@@ -1,0 +1,31 @@
+# Compiled Python modules
+*.pyo
+*.pyc
+
+# SQLite
+*.db
+*.s3db
+*.sqlite3
+
+# Vagrant private files
+.vagrant/*
+.vagrant*
+
+#logs
+*.log
+*.log.*
+
+#pids
+*.pid
+
+#ppa public keys
+*.asc*
+
+# markdown preview
+README.html
+
+# vscode editor
+.vscode/
+
+#Coverage
+.coverage
