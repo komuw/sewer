@@ -49,6 +49,10 @@ class ACMEclient(object):
             ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
             ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
             CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
+
+        self.logger = get_logger(__name__).bind(
+            client_name=self.__class__.__name__)
+
         self.domain_name = domain_name
         self.CLOUDFLARE_DNS_ZONE_ID = CLOUDFLARE_DNS_ZONE_ID
         self.CLOUDFLARE_EMAIL = CLOUDFLARE_EMAIL
@@ -72,7 +76,7 @@ class ACMEclient(object):
         else:
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
 
-        self.logger = get_logger(__name__).bind(
+        self.logger = self.logger.bind(
             client_name=self.__class__.__name__,
             domain_name=self.domain_name,
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL,
