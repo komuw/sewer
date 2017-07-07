@@ -1,11 +1,11 @@
-# Sewer          
+## Sewer          
 
 Sewer is a Let's Encrypt(ACME) client.         
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
 Sewer currently only supports the DNS mode of validation. The only currently supported DNS provider is cloudflare but I will add more as time progresses.      
 
 
-# Usage:
+## Usage:
 
 ```python
 import ACMEclient
@@ -23,11 +23,14 @@ dns_record_id = create_cloudflare_dns_record_response.json()['result']['id']
 check_challenge_status_response = client.check_challenge_status(dns_record_id, dns_challenge_url)
 ```
 
-# TODO:
+## TODO:
+- add functionality to actually get certificates
+- make it DNS provider agnostic
+- support more DNS providers
 
 
 
-# FAQ:
+## FAQ:
 - Why another ACME client?          
   I wanted an ACME client that I could use to programmatically(as a library) use to get certificates. However I could not 
   find anything satisfactory for use in Python code.
