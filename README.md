@@ -17,7 +17,7 @@ client = ACMEclient(domain_name='example.com',
 acme_register_response = client.acme_register()
 dns_token, dns_challenge_url = client.get_challenge()
 acme_keyauthorization, base64_of_acme_keyauthorization = client.get_keyauthorization(dns_token)
-create_cloudflare_dns_record_response = client.create_cloudflare_dns_record(self, base64_of_acme_keyauthorization)
+create_cloudflare_dns_record_response = client.create_cloudflare_dns_record(base64_of_acme_keyauthorization)
 notify_acme_challenge_set_response = client.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
 dns_record_id = create_cloudflare_dns_record_response.json()['result']['id']
 check_challenge_status_response = client.check_challenge_status(dns_record_id, dns_challenge_url)
