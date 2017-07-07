@@ -28,6 +28,7 @@ check_challenge_status_response = client.check_challenge_status(dns_record_id, d
 - make it DNS provider agnostic
 - support more DNS providers
 - add robust tests
+- be able to handle SAN(subject alternative names)
 
 
 
