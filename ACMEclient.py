@@ -136,7 +136,7 @@ class ACMEclient(object):
         self.logger.info('make_signed_acme_request')
         payload64 = self.calculate_safe_base64(
             json.dumps(payload).encode('utf8'))
-        protected = self.get_acme_header(self.account_key)
+        protected = self.get_acme_header()
 
         response = requests.get(
             self.GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT)

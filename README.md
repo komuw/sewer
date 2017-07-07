@@ -27,6 +27,7 @@ check_challenge_status_response = client.check_challenge_status(dns_record_id, d
 - add functionality to actually get certificates
 - make it DNS provider agnostic
 - support more DNS providers
+- add robust tests
 
 
 
