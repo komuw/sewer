@@ -23,6 +23,9 @@ class ACMEclient(object):
                             CLOUDFLARE_API_KEY='nsa-grade-api-key')
         certificate = client.cert()
 
+        with open('certificate.crt', 'w') as certificate_file:
+            certificate_file.write(certificate)
+
     todo:
         - reduce number of steps taken to get certificates.
         - handle exceptions

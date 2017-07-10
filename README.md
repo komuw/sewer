@@ -19,6 +19,10 @@ certificate = client.cert()
 print "your certicate is:", certificate
 print "\n\n"
 print "you can write it to a file then add that file to your favourite webserver."
+
+with open('certificate.crt', 'w') as certificate_file:
+    certificate_file.write(certificate)
+
 ```
 
 ## TODO:
