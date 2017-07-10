@@ -28,7 +28,6 @@ print "you can write it to a file then add that file to your favourite webserver
 ```
 
 ## TODO:
-- add functionality to actually get certificates
 - make it DNS provider agnostic
 - support more DNS providers
 - add robust tests
