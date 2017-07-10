@@ -11,9 +11,9 @@ Sewer currently only supports the DNS mode of validation. The only currently sup
 import ACMEclient
 
 client = ACMEclient(domain_name='example.com',
-                    CLOUDFLARE_DNS_ZONE_ID='random',
-                    CLOUDFLARE_EMAIL='example@example.com',
-                    CLOUDFLARE_API_KEY='nsa-grade-api-key')
+                            CLOUDFLARE_DNS_ZONE_ID='random',
+                            CLOUDFLARE_EMAIL='example@example.com',
+                            CLOUDFLARE_API_KEY='nsa-grade-api-key')
 acme_register_response = client.acme_register()
 dns_token, dns_challenge_url = client.get_challenge()
 acme_keyauthorization, base64_of_acme_keyauthorization = client.get_keyauthorization(dns_token)
@@ -21,6 +21,10 @@ create_cloudflare_dns_record_response = client.create_cloudflare_dns_record(base
 notify_acme_challenge_set_response = client.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
 dns_record_id = create_cloudflare_dns_record_response.json()['result']['id']
 check_challenge_status_response = client.check_challenge_status(dns_record_id, dns_challenge_url)
+get_certicate_response = client.get_certicate()
+
+print "your certicate is:", get_certicate_response
+print "you can write it to a file then add that file to your favourite webserver."
 ```
 
 ## TODO:
