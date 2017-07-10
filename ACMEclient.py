@@ -4,6 +4,7 @@ import base64
 import hashlib
 import binascii
 import urlparse
+import textwrap
 
 import requests
 import OpenSSL
@@ -27,6 +28,7 @@ class ACMEclient(object):
         notify_acme_challenge_set_response = client.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
         dns_record_id = create_cloudflare_dns_record_response.json()['result']['id']
         check_challenge_status_response = client.check_challenge_status(dns_record_id, dns_challenge_url)
+        get_certicate_response = client.get_certicate()
 
     todo:
         - reduce number of steps taken to get certificates.
@@ -34,21 +36,21 @@ class ACMEclient(object):
     """
 
     def __init__(
-            self,
-            domain_name,
-            CLOUDFLARE_DNS_ZONE_ID,
-            CLOUDFLARE_EMAIL,
-            CLOUDFLARE_API_KEY,
-            account_key=None,
-            bits=2048,
-            digest='sha256',
-            ACME_REQUEST_TIMEOUT=65,
-            ACME_CHALLENGE_WAIT_PERIOD=4,
-            GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-            ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org",
-            ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
-            ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
-            CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
+        self,
+        domain_name,
+        CLOUDFLARE_DNS_ZONE_ID,
+        CLOUDFLARE_EMAIL,
+        CLOUDFLARE_API_KEY,
+        account_key=None,
+        bits=2048,
+        digest='sha256',
+        ACME_REQUEST_TIMEOUT=65,
+        ACME_CHALLENGE_WAIT_PERIOD=4,
+        GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
+        ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org",
+        ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
+        ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
+        CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
 
         self.logger = get_logger(__name__).bind(
             client_name=self.__class__.__name__)
@@ -65,6 +67,9 @@ class ACMEclient(object):
         self.ACME_CERTIFICATE_AUTHORITY_URL = ACME_CERTIFICATE_AUTHORITY_URL
         self.ACME_CERTIFICATE_AUTHORITY_TOS = ACME_CERTIFICATE_AUTHORITY_TOS
         self.ACME_CERTIFICATE_AUTHORITY_CHAIN = ACME_CERTIFICATE_AUTHORITY_CHAIN
+        self.certificate_key = self.create_certificate_key()
+        self.csr = self.create_csr()
+        self.certificate_chain = self.get_certificate_chain()
 
         if not account_key:
             self.account_key = self.create_account_key()
@@ -86,13 +91,47 @@ class ACMEclient(object):
         # self.GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory"
         # self.ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
 
-    def create_account_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
+    def create_account_key(self):
         self.logger.info('create_account_key')
+        return self.create_key()
+
+    def create_certificate_key(self):
+        self.logger.info('create_certificate_key')
+        return self.create_key()
+
+    def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
         key = OpenSSL.crypto.PKey()
         key.generate_key(key_type, self.bits)
         private_key = OpenSSL.crypto.dump_privatekey(
             OpenSSL.crypto.FILETYPE_PEM, key)
         return private_key
+
+    def create_csr(self):
+        self.logger.info('create_csr')
+        SAN = 'DNS:{0}'.format(self.domain_name).encode('utf8')
+        X509Req = OpenSSL.crypto.X509Req()
+        X509Req.get_subject().CN = self.domain_name
+        X509Req.add_extensions(
+            [OpenSSL.crypto.X509Extension('subjectAltName'.encode('utf8'),
+                                          critical=False,
+                                          value=SAN)])
+        pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
+                                            self.certificate_key)
+        X509Req.set_pubkey(pk)
+        X509Req.set_version(2)
+        X509Req.sign(pk, self.digest)
+        return OpenSSL.crypto.dump_certificate_request(
+            OpenSSL.crypto.FILETYPE_ASN1, X509Req)
+
+    def get_certificate_chain(self):
+        self.logger.info('get_certificate_chain')
+        url = self.ACME_CERTIFICATE_AUTHORITY_CHAIN
+        get_certificate_chain_response = requests.get(
+            url,
+            timeout=self.ACME_REQUEST_TIMEOUT)
+        certificate_chain = get_certificate_chain_response.content.decode(
+            'utf8')
+        return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
         return base64.urlsafe_b64encode(un_encoded_data).decode('utf8').rstrip(
@@ -120,13 +159,10 @@ class ACMEclient(object):
         header = {
             "alg": "RS256",
             "jwk": {
-                "e":
-                self.calculate_safe_base64(
+                "e": self.calculate_safe_base64(
                     binascii.unhexlify(exponent.encode('utf8'))),
-                "kty":
-                "RSA",
-                "n":
-                self.calculate_safe_base64(
+                "kty": "RSA",
+                "n": self.calculate_safe_base64(
                     binascii.unhexlify(modulus.encode('utf8')))
             }
         }
@@ -139,7 +175,8 @@ class ACMEclient(object):
         protected = self.get_acme_header()
 
         response = requests.get(
-            self.GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT)
+            self.GET_NONCE_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT)
         nonce = response.headers['Replay-Nonce']
         protected["nonce"] = nonce
 
@@ -153,7 +190,9 @@ class ACMEclient(object):
             "signature": self.calculate_safe_base64(signature)
         })
         response = requests.post(
-            url, data=data.encode('utf8'), timeout=self.ACME_REQUEST_TIMEOUT)
+            url,
+            data=data.encode('utf8'),
+            timeout=self.ACME_REQUEST_TIMEOUT)
         return response
 
     def acme_register(self):
@@ -165,7 +204,8 @@ class ACMEclient(object):
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
-            url=url, payload=payload)
+            url=url,
+            payload=payload)
         return acme_register_response
 
     def get_challenge(self):
@@ -180,7 +220,8 @@ class ACMEclient(object):
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
-            url=url, payload=payload)
+            url=url,
+            payload=payload)
 
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
@@ -243,9 +284,11 @@ class ACMEclient(object):
         while True:
             try:
                 check_challenge_status_response = requests.get(
-                    dns_challenge_url, timeout=self.ACME_REQUEST_TIMEOUT)
+                    dns_challenge_url,
+                    timeout=self.ACME_REQUEST_TIMEOUT)
                 challenge_status = check_challenge_status_response.json()[
-                    'status']
+                    'status'
+                ]
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 break
@@ -267,5 +310,28 @@ class ACMEclient(object):
             'Content-Type': 'application/json'
         }
         response = requests.delete(
-            url, headers=headers, timeout=self.ACME_REQUEST_TIMEOUT)
+            url,
+            headers=headers,
+            timeout=self.ACME_REQUEST_TIMEOUT)
         return response
+
+    def get_certicate(self):
+        self.logger.info('get_certicate')
+        payload = {
+            "resource": "new-cert",
+            "csr": self.calculate_safe_base64(self.csr)
+        }
+        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+                               '/acme/new-cert')
+        get_certicate_response = self.make_signed_acme_request(url, payload)
+        base64encoded_cert = base64.b64encode(
+            get_certicate_response.content).decode('utf8')
+        sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)
+        certificate = '\n'.join(sixty_four_width_cert)
+
+        pem_certificate = """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
+            certificate)
+        pem_certificate_and_chain = pem_certificate + self.certificate_chain
+        self.logger.debug('pem_certificate',
+                          pem_certificate=pem_certificate_and_chain)
+        return pem_certificate_and_chain
