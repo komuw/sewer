@@ -21,14 +21,7 @@ class ACMEclient(object):
                             CLOUDFLARE_DNS_ZONE_ID='random',
                             CLOUDFLARE_EMAIL='example@example.com',
                             CLOUDFLARE_API_KEY='nsa-grade-api-key')
-        acme_register_response = client.acme_register()
-        dns_token, dns_challenge_url = client.get_challenge()
-        acme_keyauthorization, base64_of_acme_keyauthorization = client.get_keyauthorization(dns_token)
-        create_cloudflare_dns_record_response = client.create_cloudflare_dns_record(base64_of_acme_keyauthorization)
-        notify_acme_challenge_set_response = client.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
-        dns_record_id = create_cloudflare_dns_record_response.json()['result']['id']
-        check_challenge_status_response = client.check_challenge_status(dns_record_id, dns_challenge_url)
-        get_certicate_response = client.get_certicate()
+        certificate = client.cert()
 
     todo:
         - reduce number of steps taken to get certificates.
@@ -335,3 +328,31 @@ class ACMEclient(object):
         self.logger.debug('pem_certificate',
                           pem_certificate=pem_certificate_and_chain)
         return pem_certificate_and_chain
+
+    def just_get_me_a_certificate(self):
+        self.logger.info('just_get_me_a_certificate')
+        self.acme_register()
+        dns_token, dns_challenge_url = self.get_challenge()
+        acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+            dns_token)
+        create_cloudflare_dns_record_response = self.create_cloudflare_dns_record(
+            base64_of_acme_keyauthorization)
+        self.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
+        dns_record_id = create_cloudflare_dns_record_response.json(
+        )['result']['id']
+        self.check_challenge_status(dns_record_id, dns_challenge_url)
+        certificate = self.get_certicate()
+
+        return certificate
+
+    def cert(self):
+        """
+        convenience method to get a certificate without much hassle
+        """
+        return self.just_get_me_a_certificate()
+
+    def certificate(self):
+        """
+        convenience method to get a certificate without much hassle
+        """
+        return self.just_get_me_a_certificate()
