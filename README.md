@@ -6,7 +6,9 @@ Sewer currently only supports the DNS mode of validation. The only currently sup
 
 
 ## Installation:
+
 `pip install sewer`
+
 
 ## Usage:
 
@@ -79,3 +81,10 @@ with open('certificate.key', 'w') as certificate_key_file:
   Because, for the longest time now, getting certificates has felt like wading through sewers. That was before Let's Encrypt showed up.                     
   Also, I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.
 
+
+## Development setup
+- git clone git@github.com:komuW/sewer.git
+- cd sewer
+- sudo apt-get install pandoc
+- pip install twine wheel pypandoc coverage
+- to be continued
