@@ -17,36 +17,54 @@ class ACMEclient(object):
     todo: improve documentation.
 
     usage:
+        1. to create a new certificate.
         client = ACMEclient(domain_name='example.com',
                             CLOUDFLARE_DNS_ZONE_ID='random',
                             CLOUDFLARE_EMAIL='example@example.com',
                             CLOUDFLARE_API_KEY='nsa-grade-api-key')
         certificate = client.cert()
+        certificate_key = client.certificate_key
+        account_key = client.account_key
 
         with open('certificate.crt', 'w') as certificate_file:
             certificate_file.write(certificate)
 
+        with open('certificate.key', 'w') as certificate_key_file:
+            certificate_key_file.write(certificate_key)
+
+
+        2. to renew a certificate:
+        with open('account_key.key', 'r') as account_key_file:
+            account_key = account_key_file.read()
+
+        client = ACMEclient(domain_name='example.com',
+                            CLOUDFLARE_DNS_ZONE_ID='random',
+                            CLOUDFLARE_EMAIL='example@example.com',
+                            CLOUDFLARE_API_KEY='nsa-grade-api-key',
+                            account_key=account_key)
+        certificate = client.renew()
+        certificate_key = client.certificate_key
+
     todo:
-        - reduce number of steps taken to get certificates.
         - handle exceptions
     """
 
     def __init__(
-        self,
-        domain_name,
-        CLOUDFLARE_DNS_ZONE_ID,
-        CLOUDFLARE_EMAIL,
-        CLOUDFLARE_API_KEY,
-        account_key=None,
-        bits=2048,
-        digest='sha256',
-        ACME_REQUEST_TIMEOUT=65,
-        ACME_CHALLENGE_WAIT_PERIOD=4,
-        GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-        ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org",
-        ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
-        ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
-        CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
+            self,
+            domain_name,
+            CLOUDFLARE_DNS_ZONE_ID,
+            CLOUDFLARE_EMAIL,
+            CLOUDFLARE_API_KEY,
+            account_key=None,
+            bits=2048,
+            digest='sha256',
+            ACME_REQUEST_TIMEOUT=65,
+            ACME_CHALLENGE_WAIT_PERIOD=4,
+            GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
+            ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org",
+            ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
+            ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
+            CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
 
         self.logger = get_logger(__name__).bind(
             client_name=self.__class__.__name__)
@@ -69,8 +87,10 @@ class ACMEclient(object):
 
         if not account_key:
             self.account_key = self.create_account_key()
+            self.PRIOR_REGISTERED = False
         else:
             self.account_key = account_key
+            self.PRIOR_REGISTERED = True
 
         if CLOUDFLARE_API_BASE_URL[-1] != '/':
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
@@ -107,10 +127,10 @@ class ACMEclient(object):
         SAN = 'DNS:{0}'.format(self.domain_name).encode('utf8')
         X509Req = OpenSSL.crypto.X509Req()
         X509Req.get_subject().CN = self.domain_name
-        X509Req.add_extensions(
-            [OpenSSL.crypto.X509Extension('subjectAltName'.encode('utf8'),
-                                          critical=False,
-                                          value=SAN)])
+        X509Req.add_extensions([
+            OpenSSL.crypto.X509Extension(
+                'subjectAltName'.encode('utf8'), critical=False, value=SAN)
+        ])
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
                                             self.certificate_key)
         X509Req.set_pubkey(pk)
@@ -123,8 +143,7 @@ class ACMEclient(object):
         self.logger.info('get_certificate_chain')
         url = self.ACME_CERTIFICATE_AUTHORITY_CHAIN
         get_certificate_chain_response = requests.get(
-            url,
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            url, timeout=self.ACME_REQUEST_TIMEOUT)
         certificate_chain = get_certificate_chain_response.content.decode(
             'utf8')
         return certificate_chain
@@ -155,10 +174,13 @@ class ACMEclient(object):
         header = {
             "alg": "RS256",
             "jwk": {
-                "e": self.calculate_safe_base64(
+                "e":
+                self.calculate_safe_base64(
                     binascii.unhexlify(exponent.encode('utf8'))),
-                "kty": "RSA",
-                "n": self.calculate_safe_base64(
+                "kty":
+                "RSA",
+                "n":
+                self.calculate_safe_base64(
                     binascii.unhexlify(modulus.encode('utf8')))
             }
         }
@@ -171,8 +193,7 @@ class ACMEclient(object):
         protected = self.get_acme_header()
 
         response = requests.get(
-            self.GET_NONCE_URL,
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            self.GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT)
         nonce = response.headers['Replay-Nonce']
         protected["nonce"] = nonce
 
@@ -186,12 +207,14 @@ class ACMEclient(object):
             "signature": self.calculate_safe_base64(signature)
         })
         response = requests.post(
-            url,
-            data=data.encode('utf8'),
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            url, data=data.encode('utf8'), timeout=self.ACME_REQUEST_TIMEOUT)
         return response
 
     def acme_register(self):
+        """
+        Register using a customers account_key.
+        This method should only be called if self.PRIOR_REGISTERED == False
+        """
         self.logger.info('acme_register')
         payload = {
             "resource": "new-reg",
@@ -200,8 +223,7 @@ class ACMEclient(object):
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
-            url=url,
-            payload=payload)
+            url=url, payload=payload)
         return acme_register_response
 
     def get_challenge(self):
@@ -216,8 +238,7 @@ class ACMEclient(object):
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
-            url=url,
-            payload=payload)
+            url=url, payload=payload)
 
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
@@ -280,11 +301,9 @@ class ACMEclient(object):
         while True:
             try:
                 check_challenge_status_response = requests.get(
-                    dns_challenge_url,
-                    timeout=self.ACME_REQUEST_TIMEOUT)
+                    dns_challenge_url, timeout=self.ACME_REQUEST_TIMEOUT)
                 challenge_status = check_challenge_status_response.json()[
-                    'status'
-                ]
+                    'status']
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 break
@@ -306,9 +325,7 @@ class ACMEclient(object):
             'Content-Type': 'application/json'
         }
         response = requests.delete(
-            url,
-            headers=headers,
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            url, headers=headers, timeout=self.ACME_REQUEST_TIMEOUT)
         return response
 
     def get_certicate(self):
@@ -328,21 +345,22 @@ class ACMEclient(object):
         pem_certificate = """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
             certificate)
         pem_certificate_and_chain = pem_certificate + self.certificate_chain
-        self.logger.debug('pem_certificate',
-                          pem_certificate=pem_certificate_and_chain)
+        self.logger.debug(
+            'pem_certificate', pem_certificate=pem_certificate_and_chain)
         return pem_certificate_and_chain
 
     def just_get_me_a_certificate(self):
         self.logger.info('just_get_me_a_certificate')
-        self.acme_register()
+        if not self.PRIOR_REGISTERED:
+            self.acme_register()
         dns_token, dns_challenge_url = self.get_challenge()
         acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
             dns_token)
         create_cloudflare_dns_record_response = self.create_cloudflare_dns_record(
             base64_of_acme_keyauthorization)
         self.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
-        dns_record_id = create_cloudflare_dns_record_response.json(
-        )['result']['id']
+        dns_record_id = create_cloudflare_dns_record_response.json()['result'][
+            'id']
         self.check_challenge_status(dns_record_id, dns_challenge_url)
         certificate = self.get_certicate()
 
@@ -357,5 +375,14 @@ class ACMEclient(object):
     def certificate(self):
         """
         convenience method to get a certificate without much hassle
+        """
+        return self.just_get_me_a_certificate()
+
+    def renew(self):
+        """
+        renews a certificate.
+        A renewal is actually just getting a new certificate.
+        An issuance request counts as a renewal if it contains the exact same set of hostnames as a previously issued certificate.
+            https://letsencrypt.org/docs/rate-limits/
         """
         return self.just_get_me_a_certificate()
