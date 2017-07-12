@@ -8,13 +8,13 @@ Sewer currently only supports the DNS mode of validation. The only currently sup
 ## Usage:
 
 ```python
-import ACMEclient
+import sewer
 
 # 1. to create a new certificate:
-client = ACMEclient(domain_name='example.com',
-                    CLOUDFLARE_DNS_ZONE_ID='random',
-                    CLOUDFLARE_EMAIL='example@example.com',
-                    CLOUDFLARE_API_KEY='nsa-grade-api-key')
+client = sewer.Client(domain_name='example.com',
+                      CLOUDFLARE_DNS_ZONE_ID='random',
+                      CLOUDFLARE_EMAIL='example@example.com',
+                      CLOUDFLARE_API_KEY='nsa-grade-api-key')
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
@@ -39,14 +39,16 @@ with open('account_key.key', 'w') as account_key_file:
 
 
 # 2. to renew a certificate:
+import sewer
+
 with open('account_key.key', 'r') as account_key_file:
     account_key = account_key_file.read()
 
-client = ACMEclient(domain_name='example.com',
-                    CLOUDFLARE_DNS_ZONE_ID='random',
-                    CLOUDFLARE_EMAIL='example@example.com',
-                    CLOUDFLARE_API_KEY='nsa-grade-api-key',
-                    account_key=account_key)
+client = sewer.Client(domain_name='example.com',
+                      CLOUDFLARE_DNS_ZONE_ID='random',
+                      CLOUDFLARE_EMAIL='example@example.com',
+                      CLOUDFLARE_API_KEY='nsa-grade-api-key',
+                      account_key=account_key)
 certificate = client.renew()
 certificate_key = client.certificate_key
 
