@@ -1,5 +1,8 @@
 ## Sewer          
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
+
+
 Sewer is a Let's Encrypt(ACME) client.         
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
 Sewer currently only supports the DNS mode of validation. The only currently supported DNS provider is cloudflare but I will add more as time progresses.      
