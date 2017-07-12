@@ -5,6 +5,9 @@ It allows you to obtain ssl/tls certificates from Let's Encrypt.
 Sewer currently only supports the DNS mode of validation. The only currently supported DNS provider is cloudflare but I will add more as time progresses.      
 
 
+## Installation:
+`pip install sewer`
+
 ## Usage:
 
 ```python
