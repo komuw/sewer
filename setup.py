@@ -1,12 +1,12 @@
 from setuptools import setup
 # To use a consistent encoding
-from codecs import open
+import codecs
 
 try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
 except ImportError:
-    long_description = open('README.md').read()
+    long_description = codecs.open('README.md').read()
 
 setup(
     name='sewer',
