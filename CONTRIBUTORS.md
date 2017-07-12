@@ -12,4 +12,5 @@ derivative works of any Contribution, under the MIT License.
 Contributors
 ------------
 
-komu W: www.komu.engineer
+1. [komu W](www.komu.engineer)
+2. you?
