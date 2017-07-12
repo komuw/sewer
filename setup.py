@@ -119,4 +119,8 @@ setup(
 # b) pip install -e .
 # c) python setup.py sdist
 # d) python setup.py bdist_wheel
-
+# e) DONT use python setup.py register and python setup.py upload. They use http
+# f) twine upload dist/* -r testpypi
+# g) pip install -i https://testpypi.python.org/pypi <package name>
+# h) twine upload dist/*   # prod pypi
+# i) pip install <package name>
