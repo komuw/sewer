@@ -110,3 +110,7 @@ setup(
     #     ],
     # },
 )
+
+# python packaging documentation:
+# 1. https://python-packaging.readthedocs.io/en/latest/index.html
+# 2. https://python-packaging-user-guide.readthedocs.io/tutorials/distributing-packages
