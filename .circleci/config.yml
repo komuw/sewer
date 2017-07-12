@@ -23,7 +23,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-           pip install twine wheel pypandoc coverage yapf flake8
+           sudo pip install twine wheel pypandoc coverage yapf flake8
 
       # run tests!
       - run:
