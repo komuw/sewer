@@ -11,12 +11,12 @@
 #         s = funniest.joke()
 #         self.assertTrue(isinstance(s, basestring))
 
-# The best way to get these tests going (particularly if you’re not sure what to use) is Nose.
-# With those files added, it’s just a matter of running this from the root of the repository:
+# The best way to get these tests going (particularly if you're not sure what to use) is Nose.
+# With those files added, it's just a matter of running this from the root of the repository:
 
 # $ pip install nose
 # $ nosetests
-# To integrate this with our setup.py, and ensure that Nose is installed when we run the tests, we’ll add a few lines to setup():
+# To integrate this with our setup.py, and ensure that Nose is installed when we run the tests, we'll add a few lines to setup():
 
 # setup(
 #     ...
