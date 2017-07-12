@@ -70,6 +70,7 @@ with open('certificate.key', 'w') as certificate_key_file:
 - support more DNS providers
 - add robust tests
 - be able to handle SAN(subject alternative names)
+- add ci
 
 
 
