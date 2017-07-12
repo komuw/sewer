@@ -114,3 +114,9 @@ setup(
 # python packaging documentation:
 # 1. https://python-packaging.readthedocs.io/en/latest/index.html
 # 2. https://python-packaging-user-guide.readthedocs.io/tutorials/distributing-packages
+
+# a) pip install wheel twine
+# b) pip install -e .
+# c) python setup.py sdist
+# d) python setup.py bdist_wheel
+
