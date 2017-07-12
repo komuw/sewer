@@ -27,3 +27,10 @@
 
 # $ python setup.py test
 # Setuptools will take care of installing nose and running the test suite.
+
+# from unittest import TestCase
+# from funniest.command_line import main
+
+# class TestConsole(TestCase):
+#     def test_basic(self):
+#         main()

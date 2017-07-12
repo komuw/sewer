@@ -108,7 +108,12 @@ setup(
     #         'sample=sample:main',
     #     ],
     # },
-)
+    entry_points={
+        'console_scripts': [
+            'sewer=sewer.cli:main',
+            'sewer-cli=sewer.cli:main',
+        ],
+    },)
 
 # python packaging documentation:
 # 1. https://python-packaging.readthedocs.io/en/latest/index.html
