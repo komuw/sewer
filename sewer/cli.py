@@ -53,8 +53,8 @@ def main():
         type=str,
         required=True,
         choices=['run', 'renew'],
-        help="The action that you want to. \
-        Either run(get a new certificate) or renew(renew a certificate).")
+        help="The action that you want to perform. \
+        Either run (get a new certificate) or renew (renew a certificate).")
 
     args = parser.parse_args()
     logger = get_logger(__name__)
