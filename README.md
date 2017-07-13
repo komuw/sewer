@@ -7,7 +7,7 @@
 Sewer is a Let's Encrypt(ACME) client.         
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
 Sewer currently only supports the DNS mode of validation. The only currently supported DNS provider is cloudflare but I will add more as time progresses.         
-Sewer can be used very easliy programmatically as a libarary from code.            
+Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
 
 
@@ -75,16 +75,16 @@ with open('certificate.key', 'w') as certificate_key_file:
 ## CLI:
 Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.            
 Your dns providers credentials need to be supplied as environment variables.
+ 
+To get certificate, run:                
+```CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domains example.com --action run```              
 
-To get certificate, run:
-`CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domains example.com --action run`              
+To renew a certificate, run:                
+```CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --account_key /path/to/your/account.key --dns cloudflare --domains example.com --action renew```              
 
-To renew a certificate, run:              
-`CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --account_key /path/to/your/account.key --dns cloudflare --domains example.com --action renew`            
+The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
 
-The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.         
-
-The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                 
+The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
 ## TODO:
 - make it DNS provider agnostic
