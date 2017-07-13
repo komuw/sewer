@@ -24,6 +24,7 @@ jobs:
           name: install dependencies
           command: |
            sudo pip install twine wheel pypandoc coverage yapf flake8 sewer
+           flake8 .
 
       # run tests!
       - run:
