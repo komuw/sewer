@@ -9,15 +9,14 @@ from . import Client
 def main():
     """
     Usage:
-        CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL \
-        CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY \
-        CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID \
-        GET_NONCE_URL=GET_NONCE_URL \
-        ACME_CERTIFICATE_AUTHORITY_URL=ACME_CERTIFICATE_AUTHORITY_URL \
-        ACME_CERTIFICATE_AUTHORITY_TOS=ACME_CERTIFICATE_AUTHORITY_TOS \
-        ACME_CERTIFICATE_AUTHORITY_CHAIN=ACME_CERTIFICATE_AUTHORITY_CHAIN \
-        CLOUDFLARE_API_BASE_URL=CLOUDFLARE_API_BASE_URL \
-        sewer --account_key="/path/" --dns="cloudflare" --domains="yo.com" renew/run
+        CLOUDFLARE_EMAIL=komuw05@gmail.com \
+        CLOUDFLARE_DNS_ZONE_ID=zone \
+        CLOUDFLARE_API_KEY=key \
+        sewer \
+        --account_key /tmp/account_key.key \
+        --dns cloudflare \
+        --domains yo.com \
+        --action run 
     """
     parser = argparse.ArgumentParser(
         prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
@@ -48,10 +47,12 @@ def main():
     args = parser.parse_args()
     logger = get_logger(__name__)
 
-    account_key = args.account_key
-    dns_proviser = args.dns
+    dns_provider = args.dns
     domains = args.domains
     action = args.action
+    account_key = args.account_key
+    if account_key:
+        account_key = account_key.read()
     try:
         CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
         CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
@@ -60,5 +61,23 @@ def main():
         logger.info("ERROR:: Please supply {0} as an environment variable.".
                     format(str(e)))
 
+    client = Client(
+        domain_name=domains,
+        CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
+        CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
+        CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY,
+        account_key=account_key)
+
+    certificate_key = client.certificate_key
+    account_key = client.account_key
+    # if action == 'renew':
+    #     certificate = client.renew()
+    # else:
+    #     certificate = client.cert()
+
     print "\n\n"
-    print "args:", args
+    print "certificate_key:", certificate_key
+    print "\n\n"
+    print "account_key:", account_key
+    print "\n\n"
+    print "certificate:", 'certificate'
