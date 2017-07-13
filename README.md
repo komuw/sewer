@@ -77,10 +77,27 @@ Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) tha
 Your dns providers credentials need to be supplied as environment variables.
  
 To get certificate, run:                
-```CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domains example.com --action run```              
+```shell
+CLOUDFLARE_EMAIL=example@example.com \
+CLOUDFLARE_DNS_ZONE_ID=some-zone \
+CLOUDFLARE_API_KEY=api-key \
+sewer \
+--dns cloudflare \
+--domains example.com \
+--action run
+```              
 
 To renew a certificate, run:                
-```CLOUDFLARE_EMAIL=example@example.com CLOUDFLARE_DNS_ZONE_ID=some-zone CLOUDFLARE_API_KEY=api-key sewer --account_key /path/to/your/account.key --dns cloudflare --domains example.com --action renew```              
+```shell
+CLOUDFLARE_EMAIL=example@example.com \
+CLOUDFLARE_DNS_ZONE_ID=some-zone \
+CLOUDFLARE_API_KEY=api-key \
+sewer \
+--account_key /path/to/your/account.key \
+--dns cloudflare \
+--domains example.com \
+--action renew
+```              
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
 
@@ -110,16 +127,22 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 - sudo apt-get install pandoc
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
 - install pre-requiste software:             
-`apt-get install pandoc && pip install twine wheel pypandoc coverage yapf flake8`                   
+```shell
+apt-get install pandoc && pip install twine wheel pypandoc coverage yapf flake8
+```                   
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.
 - add your name and contact(optional) to 
 - add tests
 - run tests to make sure they are passing
 - format your code using [yapf](https://github.com/google/yapf):                      
-`yapf --in-place --style "google" -r .`                     
+```shell
+yapf --in-place --style "google" -r .
+```                     
 - run [flake8](https://pypi.python.org/pypi/flake8) on the code and fix any issues:                      
-`flake8 .`                      
+```shell
+flake8 .
+```                      
 - open a pull request on this repo.               
 
 NB: I make no commitment of accepting your pull requests.
