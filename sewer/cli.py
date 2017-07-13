@@ -18,6 +18,8 @@ def main():
         --domains yo.com \
         --action run
     """
+    # TODO: enable people to specify the location where they want certificate and keys to be stored.
+    # currently, we store them in the directory from which sewer is ran
     parser = argparse.ArgumentParser(
         prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
     parser.add_argument(
@@ -47,7 +49,8 @@ def main():
     args = parser.parse_args()
     logger = get_logger(__name__)
 
-    dns_provider = args.dns
+    # TODO: enable this when sewer becomes dns provider agnostic
+    # dns_provider = args.dns
     domains = args.domains
     action = args.action
     account_key = args.account_key
