@@ -47,7 +47,8 @@ def main():
         "--domains",
         type=str,
         required=True,
-        help="The domain name for which you want to get/renew certificate for.")
+        help="The domain/subdomain name for which \
+        you want to get/renew certificate for.")
     parser.add_argument(
         "--action",
         type=str,
