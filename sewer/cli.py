@@ -16,7 +16,7 @@ def main():
         --account_key /tmp/account_key.key \
         --dns cloudflare \
         --domains yo.com \
-        --action run 
+        --action run
     """
     parser = argparse.ArgumentParser(
         prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
@@ -70,14 +70,15 @@ def main():
 
     certificate_key = client.certificate_key
     account_key = client.account_key
-    # if action == 'renew':
-    #     certificate = client.renew()
-    # else:
-    #     certificate = client.cert()
+    if action == 'renew':
+        certificate = client.renew()
+    else:
+        certificate = client.cert()
 
-    print "\n\n"
-    print "certificate_key:", certificate_key
-    print "\n\n"
-    print "account_key:", account_key
-    print "\n\n"
-    print "certificate:", 'certificate'
+    # write out certificate, certificate key and account key in current directory
+    with open('certificate.crt', 'w') as certificate_file:
+        certificate_file.write(certificate)
+    with open('certificate.key', 'w') as certificate_key_file:
+        certificate_key_file.write(certificate_key)
+    with open('account.key', 'w') as account_file:
+        account_file.write(account_key)
