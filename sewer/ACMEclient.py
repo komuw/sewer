@@ -60,8 +60,8 @@ class ACMEclient(object):
             digest='sha256',
             ACME_REQUEST_TIMEOUT=65,
             ACME_CHALLENGE_WAIT_PERIOD=4,
-            GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-            ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org",
+            GET_NONCE_URL="https://acme-v01.api.letsencrypt.org/directory",
+            ACME_CERTIFICATE_AUTHORITY_URL="https://acme-v01.api.letsencrypt.org",
             ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
             ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
             CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
@@ -103,9 +103,9 @@ class ACMEclient(object):
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL,
             CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL)
 
-        # for production/live use:
-        # self.GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory"
-        # self.ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
+        # for staging/test, use:
+        # GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
+        # ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org"
 
     def create_account_key(self):
         self.logger.info('create_account_key')
