@@ -71,8 +71,10 @@ def main():
     certificate_key = client.certificate_key
     account_key = client.account_key
     if action == 'renew':
+        message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.renew()
     else:
+        message = 'Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.cert()
 
     # write out certificate, certificate key and account key in current directory
@@ -82,3 +84,5 @@ def main():
         certificate_key_file.write(certificate_key)
     with open('account.key', 'w') as account_file:
         account_file.write(account_key)
+
+    logger.info("the_end", message=message)
