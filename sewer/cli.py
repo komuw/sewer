@@ -9,14 +9,24 @@ from . import Client
 def main():
     """
     Usage:
-        CLOUDFLARE_EMAIL=komuw05@gmail.com \
-        CLOUDFLARE_DNS_ZONE_ID=zone \
-        CLOUDFLARE_API_KEY=key \
+        1. To get a new certificate:
+        CLOUDFLARE_EMAIL=example@example.com \
+        CLOUDFLARE_DNS_ZONE_ID=some-zone \
+        CLOUDFLARE_API_KEY=api-key \
         sewer \
-        --account_key /tmp/account_key.key \
         --dns cloudflare \
-        --domains yo.com \
+        --domains example.com \
         --action run
+
+        2. To renew a certificate:
+        CLOUDFLARE_EMAIL=example@example.com \
+        CLOUDFLARE_DNS_ZONE_ID=some-zone \
+        CLOUDFLARE_API_KEY=api-key \
+        sewer \
+        --account_key /path/to/your/account.key \
+        --dns cloudflare \
+        --domains example.com \
+        --action renew
     """
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
