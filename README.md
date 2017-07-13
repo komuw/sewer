@@ -73,7 +73,7 @@ with open('certificate.key', 'w') as certificate_key_file:
 
 
 ## CLI:
-Sewer also ships with a commandline interface(called sewer) that you can use to get/renew certificates.            
+Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.            
 Your dns providers credentials need to be supplied as environment variables.
 
 To get certificate, run:
@@ -84,7 +84,7 @@ To renew a certificate, run:
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.         
 
-The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`
+The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                 
 
 ## TODO:
 - make it DNS provider agnostic
