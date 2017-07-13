@@ -13,7 +13,9 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 
 ## Installation:
 
-`pip install sewer`           
+```shell
+pip install sewer
+```           
 Sewer is in active development and it's API may change in backward incompatible ways.
 
 
