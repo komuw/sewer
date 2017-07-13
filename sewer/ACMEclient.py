@@ -345,8 +345,6 @@ class ACMEclient(object):
         pem_certificate = """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
             certificate)
         pem_certificate_and_chain = pem_certificate + self.certificate_chain
-        self.logger.debug(
-            'pem_certificate', pem_certificate=pem_certificate_and_chain)
         return pem_certificate_and_chain
 
     def just_get_me_a_certificate(self):

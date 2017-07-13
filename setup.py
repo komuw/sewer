@@ -83,8 +83,7 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['coverage', 'pypandoc'],
-        'test': ['coverage', 'pypandoc'],
+        'dev': ['coverage', 'pypandoc', 'twine', 'wheel', 'yapf', 'flake8'],
     },
 
     # If there are data files included in your packages that need to be
@@ -108,7 +107,12 @@ setup(
     #         'sample=sample:main',
     #     ],
     # },
-)
+    entry_points={
+        'console_scripts': [
+            'sewer=sewer.cli:main',
+            'sewer-cli=sewer.cli:main',
+        ],
+    },)
 
 # python packaging documentation:
 # 1. https://python-packaging.readthedocs.io/en/latest/index.html
