@@ -5,6 +5,7 @@ import hashlib
 import binascii
 import urlparse
 import textwrap
+import platform
 
 import requests
 import OpenSSL
@@ -84,6 +85,7 @@ class ACMEclient(object):
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
         self.certificate_chain = self.get_certificate_chain()
+        self.User_Agent = self.get_user_agent()
 
         if not account_key:
             self.account_key = self.create_account_key()
@@ -106,6 +108,13 @@ class ACMEclient(object):
         # for staging/test, use:
         # GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
         # ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org"
+
+    def get_user_agent(self):
+        # TODO: add the sewer-acme versionto the User-Agent
+        return "python-requests/{requests_version} ({system}: {machine}) sewer-acme".format(
+            requests_version=requests.__version__,
+            system=platform.system(),
+            machine=platform.machine())
 
     def create_account_key(self):
         self.logger.info('create_account_key')
@@ -142,8 +151,9 @@ class ACMEclient(object):
     def get_certificate_chain(self):
         self.logger.info('get_certificate_chain')
         url = self.ACME_CERTIFICATE_AUTHORITY_CHAIN
+        headers = {'User-Agent': self.User_Agent}
         get_certificate_chain_response = requests.get(
-            url, timeout=self.ACME_REQUEST_TIMEOUT)
+            url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
         certificate_chain = get_certificate_chain_response.content.decode(
             'utf8')
         return certificate_chain
@@ -192,8 +202,11 @@ class ACMEclient(object):
             json.dumps(payload).encode('utf8'))
         protected = self.get_acme_header()
 
+        headers = {'User-Agent': self.User_Agent}
         response = requests.get(
-            self.GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT)
+            self.GET_NONCE_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
         nonce = response.headers['Replay-Nonce']
         protected["nonce"] = nonce
 
@@ -206,8 +219,12 @@ class ACMEclient(object):
             "payload": payload64,
             "signature": self.calculate_safe_base64(signature)
         })
+        headers = {'User-Agent': self.User_Agent}
         response = requests.post(
-            url, data=data.encode('utf8'), timeout=self.ACME_REQUEST_TIMEOUT)
+            url,
+            data=data.encode('utf8'),
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
         return response
 
     def acme_register(self):
@@ -300,8 +317,11 @@ class ACMEclient(object):
         time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
         while True:
             try:
+                headers = {'User-Agent': self.User_Agent}
                 check_challenge_status_response = requests.get(
-                    dns_challenge_url, timeout=self.ACME_REQUEST_TIMEOUT)
+                    dns_challenge_url,
+                    timeout=self.ACME_REQUEST_TIMEOUT,
+                    headers=headers)
                 challenge_status = check_challenge_status_response.json()[
                     'status']
             except Exception as e:
