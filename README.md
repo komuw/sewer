@@ -99,6 +99,26 @@ sewer \
 --action renew
 ```              
 
+To see help:
+```shell
+sewer --help                 
+
+usage: sewer [-h] [--account_key ACCOUNT_KEY] --dns {cloudflare} --domains
+             DOMAINS --action {run,renew}
+
+Sewer is a Let's Encrypt(ACME) client.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --account_key ACCOUNT_KEY
+                        The path to your letsencrypt/acme account key.
+  --dns {cloudflare}    The name of the dns provider that you want to use.
+  --domains DOMAINS     The domain/subdomain name for which you want to
+                        get/renew certificate for.
+  --action {run,renew}  The action that you want to perform. Either run (get a
+                        new certificate) or renew (renew a certificate).
+```
+
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
 
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
