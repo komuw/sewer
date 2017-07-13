@@ -1,5 +1,5 @@
 Thank you for contributing to sewer.
-Every contribution to sewer is as important to us.
+Every contribution to sewer is important to us.
 
 
 Contributor offers to license certain software (a “Contribution” or multiple
