@@ -113,11 +113,12 @@ class ACMEclient(object):
 
     def get_user_agent(self):
         # TODO: add the sewer-acme versionto the User-Agent
-        return "python-requests/{requests_version} ({system}: {machine}) sewer-acme {sewer_version}".format(
+        return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
             system=platform.system(),
             machine=platform.machine(),
-            sewer_version=sewer_version.__version__)
+            sewer_version=sewer_version.__version__,
+            sewer_url=sewer_version.__url__)
 
     def create_account_key(self):
         self.logger.info('create_account_key')
