@@ -12,6 +12,8 @@ import OpenSSL
 import Crypto.PublicKey.RSA
 from structlog import get_logger
 
+import __version__ as sewer_version
+
 
 class ACMEclient(object):
     """
@@ -111,10 +113,11 @@ class ACMEclient(object):
 
     def get_user_agent(self):
         # TODO: add the sewer-acme versionto the User-Agent
-        return "python-requests/{requests_version} ({system}: {machine}) sewer-acme".format(
+        return "python-requests/{requests_version} ({system}: {machine}) sewer-acme {sewer_version}".format(
             requests_version=requests.__version__,
             system=platform.system(),
-            machine=platform.machine())
+            machine=platform.machine(),
+            sewer_version=sewer_version.__version__)
 
     def create_account_key(self):
         self.logger.info('create_account_key')
