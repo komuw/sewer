@@ -68,13 +68,13 @@ def main():
         account_key = account_key.read()
 
     if dns_provider == 'cloudflare':
-        from dns_providers import cloudflare
+        from . import CloudFlareDns
         try:
             CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
             CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
             CLOUDFLARE_DNS_ZONE_ID = os.environ['CLOUDFLARE_DNS_ZONE_ID']
 
-            dns_class = cloudflare.CloudFlareDns(
+            dns_class = CloudFlareDns(
                 CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)

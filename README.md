@@ -24,11 +24,13 @@ Sewer is in active development and it's API may change in backward incompatible 
 ```python
 import sewer
 
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
+                                CLOUDFLARE_EMAIL='example@example.com',
+                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+
 # 1. to create a new certificate:
 client = sewer.Client(domain_name='example.com',
-                      CLOUDFLARE_DNS_ZONE_ID='random',
-                      CLOUDFLARE_EMAIL='example@example.com',
-                      CLOUDFLARE_API_KEY='nsa-grade-api-key')
+                      dns_class=dns_class)
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
@@ -55,14 +57,15 @@ with open('account_key.key', 'w') as account_key_file:
 # 2. to renew a certificate:
 import sewer
 
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
+                                CLOUDFLARE_EMAIL='example@example.com',
+                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+
 with open('account_key.key', 'r') as account_key_file:
     account_key = account_key_file.read()
 
 client = sewer.Client(domain_name='example.com',
-                      CLOUDFLARE_DNS_ZONE_ID='random',
-                      CLOUDFLARE_EMAIL='example@example.com',
-                      CLOUDFLARE_API_KEY='nsa-grade-api-key',
-                      account_key=account_key)
+                      dns_class=dns_class)
 certificate = client.renew()
 certificate_key = client.certificate_key
 
