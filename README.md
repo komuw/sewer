@@ -171,3 +171,43 @@ flake8 .
 - open a pull request on this repo.               
 
 NB: I make no commitment of accepting your pull requests.
+
+
+
+
+```shell
+CLOUDFLARE_EMAIL=example@example.com \
+CLOUDFLARE_DNS_ZONE_ID=random \
+CLOUDFLARE_API_KEY=nsa-grade-api-key \
+sewer \
+--dns cloudflare \
+--domains subdomain.example.com \
+--action run            
+
+2017-07-14 18:09.55 chosen_dns_provider            message=Using cloudflare as dns provider.
+2017-07-14 18:09.55 create_certificate_key         client_name=ACMEclient
+2017-07-14 18:09.55 create_csr                     client_name=ACMEclient
+2017-07-14 18:09.55 get_certificate_chain          client_name=ACMEclient
+2017-07-14 18:09.56 create_account_key             client_name=ACMEclient
+2017-07-14 18:09.56 just_get_me_a_certificate      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.56 acme_register                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.56 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.56 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.58 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.59 get_challenge                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.59 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:09.59 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.02 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.04 get_keyauthorization           ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.04 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.08 notify_acme_challenge_set      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.08 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.08 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.10 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.11 check_challenge                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.19 get_certicate                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.19 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.19 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.21 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.22 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
+```
