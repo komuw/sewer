@@ -121,6 +121,9 @@ optional arguments:
   --dns {cloudflare}    The name of the dns provider that you want to use.
   --domains DOMAINS     The domain/subdomain name for which you want to
                         get/renew certificate for.
+  --bundle_name BUNDLE_NAME
+                        The name to use for certificate certificate key and
+                        account key. Default is value of domains.
   --action {run,renew}  The action that you want to perform. Either run (get a
                         new certificate) or renew (renew a certificate).
 ```
