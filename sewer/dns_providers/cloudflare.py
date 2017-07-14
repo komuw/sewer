@@ -22,7 +22,7 @@ class CloudFlareDns(common.BaseDns):
         self.CLOUDFLARE_API_KEY = CLOUDFLARE_API_KEY
         self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
         self.dns_provider_name = 'cloudflare'
-        self.HTTP_TIMEOUT = 65 # seconds
+        self.HTTP_TIMEOUT = 65  # seconds
 
         if CLOUDFLARE_API_BASE_URL[-1] != '/':
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
