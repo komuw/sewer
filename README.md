@@ -65,7 +65,8 @@ with open('account_key.key', 'r') as account_key_file:
     account_key = account_key_file.read()
 
 client = sewer.Client(domain_name='example.com',
-                      dns_class=dns_class)
+                      dns_class=dns_class,
+                      account_key=account_key)
 certificate = client.renew()
 certificate_key = client.certificate_key
 
