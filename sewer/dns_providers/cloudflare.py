@@ -70,11 +70,6 @@ class CloudFlareDns(common.BaseDns):
             timeout=self.HTTP_TIMEOUT)
 
         dns_record_id = list_dns_response.json()['result'][0]['id']
-
-        print "list_dns_response status: dns_record_id:", list_dns_response, dns_record_id
-        print "\n\n"
-        print "list_dns_response json", list_dns_response.json()
-
         url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                'zones/{0}/dns_records/{1}'.format(
                                    self.CLOUDFLARE_DNS_ZONE_ID, dns_record_id))
