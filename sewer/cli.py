@@ -60,27 +60,36 @@ def main():
     args = parser.parse_args()
     logger = get_logger(__name__)
 
-    # TODO: enable this when sewer becomes dns provider agnostic
-    # dns_provider = args.dns
+    dns_provider = args.dns
     domains = args.domains
     action = args.action
     account_key = args.account_key
     if account_key:
         account_key = account_key.read()
-    try:
-        CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
-        CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
-        CLOUDFLARE_DNS_ZONE_ID = os.environ['CLOUDFLARE_DNS_ZONE_ID']
-    except KeyError as e:
-        logger.info("ERROR:: Please supply {0} as an environment variable.".
-                    format(str(e)))
+
+    if dns_provider == 'cloudflare':
+        from dns_providers import cloudflare
+        try:
+            CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
+            CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
+            CLOUDFLARE_DNS_ZONE_ID = os.environ['CLOUDFLARE_DNS_ZONE_ID']
+
+            dns_class = cloudflare.CloudFlareDns(
+                CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
+                CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
+                CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)
+            logger.info(
+                'chosen_dns_provider',
+                message='Using {0} as dns provider.'.format(dns_provider))
+        except KeyError as e:
+            logger.info("ERROR:: Please supply {0} as an environment variable.".
+                        format(str(e)))
+    else:
+        raise ValueError(
+            'The dns provider {0} is not recognised.'.format(dns_provider))
 
     client = Client(
-        domain_name=domains,
-        CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
-        CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
-        CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY,
-        account_key=account_key)
+        domain_name=domains, dns_class=dns_class, account_key=account_key)
 
     certificate_key = client.certificate_key
     account_key = client.account_key
@@ -92,11 +101,12 @@ def main():
         certificate = client.cert()
 
     # write out certificate, certificate key and account key in current directory
-    with open('certificate.crt', 'w') as certificate_file:
+    with open('{0}.certificate.crt'.format(domains), 'w') as certificate_file:
         certificate_file.write(certificate)
-    with open('certificate.key', 'w') as certificate_key_file:
+    with open('{0}.certificate.key'.format(domains),
+              'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
-    with open('account.key', 'w') as account_file:
+    with open('{0}.account.key'.format(domains), 'w') as account_file:
         account_file.write(account_key)
 
     logger.info("the_end", message=message)

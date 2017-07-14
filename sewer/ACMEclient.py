@@ -12,17 +12,22 @@ import OpenSSL
 import Crypto.PublicKey.RSA
 from structlog import get_logger
 
+import __version__ as sewer_version
+
 
 class ACMEclient(object):
     """
     todo: improve documentation.
 
     usage:
+        from dns_providers import cloudflare
+        dns_class = cloudflare.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
+                                             CLOUDFLARE_EMAIL='example@example.com',
+                                             CLOUDFLARE_API_KEY='nsa-grade-api-key')
+
         1. to create a new certificate.
         client = ACMEclient(domain_name='example.com',
-                            CLOUDFLARE_DNS_ZONE_ID='random',
-                            CLOUDFLARE_EMAIL='example@example.com',
-                            CLOUDFLARE_API_KEY='nsa-grade-api-key')
+                            dns_class=dns_class)
         certificate = client.cert()
         certificate_key = client.certificate_key
         account_key = client.account_key
@@ -39,9 +44,7 @@ class ACMEclient(object):
             account_key = account_key_file.read()
 
         client = ACMEclient(domain_name='example.com',
-                            CLOUDFLARE_DNS_ZONE_ID='random',
-                            CLOUDFLARE_EMAIL='example@example.com',
-                            CLOUDFLARE_API_KEY='nsa-grade-api-key',
+                            dns_class=dns_class,
                             account_key=account_key)
         certificate = client.renew()
         certificate_key = client.certificate_key
@@ -53,9 +56,7 @@ class ACMEclient(object):
     def __init__(
             self,
             domain_name,
-            CLOUDFLARE_DNS_ZONE_ID,
-            CLOUDFLARE_EMAIL,
-            CLOUDFLARE_API_KEY,
+            dns_class,
             account_key=None,
             bits=2048,
             digest='sha256',
@@ -64,16 +65,14 @@ class ACMEclient(object):
             GET_NONCE_URL="https://acme-v01.api.letsencrypt.org/directory",
             ACME_CERTIFICATE_AUTHORITY_URL="https://acme-v01.api.letsencrypt.org",
             ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
-            ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem',
-            CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
+            ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
+    ):
 
         self.logger = get_logger(__name__).bind(
             client_name=self.__class__.__name__)
 
         self.domain_name = domain_name
-        self.CLOUDFLARE_DNS_ZONE_ID = CLOUDFLARE_DNS_ZONE_ID
-        self.CLOUDFLARE_EMAIL = CLOUDFLARE_EMAIL
-        self.CLOUDFLARE_API_KEY = CLOUDFLARE_API_KEY
+        self.dns_class = dns_class
         self.bits = bits
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
@@ -82,10 +81,10 @@ class ACMEclient(object):
         self.ACME_CERTIFICATE_AUTHORITY_URL = ACME_CERTIFICATE_AUTHORITY_URL
         self.ACME_CERTIFICATE_AUTHORITY_TOS = ACME_CERTIFICATE_AUTHORITY_TOS
         self.ACME_CERTIFICATE_AUTHORITY_CHAIN = ACME_CERTIFICATE_AUTHORITY_CHAIN
+        self.User_Agent = self.get_user_agent()
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
         self.certificate_chain = self.get_certificate_chain()
-        self.User_Agent = self.get_user_agent()
 
         if not account_key:
             self.account_key = self.create_account_key()
@@ -94,16 +93,10 @@ class ACMEclient(object):
             self.account_key = account_key
             self.PRIOR_REGISTERED = True
 
-        if CLOUDFLARE_API_BASE_URL[-1] != '/':
-            self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
-        else:
-            self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
-
         self.logger = self.logger.bind(
             client_name=self.__class__.__name__,
             domain_name=self.domain_name,
-            ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL,
-            CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL)
+            ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
         # for staging/test, use:
         # GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
@@ -111,10 +104,12 @@ class ACMEclient(object):
 
     def get_user_agent(self):
         # TODO: add the sewer-acme versionto the User-Agent
-        return "python-requests/{requests_version} ({system}: {machine}) sewer-acme".format(
+        return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
             system=platform.system(),
-            machine=platform.machine())
+            machine=platform.machine(),
+            sewer_version=sewer_version.__version__,
+            sewer_url=sewer_version.__url__)
 
     def create_account_key(self):
         self.logger.info('create_account_key')
@@ -279,28 +274,6 @@ class ACMEclient(object):
 
         return acme_keyauthorization, base64_of_acme_keyauthorization
 
-    def create_cloudflare_dns_record(self, base64_of_acme_keyauthorization):
-        self.logger.info('create_cloudflare_dns_record')
-        url = urlparse.urljoin(
-            self.CLOUDFLARE_API_BASE_URL,
-            'zones/{0}/dns_records'.format(self.CLOUDFLARE_DNS_ZONE_ID))
-        headers = {
-            'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-            'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-            'Content-Type': 'application/json'
-        }
-        body = {
-            "type": "TXT",
-            "name": '_acme-challenge' + '.' + self.domain_name,
-            "content": "{0}".format(base64_of_acme_keyauthorization)
-        }
-        create_cloudflare_dns_record_response = requests.post(
-            url,
-            headers=headers,
-            data=json.dumps(body),
-            timeout=self.ACME_REQUEST_TIMEOUT)
-        return create_cloudflare_dns_record_response
-
     def notify_acme_challenge_set(self, acme_keyauthorization,
                                   dns_challenge_url):
         self.logger.info('notify_acme_challenge_set')
@@ -312,7 +285,8 @@ class ACMEclient(object):
             dns_challenge_url, payload)
         return notify_acme_challenge_set_response
 
-    def check_challenge_status(self, dns_record_id, dns_challenge_url):
+    def check_challenge_status(self, dns_record_id, dns_challenge_url,
+                               base64_of_acme_keyauthorization):
         self.logger.info('check_challenge')
         time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
         while True:
@@ -330,23 +304,10 @@ class ACMEclient(object):
             if challenge_status == "pending":
                 time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
             elif challenge_status == "valid":
-                self.delete_cloudflare_dns_record(dns_record_id=dns_record_id)
+                self.dns_class.delete_dns_record(
+                    self.domain_name, base64_of_acme_keyauthorization)
                 break
         return check_challenge_status_response
-
-    def delete_cloudflare_dns_record(self, dns_record_id):
-        self.logger.info('delete_cloudflare_dns_record')
-        url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
-                               'zones/{0}/dns_records/{1}'.format(
-                                   self.CLOUDFLARE_DNS_ZONE_ID, dns_record_id))
-        headers = {
-            'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-            'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-            'Content-Type': 'application/json'
-        }
-        response = requests.delete(
-            url, headers=headers, timeout=self.ACME_REQUEST_TIMEOUT)
-        return response
 
     def get_certicate(self):
         self.logger.info('get_certicate')
@@ -374,12 +335,13 @@ class ACMEclient(object):
         dns_token, dns_challenge_url = self.get_challenge()
         acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
             dns_token)
-        create_cloudflare_dns_record_response = self.create_cloudflare_dns_record(
-            base64_of_acme_keyauthorization)
+        create_cloudflare_dns_record_response = self.dns_class.create_dns_record(
+            self.domain_name, base64_of_acme_keyauthorization)
         self.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
         dns_record_id = create_cloudflare_dns_record_response.json()['result'][
             'id']
-        self.check_challenge_status(dns_record_id, dns_challenge_url)
+        self.check_challenge_status(dns_record_id, dns_challenge_url,
+                                    base64_of_acme_keyauthorization)
         certificate = self.get_certicate()
 
         return certificate

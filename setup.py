@@ -1,6 +1,11 @@
+import os
+
 from setuptools import setup
 # To use a consistent encoding
 import codecs
+
+here = os.path.abspath(os.path.dirname(__file__))
+about = {}
 
 try:
     import pypandoc
@@ -8,25 +13,28 @@ try:
 except ImportError:
     long_description = codecs.open('README.md').read()
 
+with open(os.path.join(here, 'sewer', '__version__.py'), 'r') as f:
+    exec (f.read(), about)
+
 setup(
-    name='sewer',
+    name=about['__title__'],
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.7',
-    description='Sewer is a programmatic Lets Encrypt(ACME) client',
+    version=about['__version__'],
+    description=about['__description__'],
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/komuW/sewer',
+    url=about['__url__'],
 
     # Author details
-    author='komuW',
-    author_email='komuw05@gmail.com',
+    author=about['__author__'],
+    author_email=about['__author_email__'],
 
     # Choose your license
-    license='MIT',
+    license=about['__license__'],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
