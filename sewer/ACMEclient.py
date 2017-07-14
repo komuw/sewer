@@ -20,10 +20,10 @@ class ACMEclient(object):
     todo: improve documentation.
 
     usage:
-        from dns_providers import cloudflare
-        dns_class = cloudflare.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                             CLOUDFLARE_EMAIL='example@example.com',
-                                             CLOUDFLARE_API_KEY='nsa-grade-api-key')
+        import sewer
+        dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
+                                        CLOUDFLARE_EMAIL='example@example.com',
+                                        CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
         1. to create a new certificate.
         client = ACMEclient(domain_name='example.com',
