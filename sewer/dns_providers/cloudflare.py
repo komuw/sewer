@@ -22,6 +22,7 @@ class CloudFlareDns(common.BaseDns):
         self.CLOUDFLARE_API_KEY = CLOUDFLARE_API_KEY
         self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
         self.dns_provider_name = 'cloudflare'
+        self.HTTP_TIMEOUT = 65 # seconds
 
         if CLOUDFLARE_API_BASE_URL[-1] != '/':
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
@@ -46,7 +47,7 @@ class CloudFlareDns(common.BaseDns):
             url,
             headers=headers,
             data=json.dumps(body),
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            timeout=self.HTTP_TIMEOUT)
         return create_cloudflare_dns_record_response
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
@@ -64,7 +65,7 @@ class CloudFlareDns(common.BaseDns):
             list_dns_url,
             params=list_dns_payload,
             headers=headers,
-            timeout=self.ACME_REQUEST_TIMEOUT)
+            timeout=self.HTTP_TIMEOUT)
 
         print "list_dns_response status:", list_dns_response
         print "\n\n"
@@ -79,5 +80,5 @@ class CloudFlareDns(common.BaseDns):
             'Content-Type': 'application/json'
         }
         response = requests.delete(
-            url, headers=headers, timeout=self.ACME_REQUEST_TIMEOUT)
+            url, headers=headers, timeout=self.HTTP_TIMEOUT)
         return response
