@@ -56,7 +56,9 @@ class CloudFlareDns(common.BaseDns):
             'X-Auth-Key': self.CLOUDFLARE_API_KEY,
             'Content-Type': 'application/json'
         }
-        list_dns_payload = {'type': 'TXT', 'name': domain_name}
+
+        dns_name = '_acme-challenge' + '.' + domain_name
+        list_dns_payload = {'type': 'TXT', 'name': dns_name}
         list_dns_url = urlparse.urljoin(
             self.CLOUDFLARE_API_BASE_URL,
             'zones/{0}/dns_records'.format(self.CLOUDFLARE_DNS_ZONE_ID))
@@ -67,7 +69,9 @@ class CloudFlareDns(common.BaseDns):
             headers=headers,
             timeout=self.HTTP_TIMEOUT)
 
-        print "list_dns_response status:", list_dns_response
+        dns_record_id = list_dns_response.json()['result'][0]['id']
+
+        print "list_dns_response status: dns_record_id:", list_dns_response, dns_record_id
         print "\n\n"
         print "list_dns_response json", list_dns_response.json()
 
