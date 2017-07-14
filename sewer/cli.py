@@ -101,11 +101,12 @@ def main():
         certificate = client.cert()
 
     # write out certificate, certificate key and account key in current directory
-    with open('certificate.crt', 'w') as certificate_file:
+    with open('{0}.certificate.crt'.format(domains), 'w') as certificate_file:
         certificate_file.write(certificate)
-    with open('certificate.key', 'w') as certificate_key_file:
+    with open('{0}.certificate.key'.format(domains),
+              'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
-    with open('account.key', 'w') as account_file:
+    with open('{0}.account.key'.format(domains), 'w') as account_file:
         account_file.write(account_key)
 
     logger.info("the_end", message=message)
