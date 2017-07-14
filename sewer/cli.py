@@ -50,6 +50,12 @@ def main():
         help="The domain/subdomain name for which \
         you want to get/renew certificate for.")
     parser.add_argument(
+        "--bundle_name",
+        type=str,
+        required=False,
+        help="The name to use for certificate \
+        certificate key and account key. Default is value of domains.")
+    parser.add_argument(
         "--action",
         type=str,
         required=True,
@@ -64,6 +70,7 @@ def main():
     domains = args.domains
     action = args.action
     account_key = args.account_key
+    bundle_name = args.bundle_name
     if account_key:
         account_key = account_key.read()
 
@@ -100,13 +107,18 @@ def main():
         message = 'Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.cert()
 
+    if bundle_name:
+        file_name = bundle_name
+    else:
+        file_name = '{0}'.format(domains)
+
     # write out certificate, certificate key and account key in current directory
-    with open('{0}.certificate.crt'.format(domains), 'w') as certificate_file:
+    with open('{0}.certificate.crt'.format(file_name), 'w') as certificate_file:
         certificate_file.write(certificate)
-    with open('{0}.certificate.key'.format(domains),
+    with open('{0}.certificate.key'.format(file_name),
               'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
-    with open('{0}.account.key'.format(domains), 'w') as account_file:
+    with open('{0}.account.key'.format(file_name), 'w') as account_file:
         account_file.write(account_key)
 
     logger.info("the_end", message=message)
