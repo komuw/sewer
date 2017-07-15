@@ -173,12 +173,11 @@ yapf --in-place --style "google" -r .
 flake8 .
 ```                      
 - open a pull request on this repo.               
-
-NB: I make no commitment of accepting your pull requests.
-
+NB: I make no commitment of accepting your pull requests.                 
 
 
 
+Here's the ouput of running sewer using the cli app:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_DNS_ZONE_ID=random \
