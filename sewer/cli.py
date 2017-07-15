@@ -113,10 +113,9 @@ def main():
         file_name = '{0}'.format(domains)
 
     # write out certificate, certificate key and account key in current directory
-    with open('{0}.certificate.crt'.format(file_name), 'w') as certificate_file:
+    with open('{0}.crt'.format(file_name), 'w') as certificate_file:
         certificate_file.write(certificate)
-    with open('{0}.certificate.key'.format(file_name),
-              'w') as certificate_key_file:
+    with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
     with open('{0}.account.key'.format(file_name), 'w') as account_file:
         account_file.write(account_key)
