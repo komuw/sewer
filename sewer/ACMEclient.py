@@ -151,6 +151,10 @@ class ACMEclient(object):
             url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
         certificate_chain = get_certificate_chain_response.content.decode(
             'utf8')
+        self.logger.info(
+            'get_certificate_chain_response',
+            status_code=get_certificate_chain_response.status_code,
+            response=get_certificate_chain_response.json())
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
@@ -236,6 +240,10 @@ class ACMEclient(object):
                                '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
             url=url, payload=payload)
+        self.logger.info(
+            'acme_register_response',
+            status_code=acme_register_response.status_code,
+            response=acme_register_response.json())
         return acme_register_response
 
     def get_challenge(self):
@@ -251,6 +259,10 @@ class ACMEclient(object):
                                '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
             url=url, payload=payload)
+        self.logger.info(
+            'get_challenge_response',
+            status_code=challenge_response.status_code,
+            response=challenge_response.json())
 
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
@@ -283,6 +295,10 @@ class ACMEclient(object):
         }
         notify_acme_challenge_set_response = self.make_signed_acme_request(
             dns_challenge_url, payload)
+        self.logger.info(
+            'notify_acme_challenge_set_response',
+            status_code=notify_acme_challenge_set_response.status_code,
+            response=notify_acme_challenge_set_response.json())
         return notify_acme_challenge_set_response
 
     def check_challenge_status(self, dns_record_id, dns_challenge_url,
@@ -298,6 +314,10 @@ class ACMEclient(object):
                     headers=headers)
                 challenge_status = check_challenge_status_response.json()[
                     'status']
+                self.logger.info(
+                    'check_challenge_status_response',
+                    status_code=check_challenge_status_response.status_code,
+                    response=check_challenge_status_response.json())
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 break
