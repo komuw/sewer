@@ -30,6 +30,10 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+        # delete any prior existing DNS authorizations that may exist already
+        self.delete_dns_record(
+            domain_name=domain_name,
+            base64_of_acme_keyauthorization=base64_of_acme_keyauthorization)
         url = urlparse.urljoin(
             self.CLOUDFLARE_API_BASE_URL,
             'zones/{0}/dns_records'.format(self.CLOUDFLARE_DNS_ZONE_ID))
@@ -51,6 +55,18 @@ class CloudFlareDns(common.BaseDns):
         return create_cloudflare_dns_record_response
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+
+        class MockResponse(object):
+
+            def __init__(self, status_code=200, content='mock-response'):
+                self.status_code = status_code
+                self.content = content
+                super(MockResponse, self).__init__()
+
+            def json(self):
+                return {}
+
+        response = MockResponse()
         headers = {
             'X-Auth-Email': self.CLOUDFLARE_EMAIL,
             'X-Auth-Key': self.CLOUDFLARE_API_KEY,
@@ -69,15 +85,17 @@ class CloudFlareDns(common.BaseDns):
             headers=headers,
             timeout=self.HTTP_TIMEOUT)
 
-        dns_record_id = list_dns_response.json()['result'][0]['id']
-        url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
-                               'zones/{0}/dns_records/{1}'.format(
-                                   self.CLOUDFLARE_DNS_ZONE_ID, dns_record_id))
-        headers = {
-            'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-            'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-            'Content-Type': 'application/json'
-        }
-        response = requests.delete(
-            url, headers=headers, timeout=self.HTTP_TIMEOUT)
+        for i in range(0, len(list_dns_response.json()['result'])):
+            dns_record_id = list_dns_response.json()['result'][i]['id']
+            url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
+                                   'zones/{0}/dns_records/{1}'.format(
+                                       self.CLOUDFLARE_DNS_ZONE_ID,
+                                       dns_record_id))
+            headers = {
+                'X-Auth-Email': self.CLOUDFLARE_EMAIL,
+                'X-Auth-Key': self.CLOUDFLARE_API_KEY,
+                'Content-Type': 'application/json'
+            }
+            response = requests.delete(
+                url, headers=headers, timeout=self.HTTP_TIMEOUT)
         return response
