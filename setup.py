@@ -1,6 +1,6 @@
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 # To use a consistent encoding
 import codecs
 
@@ -64,7 +64,8 @@ setup(
     keywords='letsencrypt',
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['sewer'],
+    # packages=['sewer'],
+    packages=find_packages(exclude=['docs', '*tests*']),
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
