@@ -109,9 +109,9 @@ sewer \
 To see help:
 ```shell
 sewer --help                 
-
+     
 usage: sewer [-h] [--account_key ACCOUNT_KEY] --dns {cloudflare} --domains
-             DOMAINS --action {run,renew}
+             DOMAINS [--bundle_name BUNDLE_NAME] --action {run,renew}
 
 Sewer is a Let's Encrypt(ACME) client.
 
