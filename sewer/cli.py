@@ -94,7 +94,7 @@ def main():
         ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-staging.api.letsencrypt.org"
     else:
         GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory",
-        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org",
+        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
