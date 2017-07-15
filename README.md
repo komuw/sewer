@@ -125,6 +125,10 @@ optional arguments:
   --bundle_name BUNDLE_NAME
                         The name to use for certificate certificate key and
                         account key. Default is value of domains.
+  --endpoint {production,staging}
+                        Whether to use letsencrypt/acme production/live
+                        endpoints or staging endpoints. production endpoints
+                        are used by default.
   --action {run,renew}  The action that you want to perform. Either run (get a
                         new certificate) or renew (renew a certificate).
 ```

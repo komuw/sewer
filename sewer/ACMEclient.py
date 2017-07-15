@@ -153,8 +153,7 @@ class ACMEclient(object):
             'utf8')
         self.logger.info(
             'get_certificate_chain_response',
-            status_code=get_certificate_chain_response.status_code,
-            response=get_certificate_chain_response.json())
+            status_code=get_certificate_chain_response.status_code)
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
