@@ -304,6 +304,8 @@ class ACMEclient(object):
                                base64_of_acme_keyauthorization):
         self.logger.info('check_challenge')
         time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
+        number_of_checks = 0
+        maximum_number_of_checks_allowed = 15
         while True:
             try:
                 headers = {'User-Agent': self.User_Agent}
@@ -313,10 +315,17 @@ class ACMEclient(object):
                     headers=headers)
                 challenge_status = check_challenge_status_response.json()[
                     'status']
+                number_of_checks = number_of_checks + 1
                 self.logger.info(
                     'check_challenge_status_response',
                     status_code=check_challenge_status_response.status_code,
-                    response=check_challenge_status_response.json())
+                    response=check_challenge_status_response.json(),
+                    number_of_checks=number_of_checks)
+                if number_of_checks > maximum_number_of_checks_allowed:
+                    raise StopIteration(
+                        "Number of checks done is {0} which is greater than the maximum allowed of {1}.".
+                        format(number_of_checks,
+                               maximum_number_of_checks_allowed))
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 break
