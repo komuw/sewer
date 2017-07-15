@@ -90,10 +90,10 @@ def main():
     if endpoint == 'staging':
         # TODO: move this to a config.py file.
         # the cli and the client would both read this urls from that config file
-        GET_NONCE_URL = "https://acme-staging.api.letsencrypt.org/directory",
+        GET_NONCE_URL = "https://acme-staging.api.letsencrypt.org/directory"
         ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-staging.api.letsencrypt.org"
     else:
-        GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory",
+        GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory"
         ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
 
     if dns_provider == 'cloudflare':
