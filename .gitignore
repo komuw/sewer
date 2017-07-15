@@ -39,3 +39,7 @@ README.html
 
 # virtualenv
 .venv
+
+# certificates and keys
+*.crt
+*.key
