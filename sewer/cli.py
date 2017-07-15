@@ -73,6 +73,10 @@ def main():
     bundle_name = args.bundle_name
     if account_key:
         account_key = account_key.read()
+    if bundle_name:
+        file_name = bundle_name
+    else:
+        file_name = '{0}'.format(domains)
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
@@ -97,9 +101,16 @@ def main():
 
     client = Client(
         domain_name=domains, dns_class=dns_class, account_key=account_key)
-
     certificate_key = client.certificate_key
     account_key = client.account_key
+
+    # write out account_key in current directory
+    with open('{0}.account.key'.format(file_name), 'w') as account_file:
+        account_file.write(account_key)
+    logger.info(
+        "write_account_key",
+        message='account key succesfully written to current directory.')
+
     if action == 'renew':
         message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.renew()
@@ -107,17 +118,10 @@ def main():
         message = 'Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.cert()
 
-    if bundle_name:
-        file_name = bundle_name
-    else:
-        file_name = '{0}'.format(domains)
-
-    # write out certificate, certificate key and account key in current directory
+    # write out certificate and certificate key in current directory
     with open('{0}.crt'.format(file_name), 'w') as certificate_file:
         certificate_file.write(certificate)
     with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
-    with open('{0}.account.key'.format(file_name), 'w') as account_file:
-        account_file.write(account_key)
 
     logger.info("the_end", message=message)
