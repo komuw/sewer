@@ -322,7 +322,10 @@ class ACMEclient(object):
                     response=check_challenge_status_response.json(),
                     number_of_checks=number_of_checks)
                 if number_of_checks > maximum_number_of_checks_allowed:
-                    raise StopIteration("Number of checks done is {0} which is greater than the maximum allowed of {1}.".format(number_of_checks, maximum_number_of_checks_allowed))
+                    raise StopIteration(
+                        "Number of checks done is {0} which is greater than the maximum allowed of {1}.".
+                        format(number_of_checks,
+                               maximum_number_of_checks_allowed))
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 break
