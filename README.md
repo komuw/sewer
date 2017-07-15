@@ -133,7 +133,6 @@ The cerrtificate, certificate key and account key will be saved in the directory
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
 ## TODO:
-- make it DNS provider agnostic
 - support more DNS providers
 - add robust tests
 - be able to handle SAN(subject alternative names)
