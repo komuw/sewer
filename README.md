@@ -187,6 +187,7 @@ CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_DNS_ZONE_ID=random \
 CLOUDFLARE_API_KEY=nsa-grade-api-key \
 sewer \
+--endpoint staging \
 --dns cloudflare \
 --domains subdomain.example.com \
 --action run            
