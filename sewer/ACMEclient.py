@@ -97,6 +97,7 @@ class ACMEclient(object):
 
         self.logger = self.logger.bind(
             client_name=self.__class__.__name__,
+            client_version=sewer_version.__version__,
             domain_name=self.domain_name,
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
