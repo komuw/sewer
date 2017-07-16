@@ -50,7 +50,7 @@ class CloudFlareDns(common.BaseDns):
         }
         body = {
             "type": "TXT",
-            "name": '_acme-challenge' + '.' + domain_name,
+            "name": '_acme-challenge' + '.' + domain_name + '.',
             "content": "{0}".format(base64_of_acme_keyauthorization)
         }
         create_cloudflare_dns_record_response = requests.post(
