@@ -9,7 +9,7 @@ import platform
 
 import requests
 import OpenSSL
-import Crypto.PublicKey.RSA
+import cryptography
 from structlog import get_logger
 
 import __version__ as sewer_version
@@ -171,17 +171,17 @@ class ACMEclient(object):
 
     def get_acme_header(self):
         self.logger.info('get_acme_header')
-        pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.account_key)
-        pk_asn1 = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_ASN1,
-                                                 pk)
-        k = Crypto.PublicKey.RSA.importKey(pk_asn1)
+        private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+            self.account_key,
+            password=None,
+            backend=cryptography.hazmat.backends.default_backend())
+        public_key_public_numbers = private_key.public_key().public_numbers()
 
         # private key public exponent in hex format
-        exponent = "{0:x}".format(k.e)
+        exponent = "{0:x}".format(public_key_public_numbers.e)
         exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
         # private key modulus in hex format
-        modulus = "{0:x}".format(k.n)
+        modulus = "{0:x}".format(public_key_public_numbers.n)
         header = {
             "alg": "RS256",
             "jwk": {
