@@ -64,6 +64,11 @@ def main():
         help="Whether to use letsencrypt/acme production/live endpoints \
         or staging endpoints. production endpoints are used by default.")
     parser.add_argument(
+        "--email",
+        type=str,
+        required=False,
+        help="Email to be used for registration and recovery.")
+    parser.add_argument(
         "--action",
         type=str,
         required=True,
@@ -80,6 +85,7 @@ def main():
     account_key = args.account_key
     bundle_name = args.bundle_name
     endpoint = args.endpoint
+    email = args.email
 
     if account_key:
         account_key = account_key.read()
@@ -120,6 +126,7 @@ def main():
     client = Client(
         domain_name=domains,
         dns_class=dns_class,
+        registration_recovery_email=email,
         account_key=account_key,
         GET_NONCE_URL=GET_NONCE_URL,
         ACME_CERTIFICATE_AUTHORITY_URL=ACME_CERTIFICATE_AUTHORITY_URL)

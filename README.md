@@ -129,6 +129,7 @@ optional arguments:
                         Whether to use letsencrypt/acme production/live
                         endpoints or staging endpoints. production endpoints
                         are used by default.
+  --email EMAIL         Email to be used for registration and recovery.
   --action {run,renew}  The action that you want to perform. Either run (get a
                         new certificate) or renew (renew a certificate).
 ```
