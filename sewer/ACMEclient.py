@@ -96,8 +96,8 @@ class ACMEclient(object):
             self.PRIOR_REGISTERED = True
 
         self.logger = self.logger.bind(
-            client_name=self.__class__.__name__,
-            client_version=sewer_version.__version__,
+            sewer_client_name=self.__class__.__name__,
+            sewer_client_version=sewer_version.__version__,
             domain_name=self.domain_name,
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
