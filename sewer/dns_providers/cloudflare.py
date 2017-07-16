@@ -2,6 +2,7 @@ import json
 import urlparse
 
 import requests
+from structlog import get_logger
 
 from . import common
 
@@ -28,6 +29,9 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
         else:
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
+
+        self.logger = get_logger(__name__).bind(
+            dns_provider_name=self.dns_provider_name)
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('create_dns_record')

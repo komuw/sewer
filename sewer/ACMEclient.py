@@ -57,6 +57,7 @@ class ACMEclient(object):
             self,
             domain_name,
             dns_class,
+            registration_recovery_email=None,
             account_key=None,
             bits=2048,
             digest='sha256',
@@ -73,6 +74,7 @@ class ACMEclient(object):
 
         self.domain_name = domain_name
         self.dns_class = dns_class
+        self.registration_recovery_email = registration_recovery_email
         self.bits = bits
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
@@ -231,10 +233,18 @@ class ACMEclient(object):
         This method should only be called if self.PRIOR_REGISTERED == False
         """
         self.logger.info('acme_register')
-        payload = {
-            "resource": "new-reg",
-            "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS
-        }
+        if self.registration_recovery_email:
+            payload = {
+                "resource": "new-reg",
+                "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS,
+                "contact":
+                ["mailto:{0}".format(self.registration_recovery_email)]
+            }
+        else:
+            payload = {
+                "resource": "new-reg",
+                "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS
+            }
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
