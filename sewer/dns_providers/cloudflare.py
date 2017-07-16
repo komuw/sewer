@@ -30,6 +30,8 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+        self.logger.info('create_dns_record')
+
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(
             domain_name=domain_name,
@@ -52,9 +54,14 @@ class CloudFlareDns(common.BaseDns):
             headers=headers,
             data=json.dumps(body),
             timeout=self.HTTP_TIMEOUT)
+        self.logger.info(
+            'create_cloudflare_dns_record_response',
+            status_code=create_cloudflare_dns_record_response.status_code,
+            response=create_cloudflare_dns_record_response.json())
         return create_cloudflare_dns_record_response
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+        self.logger.info('delete_dns_record')
 
         class MockResponse(object):
 
@@ -66,7 +73,7 @@ class CloudFlareDns(common.BaseDns):
             def json(self):
                 return {}
 
-        response = MockResponse()
+        delete_dns_record_response = MockResponse()
         headers = {
             'X-Auth-Email': self.CLOUDFLARE_EMAIL,
             'X-Auth-Key': self.CLOUDFLARE_API_KEY,
@@ -96,6 +103,10 @@ class CloudFlareDns(common.BaseDns):
                 'X-Auth-Key': self.CLOUDFLARE_API_KEY,
                 'Content-Type': 'application/json'
             }
-            response = requests.delete(
+            delete_dns_record_response = requests.delete(
                 url, headers=headers, timeout=self.HTTP_TIMEOUT)
-        return response
+            self.logger.info(
+                'delete_dns_record_response',
+                status_code=delete_dns_record_response.status_code,
+                response=delete_dns_record_response.json())
+        return delete_dns_record_response
