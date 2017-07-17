@@ -166,7 +166,7 @@ apt-get install pandoc && pip install twine wheel pypandoc coverage yapf flake8
 ```                   
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.
-- add your name and contact(optional) to 
+- add your name and contact(optional) to CONTRIBUTORS.md
 - add tests
 - run tests to make sure they are passing
 - format your code using [yapf](https://github.com/google/yapf):                      
