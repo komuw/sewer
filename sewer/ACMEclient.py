@@ -105,6 +105,17 @@ class ACMEclient(object):
         # GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
         # ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org"
 
+    def log_response(self, response):
+        """
+        renders response as json or as a string
+        """
+        # TODO: use this to handle all response logs.
+        try:
+            log_body = response.json()
+        except ValueError:
+            log_body = response.content
+        return log_body
+
     def get_user_agent(self):
         # TODO: add the sewer-acme versionto the User-Agent
         return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
@@ -357,6 +368,10 @@ class ACMEclient(object):
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-cert')
         get_certicate_response = self.make_signed_acme_request(url, payload)
+        self.logger.info(
+            'get_certicate_response',
+            status_code=get_certicate_response.status_code,
+            response=self.log_response(get_certicate_response))
         base64encoded_cert = base64.b64encode(
             get_certicate_response.content).decode('utf8')
         sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)
