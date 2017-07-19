@@ -111,7 +111,12 @@ class ACMEclient(object):
         """
         # TODO: use this to handle all response logs.
         try:
+            response.content.decode('ascii')  # try and trigger a unicode error.
             log_body = response.json()
+        except UnicodeError:
+            # certificate has been issued
+            # unicodeError is a subclass of ValueError so we need to capture it first
+            log_body = 'Response probably contains a certificate.'
         except ValueError:
             log_body = response.content
         return log_body
@@ -264,7 +269,7 @@ class ACMEclient(object):
         self.logger.info(
             'acme_register_response',
             status_code=acme_register_response.status_code,
-            response=acme_register_response.json())
+            response=self.log_response(acme_register_response))
         return acme_register_response
 
     def get_challenge(self):
@@ -283,7 +288,7 @@ class ACMEclient(object):
         self.logger.info(
             'get_challenge_response',
             status_code=challenge_response.status_code,
-            response=challenge_response.json())
+            response=self.log_response(challenge_response))
 
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
@@ -319,7 +324,7 @@ class ACMEclient(object):
         self.logger.info(
             'notify_acme_challenge_set_response',
             status_code=notify_acme_challenge_set_response.status_code,
-            response=notify_acme_challenge_set_response.json())
+            response=self.log_response(notify_acme_challenge_set_response))
         return notify_acme_challenge_set_response
 
     def check_challenge_status(self, dns_record_id, dns_challenge_url,
@@ -341,7 +346,7 @@ class ACMEclient(object):
                 self.logger.info(
                     'check_challenge_status_response',
                     status_code=check_challenge_status_response.status_code,
-                    response=check_challenge_status_response.json(),
+                    response=self.log_response(check_challenge_status_response),
                     number_of_checks=number_of_checks)
                 if number_of_checks > maximum_number_of_checks_allowed:
                     raise StopIteration(
