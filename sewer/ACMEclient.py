@@ -26,8 +26,8 @@ class ACMEclient(object):
                                         CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
         1. to create a new certificate.
-        client = ACMEclient(domain_name='example.com',
-                            dns_class=dns_class)
+        client = sewer.Client(domain_name='example.com',
+                              dns_class=dns_class)
         certificate = client.cert()
         certificate_key = client.certificate_key
         account_key = client.account_key
@@ -43,9 +43,9 @@ class ACMEclient(object):
         with open('account_key.key', 'r') as account_key_file:
             account_key = account_key_file.read()
 
-        client = ACMEclient(domain_name='example.com',
-                            dns_class=dns_class,
-                            account_key=account_key)
+        client = sewer.Client(domain_name='example.com',
+                              dns_class=dns_class,
+                              account_key=account_key)
         certificate = client.renew()
         certificate_key = client.certificate_key
 
