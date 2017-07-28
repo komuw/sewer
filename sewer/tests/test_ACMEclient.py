@@ -95,6 +95,20 @@ class TestACMEclient(TestCase):
                 content=content)
             self.assertIsInstance(self.client.certificate_chain, basestring)
 
+    def test_acme_registration_is_done(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'sewer.Client.acme_register') as mock_acme_registration:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content=content)
+            self.client.cert()
+            self.assertTrue(mock_acme_registration.called)
+
 
 # TEST cli
 # from unittest import TestCase
