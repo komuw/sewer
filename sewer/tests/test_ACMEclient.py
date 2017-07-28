@@ -63,6 +63,26 @@ class TestACMEclient(TestCase):
                 certificate_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
 
+    def test_account_key_is_generated(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content=content)
+            account_key = self.client.account_key
+
+            account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                account_key,
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend())
+            self.assertIsInstance(
+                account_key_private_key,
+                cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
+
     def test_certificate_chain_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
