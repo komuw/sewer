@@ -15,3 +15,7 @@ uploadprod:
 	@python setup.py bdist_wheel
 	@twine upload dist/*
 	@sudo pip install -U sewer
+
+test:
+	@find . -type f -name \*.pyc -delete | echo
+	@python -m unittest discover
