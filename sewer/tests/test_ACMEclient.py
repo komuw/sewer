@@ -42,7 +42,6 @@ class TestACMEclient(TestCase):
             ]:
                 self.assertIn(i, self.client.User_Agent)
 
-
 # from unittest import TestCase
 # from funniest.command_line import main
 
