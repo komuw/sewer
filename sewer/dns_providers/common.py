@@ -14,6 +14,20 @@ class BaseDns(object):
         self.logger = get_logger(__name__).bind(
             dns_provider_name=self.dns_provider_name)
 
+    def log_response(self, response):
+        """
+        renders a python-requests response as json or as a string
+        """
+        try:
+            response.content.decode('ascii')  # try and trigger a unicode error.
+            log_body = response.json()
+        except UnicodeError:
+            # unicodeError is a subclass of ValueError so we need to capture it first
+            log_body = 'Unicode response.'
+        except ValueError:
+            log_body = response.content
+        return log_body
+
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         """
         Method that creates/adds a dns TXT record for a domain/subdomain name on

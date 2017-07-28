@@ -61,7 +61,7 @@ class CloudFlareDns(common.BaseDns):
         self.logger.info(
             'create_cloudflare_dns_record_response',
             status_code=create_cloudflare_dns_record_response.status_code,
-            response=create_cloudflare_dns_record_response.json())
+            response=self.log_response(create_cloudflare_dns_record_response))
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('delete_dns_record')
@@ -111,4 +111,4 @@ class CloudFlareDns(common.BaseDns):
             self.logger.info(
                 'delete_dns_record_response',
                 status_code=delete_dns_record_response.status_code,
-                response=delete_dns_record_response.json())
+                response=self.log_response(delete_dns_record_response))
