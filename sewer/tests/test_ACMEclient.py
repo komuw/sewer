@@ -3,6 +3,7 @@
 # see: https://python-packaging.readthedocs.io/en/latest/testing.html
 
 import mock
+import cryptography
 from unittest import TestCase
 
 import sewer
@@ -42,6 +43,28 @@ class TestACMEclient(TestCase):
             ]:
                 self.assertIn(i, self.client.User_Agent)
 
+    def test_certificate_key_is_generated(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content=content)
+            certificate_key = self.client.certificate_key
+
+            certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                certificate_key,
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend())
+            self.assertIsInstance(
+                certificate_key_private_key,
+                cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
+
+
+# TEST cli
 # from unittest import TestCase
 # from funniest.command_line import main
 
