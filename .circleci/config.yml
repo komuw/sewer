@@ -29,7 +29,8 @@ jobs:
       - run:
           name: run tests
           command: |
-            python sewer/tests/test_ACMEclient.py
+            find . -type f -name \*.pyc -delete | echo
+            python -m unittest discover
 
       # run make upload
 
