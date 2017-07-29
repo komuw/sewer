@@ -4,6 +4,7 @@ import argparse
 from structlog import get_logger
 
 from . import Client
+import __version__ as sewer_version
 
 
 def main():
@@ -32,6 +33,11 @@ def main():
     # currently, we store them in the directory from which sewer is ran
     parser = argparse.ArgumentParser(
         prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
+    parser.add_argument(
+        "--version",
+        action='version',
+        version='%(prog)s {version}'.format(version=sewer_version.__version__),
+        help="The current sewer version.")
     parser.add_argument(
         "--account_key",
         type=argparse.FileType('r'),

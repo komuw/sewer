@@ -117,6 +117,7 @@ Sewer is a Let's Encrypt(ACME) client.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             The current sewer version.
   --account_key ACCOUNT_KEY
                         The path to your letsencrypt/acme account key.
   --dns {cloudflare}    The name of the dns provider that you want to use.
