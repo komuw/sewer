@@ -109,6 +109,21 @@ class TestACMEclient(TestCase):
             self.client.cert()
             self.assertTrue(mock_acme_registration.called)
 
+    def test_get_challenge_is_called(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'sewer.Client.get_challenge') as mock_get_challenge:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content=content)
+            mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
+            self.client.cert()
+            self.assertTrue(mock_get_challenge.called)
+
 
 # TEST cli
 # from unittest import TestCase
