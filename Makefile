@@ -22,3 +22,4 @@ test:
 	@coverage run --omit="*tests*,*.virtualenvs/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover
 	@coverage report --show-missing --fail-under=75
 	@flake8 .
+	@grep --recursive --ignore-case pdb sewer/
