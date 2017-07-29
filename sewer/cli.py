@@ -37,7 +37,7 @@ def main():
         "--version",
         action='version',
         version='%(prog)s {version}'.format(version=sewer_version.__version__),
-        help="The current installed sewer version.")
+        help="The currently installed sewer version.")
     parser.add_argument(
         "--account_key",
         type=argparse.FileType('r'),
