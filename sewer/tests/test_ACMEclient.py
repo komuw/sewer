@@ -29,7 +29,9 @@ class TestACMEclient(TestCase):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name, dns_class=self.dns_class)
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                ACME_CHALLENGE_WAIT_PERIOD=0)
 
     def tearDown(self):
         pass
