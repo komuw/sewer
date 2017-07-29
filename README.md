@@ -140,10 +140,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 
 ## TODO:
 - support more DNS providers
-- add robust tests
 - be able to handle SAN(subject alternative names)
-- add ci
-
 
 
 ## FAQ:

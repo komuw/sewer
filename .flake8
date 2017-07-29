@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 150
-ignore = E125
+ignore = E125, E123
 exclude =
     # No need to traverse our git directory
     .git,
