@@ -222,6 +222,21 @@ class TestACMEclient(TestCase):
             self.client.cert()
             self.assertTrue(mock_get_certicate.called)
 
+    def test_certicate_is_issued(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content=content)
+            for i in [
+                    '-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'
+            ]:
+                self.assertIn(i, self.client.cert())
+
 
 # TEST cli
 # from unittest import TestCase
