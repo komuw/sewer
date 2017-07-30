@@ -42,7 +42,7 @@ class AuroraDns(common.BaseDns):
         cls = get_driver(Provider.AURORADNS)
         driver = cls(key=self.AURORA_API_KEY, secret=self.AURORA_SECRET_KEY)
         zone = driver.get_zone(domainSuffix)
-        record = zone.create_record(
+        zone.create_record(
             name=subDomain,
             type=RecordType.TXT,
             data=base64_of_acme_keyauthorization)
@@ -70,7 +70,7 @@ class AuroraDns(common.BaseDns):
                 self.logger.info('Found record ' + subDomain + '.' +
                                  domainSuffix + ' with id : ' + record_id + '.')
                 record = driver.get_record(zone_id=zone.id, record_id=record_id)
-                record = driver.delete_record(record)
+                driver.delete_record(record)
                 self.logger.info('Deleted record ' + subDomain + '.' +
                                  domainSuffix + ' with id : ' + record_id + '.')
             else:
