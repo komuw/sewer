@@ -33,7 +33,11 @@ class AuroraDns(common.BaseDns):
 
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + '.' + extractedDomain.suffix
-        subDomain = '_acme-challenge.' + extractedDomain.subdomain
+
+        if extractedDomain.subdomain is '':
+            subDomain = '_acme-challenge'
+        else:
+            subDomain = '_acme-challenge.' + extractedDomain.subdomain
 
         cls = get_driver(Provider.AURORADNS)
         driver = cls(key=self.AURORA_API_KEY, secret=self.AURORA_SECRET_KEY)
@@ -42,14 +46,18 @@ class AuroraDns(common.BaseDns):
             name=subDomain,
             type=RecordType.TXT,
             data=base64_of_acme_keyauthorization)
-        return record
+        return
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('delete_dns_record')
 
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + '.' + extractedDomain.suffix
-        subDomain = '_acme-challenge.' + extractedDomain.subdomain
+
+        if extractedDomain.subdomain is '':
+            subDomain = '_acme-challenge'
+        else:
+            subDomain = '_acme-challenge.' + extractedDomain.subdomain
 
         cls = get_driver(Provider.AURORADNS)
         driver = cls(key=self.AURORA_API_KEY, secret=self.AURORA_SECRET_KEY)
@@ -59,16 +67,14 @@ class AuroraDns(common.BaseDns):
         for x in records:
             if x.name == subDomain and x.type == 'TXT':
                 record_id = x.id
-                self.logger.info('found' + subDomain + '.' + domainSuffix +
-                                 'with id : ' + record_id)
+                self.logger.info('Found record ' + subDomain + '.' +
+                                 domainSuffix + ' with id : ' + record_id + '.')
+                record = driver.get_record(zone_id=zone.id, record_id=record_id)
+                record = driver.delete_record(record)
+                self.logger.info('Deleted record ' + subDomain + '.' +
+                                 domainSuffix + ' with id : ' + record_id + '.')
+            else:
+                self.logger.info('Record ' + subDomain + '.' + domainSuffix +
+                                 ' not found. No record to delete.')
 
-        try:
-            record_id
-        except NameError:
-            self.logger.info('No record to delete. ' + subDomain + '.' +
-                             domainSuffix + ' not found.')
-            return
-
-        record = driver.get_record(zone_id=zone.id, record_id=record_id)
-        record = driver.delete_record(record)
-        return record
+        return
