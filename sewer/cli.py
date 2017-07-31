@@ -126,11 +126,11 @@ def main():
             logger.info("ERROR:: Please supply {0} as an environment variable.".
                         format(str(e)))
 
-    if dns_provider == 'aurora':
+    elif dns_provider == 'aurora':
         from . import AuroraDns
         try:
             AURORA_API_KEY = os.environ['AURORA_API_KEY']
-            AURORA_SECRET_KEY = os.environ['AURORA_API_KEY']
+            AURORA_SECRET_KEY = os.environ['AURORA_SECRET_KEY']
 
             dns_class = AuroraDns(
                 AURORA_API_KEY=AURORA_API_KEY,
