@@ -176,7 +176,7 @@ yapf --in-place --style "google" -r .
 ```shell
 flake8 .
 ```                      
-- run test and make sure everything is passing:
+- run tests and make sure everything is passing:
 ```shell
 make test
 ```
