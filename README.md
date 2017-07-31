@@ -36,7 +36,7 @@ certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
 
-print "your certicate is:", certificate
+print "your certificate is:", certificate
 print "your certificate's key is:", certificate_key
 print "\n\n"
 print "you can write them to a file then add that file to your favourite webserver."
@@ -160,7 +160,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
 - install pre-requiste software:             
 ```shell
-apt-get install pandoc && pip install twine wheel pypandoc coverage yapf flake8
+apt-get install pandoc && pip install twine wheel pypandoc coverage yapf flake8 mock
 ```                   
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.
@@ -175,6 +175,10 @@ yapf --in-place --style "google" -r .
 ```shell
 flake8 .
 ```                      
+- run tests and make sure everything is passing:
+```shell
+make tests
+```
 - open a pull request on this repo.               
 NB: I make no commitment of accepting your pull requests.                 
 
@@ -212,7 +216,7 @@ sewer \
 2017-07-14 18:10.08 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
 2017-07-14 18:10.10 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
 2017-07-14 18:10.11 check_challenge                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.19 get_certicate                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
+2017-07-14 18:10.19 get_certificate                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
 2017-07-14 18:10.19 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
 2017-07-14 18:10.19 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
 2017-07-14 18:10.21 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com

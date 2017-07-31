@@ -364,21 +364,21 @@ class ACMEclient(object):
                 break
         return check_challenge_status_response
 
-    def get_certicate(self):
-        self.logger.info('get_certicate')
+    def get_certificate(self):
+        self.logger.info('get_certificate')
         payload = {
             "resource": "new-cert",
             "csr": self.calculate_safe_base64(self.csr)
         }
         url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-cert')
-        get_certicate_response = self.make_signed_acme_request(url, payload)
+        get_certificate_response = self.make_signed_acme_request(url, payload)
         self.logger.info(
-            'get_certicate_response',
-            status_code=get_certicate_response.status_code,
-            response=self.log_response(get_certicate_response))
+            'get_certificate_response',
+            status_code=get_certificate_response.status_code,
+            response=self.log_response(get_certificate_response))
         base64encoded_cert = base64.b64encode(
-            get_certicate_response.content).decode('utf8')
+            get_certificate_response.content).decode('utf8')
         sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)
         certificate = '\n'.join(sixty_four_width_cert)
 
@@ -399,7 +399,7 @@ class ACMEclient(object):
         self.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
         self.check_challenge_status(dns_challenge_url,
                                     base64_of_acme_keyauthorization)
-        certificate = self.get_certicate()
+        certificate = self.get_certificate()
 
         return certificate
 
