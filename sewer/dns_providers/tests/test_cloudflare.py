@@ -50,3 +50,32 @@ class TestCloudflare(TestCase):
                 base64_of_acme_keyauthorization=self.
                 base64_of_acme_keyauthorization,
                 domain_name=self.domain_name)
+
+    def test_cloudflare_is_called_by_create_dns_record(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'requests.delete') as mock_requests_delete, mock.patch(
+                        'sewer.CloudFlareDns.delete_dns_record'
+                    ) as mock_delete_dns_record:
+            mock_requests_post.return_value = \
+                mock_requests_get.return_value = \
+                mock_requests_delete.return_value = \
+                mock_delete_dns_record.return_value = test_utils.MockResponse()
+
+            self.dns_class.create_dns_record(
+                domain_name=self.domain_name,
+                base64_of_acme_keyauthorization=self.
+                base64_of_acme_keyauthorization)
+            expected = {
+                'headers': {
+                    'X-Auth-Email': self.CLOUDFLARE_EMAIL,
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                'data':
+                '{"content": "mock-base64_of_acme_keyauthorization", "type": "TXT", "name": "_acme-challenge.example.com."}',
+                'timeout':
+                65
+            }
+
+            self.assertDictEqual(expected, mock_requests_post.call_args[1])
