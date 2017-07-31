@@ -79,3 +79,32 @@ class TestCloudflare(TestCase):
             }
 
             self.assertDictEqual(expected, mock_requests_post.call_args[1])
+
+    def test_cloudflare_is_called_by_delete_dns_record(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'requests.delete') as mock_requests_delete:
+            mock_requests_post.return_value = \
+                mock_requests_delete.return_value = test_utils.MockResponse()
+
+            mock_requests_get.return_value = test_utils.MockResponse(
+                content="""{"result": [{"id": "some-id"}]}""")
+
+            self.dns_class.delete_dns_record(
+                domain_name=self.domain_name,
+                base64_of_acme_keyauthorization=self.
+                base64_of_acme_keyauthorization)
+
+            self.assertTrue(mock_requests_get.called)
+            expected = {
+                'headers': {
+                    'X-Auth-Email': self.CLOUDFLARE_EMAIL,
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                'timeout': 65
+            }
+            self.assertDictEqual(expected, mock_requests_delete.call_args[1])
+            self.assertIn(
+                'https://some-mock-url.com/zones/mock-zone-id/dns_records/some-id',
+                str(mock_requests_delete.call_args))
