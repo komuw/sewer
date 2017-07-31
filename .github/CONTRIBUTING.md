@@ -28,3 +28,8 @@ derivative works of any Contribution, under the MIT License.
 - open a pull request on this repo.               
 
 NB: I make no commitment of accepting your pull requests.
+
+Contact information
+Name : Wilfried Jonker
+Email : development@wjonker.nl
+Website : http://wjonker.nl
