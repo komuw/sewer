@@ -22,7 +22,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-           sudo pip install twine wheel pypandoc coverage yapf flake8 sewer mock tldextract apache-libcloud
+           sudo pip install twine wheel pypandoc coverage yapf flake8 sewer mock
 
       # run tests!
       - run:
