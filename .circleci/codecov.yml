@@ -16,4 +16,3 @@ comment:
   layout: "reach, diff, flags, files"
   behavior: default
   require_changes: yes  # if true: only post the comment if coverage changes
-
