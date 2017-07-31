@@ -2,6 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuW/sewer/tree/master.svg?style=svg)](https://circleci.com/gh/komuW/sewer/tree/master)
+[![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
 
 
 Sewer is a Let's Encrypt(ACME) client.         
@@ -177,7 +178,7 @@ flake8 .
 ```                      
 - run tests and make sure everything is passing:
 ```shell
-make tests
+make test
 ```
 - open a pull request on this repo.               
 NB: I make no commitment of accepting your pull requests.                 

@@ -31,7 +31,11 @@ class TestACMEclient(TestCase):
             self.client = sewer.Client(
                 domain_name=self.domain_name,
                 dns_class=self.dns_class,
-                ACME_CHALLENGE_WAIT_PERIOD=0)
+                ACME_CHALLENGE_WAIT_PERIOD=0,
+                GET_NONCE_URL=
+                "https://acme-staging.api.letsencrypt.org/directory",
+                ACME_CERTIFICATE_AUTHORITY_URL=
+                "https://acme-staging.api.letsencrypt.org")
 
     def tearDown(self):
         pass
