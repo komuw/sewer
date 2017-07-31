@@ -47,7 +47,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare'],
+        choices=['cloudflare, aurora'],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domains",
@@ -119,6 +119,22 @@ def main():
                 CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)
+            logger.info(
+                'chosen_dns_provider',
+                message='Using {0} as dns provider.'.format(dns_provider))
+        except KeyError as e:
+            logger.info("ERROR:: Please supply {0} as an environment variable.".
+                        format(str(e)))
+
+    if dns_provider == 'aurora':
+        from . import AuroraDns
+        try:
+            AURORA_API_KEY = os.environ['AURORA_API_KEY']
+            AURORA_SECRET_KEY = os.environ['AURORA_API_KEY']
+
+            dns_class = AuroraDns(
+                AURORA_API_KEY=AURORA_API_KEY,
+                AURORA_SECRET_KEY=AURORA_SECRET_KEY)
             logger.info(
                 'chosen_dns_provider',
                 message='Using {0} as dns provider.'.format(dns_provider))
