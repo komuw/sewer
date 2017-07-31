@@ -10,7 +10,7 @@ coverage:
     project:
       default:
         # basic
-        target: 72
+        target: 85
 
 comment:
   layout: "reach, diff, flags, files"

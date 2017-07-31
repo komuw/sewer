@@ -176,9 +176,9 @@ yapf --in-place --style "google" -r .
 ```shell
 flake8 .
 ```                      
-- run tests and make sure everything is passing:
+- run test and make sure everything is passing:
 ```shell
-make tests
+make test
 ```
 - open a pull request on this repo.               
 NB: I make no commitment of accepting your pull requests.                 
