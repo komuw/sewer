@@ -43,6 +43,27 @@ class TestACMEclient(TestCase):
     def tearDown(self):
         pass
 
+    def test_get_certificate_chain_failure_results_in_exception(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=409)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=409)
+
+            def mock_create_acme_client():
+                sewer.Client(
+                    domain_name='example.com',
+                    dns_class=test_utils.ExmpleDnsProvider(),
+                    ACME_CERTIFICATE_AUTHORITY_URL=
+                    "https://acme-staging.api.letsencrypt.org")
+
+            self.assertRaises(ValueError, mock_create_acme_client)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_create_acme_client()
+            self.assertIn('Error while getting Acme certificate chain',
+                          raised_exception.exception.message)
+
     def test_user_agent_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
