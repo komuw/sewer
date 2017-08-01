@@ -12,6 +12,8 @@ from . import common
 
 class AuroraDns(common.BaseDns):
     """
+    Todo: re-organize this class so that we make it easier to mock things out to
+    facilitate better tests.
     """
 
     def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY):
