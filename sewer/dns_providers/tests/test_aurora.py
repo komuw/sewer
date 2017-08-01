@@ -6,26 +6,6 @@ import sewer
 from . import test_utils
 
 
-class MockZone(object):
-
-    def create_record(self, name, type, data):
-        pass
-
-
-class MockCls(object):
-
-    def __init__(self, key, secret):
-        pass
-
-    def get_zone(self, domainSuffix):
-        mock_zone = MockZone()
-        return mock_zone
-
-
-def mockGetDriver(provider):
-    return MockCls
-
-
 class TestAurora(TestCase):
     """
     """
@@ -60,7 +40,8 @@ class TestAurora(TestCase):
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = \
                 mock_delete_dns_record.return_value = test_utils.MockResponse()
-            mock_get_driver.return_value = mockGetDriver('mock-provider')
+            mock_get_driver.return_value = test_utils.mockLibcloudGetDriver(
+                'mock-provider')
 
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name,
