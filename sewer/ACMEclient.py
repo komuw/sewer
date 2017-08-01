@@ -173,6 +173,20 @@ class ACMEclient(object):
         self.logger.info(
             'get_certificate_chain_response',
             status_code=get_certificate_chain_response.status_code)
+
+        if get_certificate_chain_response.status_code not in [200, 201]:
+            raise ValueError(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_chain_response.status_code,
+                    response=self.log_response(get_certificate_chain_response)))
+        elif '-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
+            raise ValueError(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_chain_response.status_code,
+                    response=self.log_response(get_certificate_chain_response)))
+
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):

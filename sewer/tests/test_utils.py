@@ -22,8 +22,9 @@ class MockResponse(object):
 
     def __init__(self, status_code=201, content='{"something": "ok"}'):
         self.status_code = status_code
-        self.content = content
+        self.content = content + '-----BEGIN CERTIFICATE----- some-mock-certificate -----END CERTIFICATE-----'
+        self.content_to_use_in_json_method = content
         self.headers = {'Replay-Nonce': 'example-replay-Nonce'}
 
     def json(self):
-        return json.loads(self.content)
+        return json.loads(self.content_to_use_in_json_method)
