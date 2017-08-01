@@ -137,6 +137,26 @@ class TestACMEclient(TestCase):
             self.client.cert()
             self.assertTrue(mock_get_challenge.called)
 
+    def test_get_challenge_is_not_called(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+
+            def mock_get_certificate():
+                self.client.cert()
+
+            self.assertRaises(ValueError, mock_get_certificate)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_get_certificate()
+            self.assertIn('Error requesting for challenges',
+                          raised_exception.exception.message)
+
     def test_create_dns_record_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
@@ -243,7 +263,8 @@ class TestACMEclient(TestCase):
 
     def test_certificate_is_not_issued(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
-                'requests.get') as mock_requests_get:
+                'requests.get') as mock_requests_get, mock.patch(
+                    'sewer.Client.get_challenge') as mock_get_challenge:
             content = """
                           {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
                       """
@@ -251,6 +272,7 @@ class TestACMEclient(TestCase):
                 status_code=400, content=content)
             mock_requests_get.return_value = test_utils.MockResponse(
                 status_code=400, content=content)
+            mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
 
             def mock_get_certificate():
                 self.client.cert()

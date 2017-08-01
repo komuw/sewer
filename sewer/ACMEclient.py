@@ -290,6 +290,13 @@ class ACMEclient(object):
             status_code=challenge_response.status_code,
             response=self.log_response(challenge_response))
 
+        if challenge_response.status_code != 201:
+            raise ValueError(
+                "Error requesting for challenges: status_code={status_code} response={response}".
+                format(
+                    status_code=challenge_response.status_code,
+                    response=self.log_response(challenge_response)))
+
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
                 dns_challenge = i
