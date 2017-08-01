@@ -173,6 +173,20 @@ class ACMEclient(object):
         self.logger.info(
             'get_certificate_chain_response',
             status_code=get_certificate_chain_response.status_code)
+
+        if get_certificate_chain_response.status_code not in [200, 201]:
+            raise ValueError(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_chain_response.status_code,
+                    response=self.log_response(get_certificate_chain_response)))
+        elif '-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
+            raise ValueError(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_chain_response.status_code,
+                    response=self.log_response(get_certificate_chain_response)))
+
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
@@ -270,6 +284,14 @@ class ACMEclient(object):
             'acme_register_response',
             status_code=acme_register_response.status_code,
             response=self.log_response(acme_register_response))
+
+        if acme_register_response.status_code not in [201, 409]:
+            raise ValueError(
+                "Error while registering: status_code={status_code} response={response}".
+                format(
+                    status_code=acme_register_response.status_code,
+                    response=self.log_response(acme_register_response)))
+
         return acme_register_response
 
     def get_challenge(self):
@@ -289,6 +311,13 @@ class ACMEclient(object):
             'get_challenge_response',
             status_code=challenge_response.status_code,
             response=self.log_response(challenge_response))
+
+        if challenge_response.status_code != 201:
+            raise ValueError(
+                "Error requesting for challenges: status_code={status_code} response={response}".
+                format(
+                    status_code=challenge_response.status_code,
+                    response=self.log_response(challenge_response)))
 
         for i in challenge_response.json()['challenges']:
             if i['type'] == 'dns-01':
@@ -377,6 +406,14 @@ class ACMEclient(object):
             'get_certificate_response',
             status_code=get_certificate_response.status_code,
             response=self.log_response(get_certificate_response))
+
+        if get_certificate_response.status_code != 201:
+            raise ValueError(
+                "Error fetching signed certificate: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_response.status_code,
+                    response=self.log_response(get_certificate_response)))
+
         base64encoded_cert = base64.b64encode(
             get_certificate_response.content).decode('utf8')
         sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)

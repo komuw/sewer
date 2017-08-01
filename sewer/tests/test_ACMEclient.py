@@ -18,6 +18,9 @@ class TestACMEclient(TestCase):
         - make this tests DRY
         - add tests for the cli
         - modularize this tests
+        - separate happy path tests from sad path tests.
+            eg test_get_challenge_is_called and test_get_challenge_is_not_called
+            should be in different testClasses
     """
 
     def setUp(self):
@@ -39,6 +42,27 @@ class TestACMEclient(TestCase):
 
     def tearDown(self):
         pass
+
+    def test_get_certificate_chain_failure_results_in_exception(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=409)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=409)
+
+            def mock_create_acme_client():
+                sewer.Client(
+                    domain_name='example.com',
+                    dns_class=test_utils.ExmpleDnsProvider(),
+                    ACME_CERTIFICATE_AUTHORITY_URL=
+                    "https://acme-staging.api.letsencrypt.org")
+
+            self.assertRaises(ValueError, mock_create_acme_client)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_create_acme_client()
+            self.assertIn('Error while getting Acme certificate chain',
+                          raised_exception.exception.message)
 
     def test_user_agent_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -122,6 +146,26 @@ class TestACMEclient(TestCase):
             self.client.cert()
             self.assertTrue(mock_acme_registration.called)
 
+    def test_acme_registration_failure_doesnt_result_in_certificate(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+
+            def mock_get_certificate():
+                self.client.cert()
+
+            self.assertRaises(ValueError, mock_get_certificate)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_get_certificate()
+            self.assertIn('Error while registering',
+                          raised_exception.exception.message)
+
     def test_get_challenge_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
@@ -136,6 +180,29 @@ class TestACMEclient(TestCase):
             mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
             self.client.cert()
             self.assertTrue(mock_get_challenge.called)
+
+    def test_get_challenge_is_not_called(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'sewer.Client.acme_register') as mock_acme_register:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_acme_register.return_value = test_utils.MockResponse(
+                status_code=201, content=content)
+
+            def mock_get_certificate():
+                self.client.cert()
+
+            self.assertRaises(ValueError, mock_get_certificate)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_get_certificate()
+            self.assertIn('Error requesting for challenges',
+                          raised_exception.exception.message)
 
     def test_create_dns_record_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -241,11 +308,40 @@ class TestACMEclient(TestCase):
             ]:
                 self.assertIn(i, self.client.cert())
 
+    def test_certificate_is_not_issued(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get, mock.patch(
+                    'sewer.Client.get_challenge'
+                ) as mock_get_challenge, mock.patch(
+                    'sewer.Client.acme_register') as mock_acme_register:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
+            mock_acme_register.return_value = test_utils.MockResponse(
+                status_code=409, content=content)
 
-# TEST cli
-# from unittest import TestCase
-# from funniest.command_line import main
+            def mock_get_certificate():
+                self.client.cert()
 
-# class TestConsole(TestCase):
-#     def test_basic(self):
-#         main()
+            self.assertRaises(ValueError, mock_get_certificate)
+
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_get_certificate()
+            self.assertIn('Error fetching signed certificate',
+                          raised_exception.exception.message)
+
+            # certificate = self.client.cert()
+            # self.assertIn('-----BEGIN CERTIFICATE-----', certificate)
+
+        # TEST cli
+        # from unittest import TestCase
+        # from funniest.command_line import main
+
+        # class TestConsole(TestCase):
+        #     def test_basic(self):
+        #         main()
