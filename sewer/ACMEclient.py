@@ -270,6 +270,14 @@ class ACMEclient(object):
             'acme_register_response',
             status_code=acme_register_response.status_code,
             response=self.log_response(acme_register_response))
+
+        if acme_register_response.status_code not in [201, 409]:
+            raise ValueError(
+                "Error while registering: status_code={status_code} response={response}".
+                format(
+                    status_code=acme_register_response.status_code,
+                    response=self.log_response(acme_register_response)))
+
         return acme_register_response
 
     def get_challenge(self):
