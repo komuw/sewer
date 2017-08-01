@@ -241,11 +241,34 @@ class TestACMEclient(TestCase):
             ]:
                 self.assertIn(i, self.client.cert())
 
+    def test_certificate_is_not_issued(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            content = """
+                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
+                      """
+            mock_requests_post.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
+            mock_requests_get.return_value = test_utils.MockResponse(
+                status_code=400, content=content)
 
-# TEST cli
-# from unittest import TestCase
-# from funniest.command_line import main
+            def mock_get_certificate():
+                self.client.cert()
 
-# class TestConsole(TestCase):
-#     def test_basic(self):
-#         main()
+            self.assertRaises(ValueError, mock_get_certificate)
+
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_get_certificate()
+            self.assertIn('Error fetching signed certificate',
+                          raised_exception.exception.message)
+
+            # certificate = self.client.cert()
+            # self.assertIn('-----BEGIN CERTIFICATE-----', certificate)
+
+        # TEST cli
+        # from unittest import TestCase
+        # from funniest.command_line import main
+
+        # class TestConsole(TestCase):
+        #     def test_basic(self):
+        #         main()

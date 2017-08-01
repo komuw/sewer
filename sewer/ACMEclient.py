@@ -380,7 +380,7 @@ class ACMEclient(object):
 
         if get_certificate_response.status_code != 201:
             raise ValueError(
-                "Error fetching certificate: status_code={status_code} response={response}".
+                "Error fetching signed certificate: status_code={status_code} response={response}".
                 format(
                     status_code=get_certificate_response.status_code,
                     response=self.log_response(get_certificate_response)))
