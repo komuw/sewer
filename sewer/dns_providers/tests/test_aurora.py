@@ -8,6 +8,7 @@ from . import test_utils
 
 class TestAurora(TestCase):
     """
+    Test the functionality of Aurora DNS.
     """
 
     def setUp(self):
