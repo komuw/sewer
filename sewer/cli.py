@@ -125,6 +125,7 @@ def main():
         except KeyError as e:
             logger.info("ERROR:: Please supply {0} as an environment variable.".
                         format(str(e)))
+            raise
 
     elif dns_provider == 'aurora':
         from . import AuroraDns
@@ -141,6 +142,7 @@ def main():
         except KeyError as e:
             logger.info("ERROR:: Please supply {0} as an environment variable.".
                         format(str(e)))
+            raise
     else:
         raise ValueError(
             'The dns provider {0} is not recognised.'.format(dns_provider))
