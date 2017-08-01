@@ -377,6 +377,14 @@ class ACMEclient(object):
             'get_certificate_response',
             status_code=get_certificate_response.status_code,
             response=self.log_response(get_certificate_response))
+
+        if get_certificate_response.status_code != 201:
+            raise ValueError(
+                "Error fetching certificate: status_code={status_code} response={response}".
+                format(
+                    status_code=get_certificate_response.status_code,
+                    response=self.log_response(get_certificate_response)))
+
         base64encoded_cert = base64.b64encode(
             get_certificate_response.content).decode('utf8')
         sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)
