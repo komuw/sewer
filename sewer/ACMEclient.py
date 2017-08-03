@@ -1,4 +1,5 @@
 import time
+import copy
 import json
 import base64
 import hashlib
@@ -76,7 +77,8 @@ class ACMEclient(object):
         self.domain_name = domain_name
         self.dns_class = dns_class
         self.domain_alt_names = domain_alt_names
-        self.all_domain_names = list(self.domain_name) + self.domain_alt_names
+        self.all_domain_names = copy.copy(self.domain_alt_names)
+        self.all_domain_names.insert(0, self.domain_name)
         self.registration_recovery_email = registration_recovery_email
         self.bits = bits
         self.digest = digest
@@ -101,7 +103,7 @@ class ACMEclient(object):
         self.logger = self.logger.bind(
             sewer_client_name=self.__class__.__name__,
             sewer_client_version=sewer_version.__version__,
-            domain_name=self.domain_name,
+            domain_names=self.all_domain_names,
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
         # for staging/test, use:
@@ -366,8 +368,7 @@ class ACMEclient(object):
         return notify_acme_challenge_set_response
 
     def check_challenge_status(self, dns_challenge_url,
-                               base64_of_acme_keyauthorization,
-                               domain_name):
+                               base64_of_acme_keyauthorization, domain_name):
         self.logger.info('check_challenge')
         time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
         number_of_checks = 0
@@ -398,8 +399,8 @@ class ACMEclient(object):
             if challenge_status == "pending":
                 time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
             elif challenge_status == "valid":
-                self.dns_class.delete_dns_record(domain_name,
-                    base64_of_acme_keyauthorization)
+                self.dns_class.delete_dns_record(
+                    domain_name, base64_of_acme_keyauthorization)
                 break
         return check_challenge_status_response
 
@@ -446,10 +447,10 @@ class ACMEclient(object):
                 dns_token)
             self.dns_class.create_dns_record(domain_name,
                                              base64_of_acme_keyauthorization)
-            self.notify_acme_challenge_set(acme_keyauthorization, dns_challenge_url)
-            self.check_challenge_status(dns_challenge_url,
-                                        base64_of_acme_keyauthorization,
-                                        domain_name)
+            self.notify_acme_challenge_set(acme_keyauthorization,
+                                           dns_challenge_url)
+            self.check_challenge_status(
+                dns_challenge_url, base64_of_acme_keyauthorization, domain_name)
         certificate = self.get_certificate()
 
         return certificate
