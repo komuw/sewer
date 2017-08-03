@@ -115,9 +115,12 @@ sewer \
 To see help:
 ```shell
 sewer --help                 
-     
-usage: sewer [-h] [--account_key ACCOUNT_KEY] --dns {cloudflare} --domains
-             DOMAINS [--bundle_name BUNDLE_NAME] --action {run,renew}
+        
+usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY] --dns
+             {cloudflare,aurora} --domain DOMAIN
+             [--alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]]
+             [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
+             [--email EMAIL] --action {run,renew}
 
 Sewer is a Let's Encrypt(ACME) client.
 
@@ -125,30 +128,50 @@ optional arguments:
   -h, --help            show this help message and exit
   --version             The currently installed sewer version.
   --account_key ACCOUNT_KEY
-                        The path to your letsencrypt/acme account key.
-  --dns {cloudflare}    The name of the dns provider that you want to use.
-  --domains DOMAINS     The domain/subdomain name for which you want to
-                        get/renew certificate for.
+                        The path to your letsencrypt/acme account key. eg:
+                        --account_key /home/myaccount.key
+  --dns {cloudflare,aurora}
+                        The name of the dns provider that you want to use.
+  --domain DOMAIN       The domain/subdomain name for which you want to
+                        get/renew certificate for. eg: --domain example.com
+  --alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]
+                        A list of alternative domain/subdomain name/s(if any)
+                        for which you want to get/renew certificate for. eg:
+                        --alt_domains www.example.com blog.example.com
   --bundle_name BUNDLE_NAME
                         The name to use for certificate certificate key and
-                        account key. Default is value of domains.
+                        account key. Default is value of domain.
   --endpoint {production,staging}
                         Whether to use letsencrypt/acme production/live
                         endpoints or staging endpoints. production endpoints
-                        are used by default.
-  --email EMAIL         Email to be used for registration and recovery.
+                        are used by default. eg: --endpoint staging
+  --email EMAIL         Email to be used for registration and recovery. eg:
+                        --email me@example.com
   --action {run,renew}  The action that you want to perform. Either run (get a
-                        new certificate) or renew (renew a certificate).
+                        new certificate) or renew (renew a certificate). eg:
+                        --action run
 ```
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
 
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
+
+## Features:
+- Obtain certificates.
+- Renew certificates.
+- Supports multiple DNS providers.
+- Support for SAN certificates.
+- Can be used as a python library as well as a command line(CLI) application.
+- Bundling certificates.
+- Well written(if I have to say so myself):
+  - [Good test coverage](https://codecov.io/gh/komuW/sewer)
+  - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
+  - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
+
+
 ## TODO:
 - support more DNS providers
-- be able to handle SAN(subject alternative names)
-
 
 ## FAQ:
 - Why another ACME client?          
@@ -200,30 +223,35 @@ sewer \
 --domains subdomain.example.com \
 --action run            
 
-2017-07-14 18:09.55 chosen_dns_provider            message=Using cloudflare as dns provider.
-2017-07-14 18:09.55 create_certificate_key         client_name=ACMEclient
-2017-07-14 18:09.55 create_csr                     client_name=ACMEclient
-2017-07-14 18:09.55 get_certificate_chain          client_name=ACMEclient
-2017-07-14 18:09.56 create_account_key             client_name=ACMEclient
-2017-07-14 18:09.56 just_get_me_a_certificate      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.56 acme_register                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.56 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.56 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.58 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.59 get_challenge                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.59 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:09.59 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.02 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.04 get_keyauthorization           ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.04 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.08 notify_acme_challenge_set      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.08 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.08 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.10 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.11 check_challenge                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.19 get_certificate                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.19 make_signed_acme_request       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.19 get_acme_header                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.21 sign_message                   ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_name=subdomain.example.com
-2017-07-14 18:10.22 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
+2017-08-03 22:58.16 chosen_dns_provider            message=Using cloudflare as dns provider.
+2017-08-03 22:58.16 create_certificate_key         client_name=ACMEclient
+2017-08-03 22:58.16 create_csr                     client_name=ACMEclient
+2017-08-03 22:58.16 get_certificate_chain          client_name=ACMEclient
+2017-08-03 22:58.18 get_certificate_chain_response client_name=ACMEclient status_code=200
+2017-08-03 22:58.18 create_account_key             client_name=ACMEclient
+2017-08-03 22:58.19 write_account_key              message=account key succesfully written to current directory.
+2017-08-03 22:58.19 just_get_me_a_certificate      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+
+2017-08-03 22:58.19 acme_register                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+2017-08-03 22:58.22 acme_register_response         ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'Status': u'valid', u'agreement': u'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', u'contact': [], u'createdAt': u'2017-08-03T19:58:22.829066395Z',  u'id': 2898386} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=201
+
+2017-08-03 22:58.22 get_challenge                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+2017-08-03 22:58.26 get_challenge_response         ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'status': u'pending', u'challenges': [{u'status': u'pending', u'token': u'mac1lsAoUqs-3Gyno7k_3NkZ8Ijqpprqq9PTb4mM1wg', u'type': u'dns-01', u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/uOCIaMTnR-MxEtVAdzMtOA95M48f_j1sWEF3qjrvKz0/50674288'}], u'identifier': {u'type': u'dns', u'value': u'example.com'}, u'expires': u'2017-08-10T19:58:26.212741655Z'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=201
+
+2017-08-03 22:58.26 create_dns_record              dns_provider_name=cloudflare
+2017-08-03 22:58.31 create_cloudflare_dns_record_response dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'proxiable': False, u'locked': False, u'name': u'_acme-challenge.example.com', u'created_on': u'2017-08-03T19:58:30.877292Z'}, u'success': True} status_code=200
+
+2017-08-03 22:58.31 notify_acme_challenge_set      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+2017-08-03 22:58.35 notify_acme_challenge_set_response ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'status': u'pending', u'keyAuthorization': u'mac1lsAoUqs-HAJAJAJ.some', u'token': u'mac1lsAoUqs-sdksf', u'type': u'dns-01', u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/uOCIaMTnR-sfsf/50674288'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=202
+
+2017-08-03 22:58.35 check_challenge                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+2017-08-03 22:58.40 check_challenge_status_response ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] number_of_checks=1 response={u'status': u'valid', u'validationRecord': [{u'addressesTried': [], u'hostname': u'example.com', u'addressUsed': u'', u'port': u'', u'addressesResolved': []}], u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/xxvx-APOSSSLS/50674288', u'token': u'mac1lsAoUqs-SSSs', u'type': u'dns-01'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=202
+
+2017-08-03 22:58.40 delete_dns_record              dns_provider_name=cloudflare
+2017-08-03 22:58.44 delete_dns_record_response     dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'id': u'06ea612fa03ff12ba95dcf5ba32d7709'}, u'success': True} status_code=200
+
+2017-08-03 22:59.08 get_certificate                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
+2017-08-03 22:59.12 get_certificate_response       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response=Response probably contains a certificate. sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=201
+
+2017-08-03 22:59.12 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
 ```
