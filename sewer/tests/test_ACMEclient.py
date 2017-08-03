@@ -335,13 +335,40 @@ class TestACMEclient(TestCase):
             self.assertIn('Error fetching signed certificate',
                           raised_exception.exception.message)
 
-            # certificate = self.client.cert()
-            # self.assertIn('-----BEGIN CERTIFICATE-----', certificate)
 
-        # TEST cli
-        # from unittest import TestCase
-        # from funniest.command_line import main
+class TestACMEclientForSAN(TestACMEclient):
+    """
+    Test Acme client for SAN certificates.
+    """
 
-        # class TestConsole(TestCase):
-        #     def test_basic(self):
-        #         main()
+    def setUp(self):
+        self.domain_name = 'exampleSAN.com'
+        self.domain_alt_names = [
+            'blog.exampleSAN.com', 'staging.exampleSAN.com',
+            'www.exampleSAN.com'
+        ]
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+
+            self.dns_class = test_utils.ExmpleDnsProvider()
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                domain_alt_names=self.domain_alt_names,
+                ACME_CHALLENGE_WAIT_PERIOD=0,
+                GET_NONCE_URL=
+                "https://acme-staging.api.letsencrypt.org/directory",
+                ACME_CERTIFICATE_AUTHORITY_URL=
+                "https://acme-staging.api.letsencrypt.org")
+        super(TestACMEclientForSAN, self).setUp()
+
+
+# TEST cli
+# from unittest import TestCase
+# from funniest.command_line import main
+
+# class TestConsole(TestCase):
+#     def test_basic(self):
+#         main()
