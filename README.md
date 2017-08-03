@@ -145,10 +145,22 @@ The cerrtificate, certificate key and account key will be saved in the directory
 
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
+
+## Features:
+- Obtain certificates.
+- Renew certificates.
+- Supports multiple DNS providers.
+- Support for SAN certificates.
+- Can be used as a python library as well as a command line(CLI) application.
+- Bundling certificates.
+- Well written(if I have to say so myself):
+  - [Good test coverage](https://codecov.io/gh/komuW/sewer)
+  - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
+  - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
+
+
 ## TODO:
 - support more DNS providers
-- be able to handle SAN(subject alternative names)
-
 
 ## FAQ:
 - Why another ACME client?          
