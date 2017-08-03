@@ -16,7 +16,7 @@ def main():
         CLOUDFLARE_API_KEY=api-key \
         sewer \
         --dns cloudflare \
-        --domains example.com \
+        --domain example.com \
         --action run
 
         2. To renew a certificate:
@@ -26,7 +26,7 @@ def main():
         sewer \
         --account_key /path/to/your/account.key \
         --dns cloudflare \
-        --domains example.com \
+        --domain example.com \
         --action renew
     """
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
@@ -42,7 +42,8 @@ def main():
         "--account_key",
         type=argparse.FileType('r'),
         required=False,
-        help="The path to your letsencrypt/acme account key.")
+        help="The path to your letsencrypt/acme account key. \
+        eg: --account_key /home/myaccount.key")
     parser.add_argument(
         "--dns",
         type=str,
@@ -50,17 +51,27 @@ def main():
         choices=['cloudflare', 'aurora'],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
-        "--domains",
+        "--domain",
         type=str,
         required=True,
         help="The domain/subdomain name for which \
-        you want to get/renew certificate for.")
+        you want to get/renew certificate for. \
+        eg: --domain example.com")
+    parser.add_argument(
+        "--alt_domains",
+        type=str,
+        required=False,
+        default=[],
+        nargs='*',
+        help="A list of alternative domain/subdomain name/s(if any) for which \
+        you want to get/renew certificate for. \
+        eg: --alt_domains www.example.com blog.example.com")
     parser.add_argument(
         "--bundle_name",
         type=str,
         required=False,
         help="The name to use for certificate \
-        certificate key and account key. Default is value of domains.")
+        certificate key and account key. Default is value of domain.")
     parser.add_argument(
         "--endpoint",
         type=str,
@@ -68,25 +79,29 @@ def main():
         default='production',
         choices=['production', 'staging'],
         help="Whether to use letsencrypt/acme production/live endpoints \
-        or staging endpoints. production endpoints are used by default.")
+        or staging endpoints. production endpoints are used by default. \
+        eg: --endpoint staging")
     parser.add_argument(
         "--email",
         type=str,
         required=False,
-        help="Email to be used for registration and recovery.")
+        help="Email to be used for registration and recovery. \
+        eg: --email me@example.com")
     parser.add_argument(
         "--action",
         type=str,
         required=True,
         choices=['run', 'renew'],
         help="The action that you want to perform. \
-        Either run (get a new certificate) or renew (renew a certificate).")
+        Either run (get a new certificate) or renew (renew a certificate). \
+        eg: --action run")
 
     args = parser.parse_args()
     logger = get_logger(__name__)
 
     dns_provider = args.dns
-    domains = args.domains
+    domain = args.domain
+    alt_domains = args.alt_domains
     action = args.action
     account_key = args.account_key
     bundle_name = args.bundle_name
@@ -98,7 +113,7 @@ def main():
     if bundle_name:
         file_name = bundle_name
     else:
-        file_name = '{0}'.format(domains)
+        file_name = '{0}'.format(domain)
     if endpoint == 'staging':
         # TODO: move this to a config.py file.
         # the cli and the client would both read this urls from that config file
@@ -148,8 +163,9 @@ def main():
             'The dns provider {0} is not recognised.'.format(dns_provider))
 
     client = Client(
-        domain_name=domains,
+        domain_name=domain,
         dns_class=dns_class,
+        domain_alt_names=alt_domains,
         registration_recovery_email=email,
         account_key=account_key,
         GET_NONCE_URL=GET_NONCE_URL,
