@@ -96,7 +96,7 @@ CLOUDFLARE_DNS_ZONE_ID=some-zone \
 CLOUDFLARE_API_KEY=api-key \
 sewer \
 --dns cloudflare \
---domains example.com \
+--domain example.com \
 --action run
 ```              
 
@@ -108,7 +108,7 @@ CLOUDFLARE_API_KEY=api-key \
 sewer \
 --account_key /path/to/your/account.key \
 --dns cloudflare \
---domains example.com \
+--domain example.com \
 --action renew
 ```              
 
