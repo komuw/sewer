@@ -12,5 +12,5 @@ derivative works of any Contribution, under the MIT License.
 Contributors
 ------------
 
-1. [komu W](www.komu.engineer)
+1. [komu W](https://www.komu.engineer)
 2. [Wilfried Jonker](wjonker.nl)
