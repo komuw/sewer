@@ -179,8 +179,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not 
   find anything satisfactory for use in Python code.
 - Why is it called Sewer?
-  Because, for the longest time now, getting certificates has felt like wading through sewers. That was before Let's Encrypt showed up.                     
-  Also, I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.
+  I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.
 
 
 ## Development setup:
