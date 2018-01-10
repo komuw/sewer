@@ -7,7 +7,7 @@
 
 Sewer is a Let's Encrypt(ACME) client.         
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
-Sewer currently only supports the DNS mode of validation.                 
+Sewer currently only supports the DNS mode of validation, I have no plans of supporting other modes of validation.                 
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
