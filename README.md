@@ -157,6 +157,7 @@ The cerrtificate, certificate key and account key will be saved in the directory
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
 
+
 ## Features:
 - Obtain certificates.
 - Renew certificates.
@@ -169,18 +170,94 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
+## How to use a custom/unsupported DNS provider:
+Currently, sewer only supports cloudflare and Aurora. However, it is very easy to use another dns provider with sewer.          
+All you have to do is create your own dns class that is a child of `sewer.BaseDns` and then implement the             
+`create_dns_record` and `delete_dns_record` methods.                     
+As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you            
+would do something like;
+```python
+import sewer
+import boto3
 
-## TODO:
-- support more DNS providers
-- https://github.com/komuW/sewer/milestone/1
+class AWSroute53Dns(sewer.BaseDns):
+    def __init__(self,
+                HostedZoneId,
+                AWS_ACCESS_KEY_ID,
+                AWS_SECRET_ACCESS_KEY):
+        self.dns_provider_name = 'AWS_route53'
 
-## FAQ:
-- Why another ACME client?          
-  I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not 
-  find anything satisfactory for use in Python code.
-- Why is it called Sewer?
-  I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.
+        self.HostedZoneId = HostedZoneId
+        self.boto_client = boto3.client('route53',
+                                        aws_access_key_id=AWS_ACCESS_KEY_ID,
+                                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
+    def create_dns_record(self,
+                         domain_name,
+                         base64_of_acme_keyauthorization):
+        """
+        AWS route53 with boto3 documentation; https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
+        """
+        # do whatever is necessary for your particular DNS provider to create a TXT DNS record
+        # eg for AWS route53, it will be something like::
+        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
+                                                    ChangeBatch={
+                                                    'Changes': [
+                                                        {
+                                                            'Action': 'CREATE',
+                                                            'ResourceRecordSet': {
+                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
+                                                                'Type': 'TXT',
+                                                                'TTL': 123,
+                                                                'ResourceRecords': [
+                                                                    {
+                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
+                                                                    },
+                                                                ]
+                                                            }
+                                                        },
+                                                    ]
+                                                }
+                                            )
+    def delete_dns_record(self,
+                          domain_name,
+                          base64_of_acme_keyauthorization):
+        # do whatever is necessary for your particular DNS provider to delete a TXT DNS record
+        # eg for AWS route53, it will be something like::
+        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
+                                                    ChangeBatch={
+                                                    'Changes': [
+                                                        {
+                                                            'Action': 'DELETE',
+                                                            'ResourceRecordSet': {
+                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
+                                                                'Type': 'TXT',
+                                                                'TTL': 123,
+                                                                'ResourceRecords': [
+                                                                    {
+                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
+                                                                    },
+                                                                ]
+                                                            }
+                                                        },
+                                                    ]
+                                                }
+                                            )
+
+
+custom_route53_dns_class = AWSroute53Dns(HostedZoneId='my-zone',
+                                        AWS_ACCESS_KEY_ID='access-key',
+                                        AWS_SECRET_ACCESS_KEY='secret-access-key')
+
+# create a new certificate:
+client = sewer.Client(domain_name='example.com',
+                      dns_class=custom_route53_dns_class)
+certificate = client.cert()
+certificate_key = client.certificate_key
+account_key = client.account_key
+print "certificate::", certificate
+print "certificate's key::", certificate_key
+```
 
 ## Development setup:
 - fork this repo.
@@ -212,6 +289,18 @@ NB: I make no commitment of accepting your pull requests.
 
 
 
+## TODO:
+- support more DNS providers
+- https://github.com/komuW/sewer/milestone/1
+
+## FAQ:
+- Why another ACME client?          
+  I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not 
+  find anything satisfactory for use in Python code.
+- Why is it called Sewer?
+  I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.                            
+
+
 Here's the ouput of running sewer using the cli app:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
@@ -234,19 +323,14 @@ sewer \
 
 2017-08-03 22:58.19 acme_register                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
 2017-08-03 22:58.22 acme_register_response         ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'Status': u'valid', u'agreement': u'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', u'contact': [], u'createdAt': u'2017-08-03T19:58:22.829066395Z',  u'id': 2898386} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=201
-
-2017-08-03 22:58.22 get_challenge                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
-2017-08-03 22:58.26 get_challenge_response         ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'status': u'pending', u'challenges': [{u'status': u'pending', u'token': u'mac1lsAoUqs-3Gyno7k_3NkZ8Ijqpprqq9PTb4mM1wg', u'type': u'dns-01', u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/uOCIaMTnR-MxEtVAdzMtOA95M48f_j1sWEF3qjrvKz0/50674288'}], u'identifier': {u'type': u'dns', u'value': u'example.com'}, u'expires': u'2017-08-10T19:58:26.212741655Z'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=201
-
+.
+.
+.
 2017-08-03 22:58.26 create_dns_record              dns_provider_name=cloudflare
 2017-08-03 22:58.31 create_cloudflare_dns_record_response dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'proxiable': False, u'locked': False, u'name': u'_acme-challenge.example.com', u'created_on': u'2017-08-03T19:58:30.877292Z'}, u'success': True} status_code=200
-
-2017-08-03 22:58.31 notify_acme_challenge_set      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
-2017-08-03 22:58.35 notify_acme_challenge_set_response ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] response={u'status': u'pending', u'keyAuthorization': u'mac1lsAoUqs-HAJAJAJ.some', u'token': u'mac1lsAoUqs-sdksf', u'type': u'dns-01', u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/uOCIaMTnR-sfsf/50674288'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=202
-
-2017-08-03 22:58.35 check_challenge                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] sewer_client_name=ACMEclient sewer_client_version=0.2.8
-2017-08-03 22:58.40 check_challenge_status_response ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=ACMEclient domain_names=['example.com', 'blog.example.com'] number_of_checks=1 response={u'status': u'valid', u'validationRecord': [{u'addressesTried': [], u'hostname': u'example.com', u'addressUsed': u'', u'port': u'', u'addressesResolved': []}], u'uri': u'https://acme-staging.api.letsencrypt.org/acme/challenge/xxvx-APOSSSLS/50674288', u'token': u'mac1lsAoUqs-SSSs', u'type': u'dns-01'} sewer_client_name=ACMEclient sewer_client_version=0.2.8 status_code=202
-
+.
+.
+.
 2017-08-03 22:58.40 delete_dns_record              dns_provider_name=cloudflare
 2017-08-03 22:58.44 delete_dns_record_response     dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'id': u'06ea612fa03ff12ba95dcf5ba32d7709'}, u'success': True} status_code=200
 
