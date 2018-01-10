@@ -242,9 +242,9 @@ class AWSroute53Dns(sewer.BaseDns):
                                             )
 
 
-custom_route53_dns_class = AWSroute53Dns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                CLOUDFLARE_EMAIL='example@example.com',
-                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+custom_route53_dns_class = AWSroute53Dns(HostedZoneId='my-zone',
+                                        AWS_ACCESS_KEY_ID='access-key',
+                                        AWS_SECRET_ACCESS_KEY='secret-access-key')
 
 # 1. to create a new certificate:
 client = sewer.Client(domain_name='example.com',
