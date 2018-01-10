@@ -246,7 +246,7 @@ custom_route53_dns_class = AWSroute53Dns(HostedZoneId='my-zone',
                                         AWS_ACCESS_KEY_ID='access-key',
                                         AWS_SECRET_ACCESS_KEY='secret-access-key')
 
-# 1. to create a new certificate:
+# create a new certificate:
 client = sewer.Client(domain_name='example.com',
                       dns_class=custom_route53_dns_class)
 certificate = client.cert()
