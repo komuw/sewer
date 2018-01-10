@@ -171,50 +171,89 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
 ## How to use a custom/unsupported DNS provider:
-Currently, sewer only supports cloudflare and Aurora. However, it is very easy to use another dns provider with sewer.
+Currently, sewer only supports cloudflare and Aurora. However, it is very easy to use another dns provider with sewer.          
+All you have to do is create your own dns class that is a child of `sewer.BaseDns` and then implement the             
+`create_dns_record` and `delete_dns_record` methods.                     
+As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you            
+would do something like;
 ```python
 import sewer
+import boto3
 
 class AWSroute53Dns(sewer.BaseDns):
     def __init__(self,
+                HostedZoneId,
                 AWS_ACCESS_KEY_ID,
                 AWS_SECRET_ACCESS_KEY):
         self.dns_provider_name = 'AWS_route53'
+
+        self.HostedZoneId = HostedZoneId
+        self.boto_client = boto3.client('route53',
+                                        aws_access_key_id=AWS_ACCESS_KEY_ID,
+                                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+
     def create_dns_record(self,
                          domain_name,
                          base64_of_acme_keyauthorization):
-        return
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
-        return
+        # do whatever is necessary for your particular DNS provider to create a TXT DNS record
+        # eg for AWS route53, it will be something like::
+        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
+                                                    ChangeBatch={
+                                                    'Changes': [
+                                                        {
+                                                            'Action': 'CREATE',
+                                                            'ResourceRecordSet': {
+                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
+                                                                'Type': 'TXT',
+                                                                'TTL': 123,
+                                                                'ResourceRecords': [
+                                                                    {
+                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
+                                                                    },
+                                                                ]
+                                                            }
+                                                        },
+                                                    ]
+                                                }
+                                            )
+    def delete_dns_record(self,
+                          domain_name,
+                          base64_of_acme_keyauthorization):
+        # do whatever is necessary for your particular DNS provider to delete a TXT DNS record
+        # eg for AWS route53, it will be something like::
+        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
+                                                    ChangeBatch={
+                                                    'Changes': [
+                                                        {
+                                                            'Action': 'DELETE',
+                                                            'ResourceRecordSet': {
+                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
+                                                                'Type': 'TXT',
+                                                                'TTL': 123,
+                                                                'ResourceRecords': [
+                                                                    {
+                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
+                                                                    },
+                                                                ]
+                                                            }
+                                                        },
+                                                    ]
+                                                }
+                                            )
 
-custom_dns_class = AWSroute53Dnsc(CLOUDFLARE_DNS_ZONE_ID='random',
+
+custom_route53_dns_class = AWSroute53Dns(CLOUDFLARE_DNS_ZONE_ID='random',
                                 CLOUDFLARE_EMAIL='example@example.com',
                                 CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
 # 1. to create a new certificate:
 client = sewer.Client(domain_name='example.com',
-                      dns_class=dns_class)
+                      dns_class=custom_route53_dns_class)
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
-
-print "your certificate is:", certificate
-print "your certificate's key is:", certificate_key
-print "\n\n"
-print "you can write them to a file then add that file to your favourite webserver."
-
-with open('certificate.crt', 'w') as certificate_file:
-    certificate_file.write(certificate)
-
-with open('certificate.key', 'w') as certificate_key_file:
-    certificate_key_file.write(certificate_key)
-
-print "your account key is:", account_key
-print "IMPORTANT: keep your account key in a very safe and secure place."
-
-with open('account_key.key', 'w') as account_key_file:
-    account_key_file.write(account_key)
-
+print "certificate::", certificate
+print "certificate's key::", certificate_key
 ```
 
 ## Development setup:
