@@ -64,7 +64,7 @@ class ACMEclient(object):
             bits=2048,
             digest='sha256',
             ACME_REQUEST_TIMEOUT=65,
-            ACME_CHALLENGE_WAIT_PERIOD=4,
+            ACME_CHALLENGE_WAIT_PERIOD=8,
             GET_NONCE_URL="https://acme-v01.api.letsencrypt.org/directory",
             ACME_CERTIFICATE_AUTHORITY_URL="https://acme-v01.api.letsencrypt.org",
             ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf',
@@ -402,6 +402,9 @@ class ACMEclient(object):
                 self.dns_class.delete_dns_record(
                     domain_name, base64_of_acme_keyauthorization)
                 break
+            else:
+                # for any other status, sleep
+                time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
         return check_challenge_status_response
 
     def get_certificate(self):
