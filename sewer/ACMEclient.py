@@ -67,7 +67,7 @@ class ACMEclient(object):
             ACME_CHALLENGE_WAIT_PERIOD=4,
             GET_NONCE_URL="https://acme-v01.api.letsencrypt.org/directory",
             ACME_CERTIFICATE_AUTHORITY_URL="https://acme-v01.api.letsencrypt.org",
-            ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf',
+            ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf',
             ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
     ):
 
