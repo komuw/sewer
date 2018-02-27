@@ -276,14 +276,18 @@ apt-get -y install pandoc && pip3 install -e .[dev,test]
 - your changes should have backward compatibility in mind unless it is impossible to do so.
 - add your name and contact(optional) to CONTRIBUTORS.md
 - add tests
-- format your code using [yapf](https://github.com/google/yapf):                      
+- format your code using [autopep8](https://pypi.python.org/pypi/autopep8):                      
 ```shell
-yapf --in-place --recursive --parallel --style "google" .
-```                     
+autopep8 --experimental --in-place -r -aaaaaaaaaaa .
+```                      
 - run [flake8](https://pypi.python.org/pypi/flake8) on the code and fix any issues:                      
 ```shell
 flake8 .
 ```                      
+- run [pylint](https://pypi.python.org/pypi/pylint) on the code and fix any issues:                      
+```shell
+pylint --enable=E --disable=W,R,C sewer/
+```    
 - run tests and make sure everything is passing:
 ```shell
 make test

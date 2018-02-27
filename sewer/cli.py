@@ -116,7 +116,8 @@ def main():
         file_name = '{0}'.format(domain)
     if endpoint == 'staging':
         # TODO: move this to a config.py file.
-        # the cli and the client would both read this urls from that config file
+        # the cli and the client would both read this urls from that config
+        # file
         GET_NONCE_URL = "https://acme-staging.api.letsencrypt.org/directory"
         ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-staging.api.letsencrypt.org"
     else:

@@ -69,12 +69,25 @@ class AuroraDns(common.BaseDns):
         for x in records:
             if x.name == subDomain and x.type == 'TXT':
                 record_id = x.id
-                self.logger.info('Found record ' + subDomain + '.' +
-                                 domainSuffix + ' with id : ' + record_id + '.')
-                record = driver.get_record(zone_id=zone.id, record_id=record_id)
+                self.logger.info(
+                    'Found record ' +
+                    subDomain +
+                    '.' +
+                    domainSuffix +
+                    ' with id : ' +
+                    record_id +
+                    '.')
+                record = driver.get_record(
+                    zone_id=zone.id, record_id=record_id)
                 driver.delete_record(record)
-                self.logger.info('Deleted record ' + subDomain + '.' +
-                                 domainSuffix + ' with id : ' + record_id + '.')
+                self.logger.info(
+                    'Deleted record ' +
+                    subDomain +
+                    '.' +
+                    domainSuffix +
+                    ' with id : ' +
+                    record_id +
+                    '.')
             else:
                 self.logger.info('Record ' + subDomain + '.' + domainSuffix +
                                  ' not found. No record to delete.')

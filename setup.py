@@ -82,7 +82,7 @@ setup(
     # for example:
     # $ pip3 install -e .[dev,test]
     extras_require={
-        'dev': ['coverage', 'pypandoc', 'twine', 'wheel', 'yapf', 'autopep8'],
+        'dev': ['coverage', 'pypandoc', 'twine', 'wheel', 'autopep8'],
         'test': ['flake8', 'mock', 'pylint'],
     },
     # If there are data files included in your packages that need to be
