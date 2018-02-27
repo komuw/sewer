@@ -41,5 +41,6 @@ README.html
 .venv
 
 # certificates and keys
+*.csr
 *.crt
 *.key
