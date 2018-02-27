@@ -4,7 +4,7 @@ import argparse
 from structlog import get_logger
 
 from . import Client
-import __version__ as sewer_version
+from . import __version__ as sewer_version
 
 
 def main():

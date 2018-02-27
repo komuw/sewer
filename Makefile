@@ -17,7 +17,7 @@ uploadprod:
 	@sudo pip3 install -U sewer
 
 test:
-	@find . -type f -name \*.pyc -delete | echo
+	@find . -type f -name *.pyc -delete | echo
 	@coverage erase
 	@coverage run --omit="*tests*,*.virtualenvs/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover
 	@coverage report --show-missing --fail-under=85

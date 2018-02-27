@@ -1,5 +1,5 @@
 import json
-import urlparse
+import urllib.parse
 
 import requests
 from structlog import get_logger
@@ -40,7 +40,7 @@ class CloudFlareDns(common.BaseDns):
         self.delete_dns_record(
             domain_name=domain_name,
             base64_of_acme_keyauthorization=base64_of_acme_keyauthorization)
-        url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
+        url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                'zones/{0}/dns_records'.format(
                                    self.CLOUDFLARE_DNS_ZONE_ID))
         headers = {
@@ -85,7 +85,7 @@ class CloudFlareDns(common.BaseDns):
 
         dns_name = '_acme-challenge' + '.' + domain_name
         list_dns_payload = {'type': 'TXT', 'name': dns_name}
-        list_dns_url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
+        list_dns_url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                         'zones/{0}/dns_records'.format(
                                             self.CLOUDFLARE_DNS_ZONE_ID))
 
@@ -97,7 +97,7 @@ class CloudFlareDns(common.BaseDns):
 
         for i in range(0, len(list_dns_response.json()['result'])):
             dns_record_id = list_dns_response.json()['result'][i]['id']
-            url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL,
+            url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                    'zones/{0}/dns_records/{1}'.format(
                                        self.CLOUDFLARE_DNS_ZONE_ID,
                                        dns_record_id))

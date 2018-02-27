@@ -130,7 +130,7 @@ class TestACMEclient(TestCase):
                 content=content)
             mock_requests_get.return_value = test_utils.MockResponse(
                 content=content)
-            self.assertIsInstance(self.client.certificate_chain, basestring)
+            self.assertIsInstance(self.client.certificate_chain, str)
 
     def test_acme_registration_is_done(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(

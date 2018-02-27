@@ -4,7 +4,7 @@ import json
 import base64
 import hashlib
 import binascii
-import urlparse
+import urllib.parse
 import textwrap
 import platform
 
@@ -13,7 +13,7 @@ import OpenSSL
 import cryptography
 from structlog import get_logger
 
-import __version__ as sewer_version
+from . import __version__ as sewer_version
 
 
 class ACMEclient(object):
@@ -287,7 +287,7 @@ class ACMEclient(object):
                 "resource": "new-reg",
                 "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS
             }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
             url=url, payload=payload)
@@ -314,7 +314,7 @@ class ACMEclient(object):
                 "value": domain_name
             }
         }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
             url=url, payload=payload)
@@ -415,7 +415,7 @@ class ACMEclient(object):
             "resource": "new-cert",
             "csr": self.calculate_safe_base64(self.csr)
         }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                '/acme/new-cert')
         get_certificate_response = self.make_signed_acme_request(url, payload)
         self.logger.info(
