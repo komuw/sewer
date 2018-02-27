@@ -81,9 +81,10 @@ class ACMEclient(object):
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_CHALLENGE_WAIT_PERIOD = ACME_CHALLENGE_WAIT_PERIOD
-
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.ACME_CERTIFICATE_CHAIN_URL = ACME_CERTIFICATE_CHAIN_URL
+
+        self.User_Agent = self.get_user_agent()
         acme_endpoints = self.get_acme_endpoints().json()
         self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
         self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
@@ -92,7 +93,6 @@ class ACMEclient(object):
         self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
         self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
-        self.User_Agent = self.get_user_agent()
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
         self.certificate_chain = self.get_certificate_chain()
@@ -108,7 +108,7 @@ class ACMEclient(object):
             sewer_client_name=self.__class__.__name__,
             sewer_client_version=sewer_version.__version__,
             domain_names=self.all_domain_names,
-            ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
+            ACME_DIRECTORY_URL=self.ACME_DIRECTORY_URL)
 
         # for staging/test, use:
         # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem'
@@ -216,7 +216,14 @@ class ACMEclient(object):
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
-        return base64.urlsafe_b64encode(un_encoded_data).rstrip(b'=')
+        """
+        takes in a string or bytes
+        returns a string
+        """
+        if isinstance(un_encoded_data, str):
+            un_encoded_data = un_encoded_data.encode('utf8')
+        r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b'=')
+        return r.decode('utf8')
 
     def sign_message(self, message):
         self.logger.info('sign_message')
@@ -240,50 +247,33 @@ class ACMEclient(object):
         header = {
             "alg": "RS256",
             "jwk": {
-                "e": self.calculate_safe_base64(
-                    binascii.unhexlify(
-                        exponent.encode('utf8'))).decode('utf-8'),
+                "e": self.calculate_safe_base64(binascii.unhexlify(exponent)),
                 "kty": "RSA",
-                "n": self.calculate_safe_base64(
-                    binascii.unhexlify(
-                        modulus.encode('utf8'))).decode('utf-8')}}
+                "n": self.calculate_safe_base64(binascii.unhexlify(modulus))}}
         return header
 
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
+        headers = {'User-Agent': self.User_Agent}
 
-        def convert_to_str(payload):
-            for k, v in payload.items():
-                if isinstance(k, bytes):
-                    k = k.decode('utf-8')
-                if isinstance(v, bytes):
-                    v = v.decode('utf-8')
-                payload[k] = v
-            return payload
-
-        payload = convert_to_str(payload)
-        payload64 = self.calculate_safe_base64(
-            json.dumps(payload).encode('utf8'))
+        payload64 = self.calculate_safe_base64(json.dumps(payload))
         protected = self.get_acme_header()
 
-        headers = {'User-Agent': self.User_Agent}
         response = requests.get(
             self.ACME_GET_NONCE_URL,
             timeout=self.ACME_REQUEST_TIMEOUT,
             headers=headers)
         nonce = response.headers['Replay-Nonce']
         protected["nonce"] = nonce
+        protected["url"] = url
 
-        protected64 = self.calculate_safe_base64(
-            json.dumps(protected).encode('utf8'))
+        protected64 = self.calculate_safe_base64(json.dumps(protected))
         signature = self.sign_message(
-            message="{0}.{1}".format(protected64, payload64))
-        data = json.dumps({
-            "protected": protected64.decode('utf-8'),
-            "payload": payload64.decode('utf-8'),
-            "signature": self.calculate_safe_base64(signature).decode('utf-8')
-        })
-        headers = {'User-Agent': self.User_Agent}
+            message="{0}.{1}".format(
+                protected64, payload64))  # bytes
+        data = json.dumps(
+            {"protected": protected64, "payload": payload64,
+             "signature": self.calculate_safe_base64(signature)})
         response = requests.post(
             url,
             data=data.encode('utf8'),
@@ -299,18 +289,13 @@ class ACMEclient(object):
         self.logger.info('acme_register')
         if self.registration_recovery_email:
             payload = {
-                "resource": "new-reg",
-                "agreement": self.ACME_TOS_URL,
-                "contact":
-                ["mailto:{0}".format(self.registration_recovery_email)]
-            }
+                "termsOfServiceAgreed": True, "contact": [
+                    "mailto:{0}".format(
+                        self.registration_recovery_email)]}
         else:
-            payload = {
-                "resource": "new-reg",
-                "agreement": self.ACME_TOS_URL
-            }
-        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                                   '/acme/new-reg')
+            payload = {"termsOfServiceAgreed": True}
+
+        url = self.ACME_NEW_ACCOUNT_URL
         acme_register_response = self.make_signed_acme_request(
             url=url, payload=payload)
         self.logger.info(
