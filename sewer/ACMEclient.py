@@ -232,6 +232,14 @@ class ACMEclient(object):
         return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
 
     def get_acme_header(self):
+        """
+        The JWS Protected Header MUST include the following fields:
+        - "alg" (Algorithm)
+        - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
+        - "kid" (Key ID, for all other requests). gotten from self.ACME_NEW_ACCOUNT_URL
+        - "nonce". gotten from self.ACME_GET_NONCE_URL
+        - "url"
+        """
         self.logger.info('get_acme_header')
         private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
             self.account_key,
@@ -251,6 +259,49 @@ class ACMEclient(object):
                 "kty": "RSA",
                 "n": self.calculate_safe_base64(binascii.unhexlify(modulus))}}
         return header
+
+    def apply_for_cert_issuance(self):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        The order object returned by the server represents a promise that if
+        the client fulfills the server's requirements before the "expires"
+        time, then the server will be willing to finalize the order upon
+        request and issue the requested certificate.  In the order object,
+        any authorization referenced in the "authorizations" array whose
+        status is "pending" represents an authorization transaction that the
+        client must complete before the server will issue the certificate.
+
+        Once the client believes it has fulfilled the server's requirements,
+        it should send a POST request to the order resource's finalize URL.
+        The POST body MUST include a CSR:
+        """
+        self.logger.info('apply_for_cert_issuance')
+        # TODO: factor in self.all_domain_names instead of just
+        # self.domain_name
+        payload = {
+            "identifiers": [{"type": "dns", "value": self.domain_name}],
+            # the date values seem to be ignored by LetsEncrypt although they are
+            # in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+            #    "notBefore": "2016-01-01T00:00:00Z",
+            #    "notAfter": "2016-01-08T00:00:00Z"
+        }
+
+        url = self.ACME_NEW_ORDER_URL
+        apply_for_cert_issuance_response = self.make_signed_acme_request(
+            url=url,
+            payload=payload)
+        self.logger.info(
+            'apply_for_cert_issuance_response',
+            status_code=apply_for_cert_issuance_response.status_code,
+            response=self.log_response(apply_for_cert_issuance_response))
+
+        if apply_for_cert_issuance_response.status_code != 201:
+            raise ValueError(
+                "Error applying for certificate issuance: status_code={status_code} response={response}". format(
+                    status_code=apply_for_cert_issuance_response.status_code,
+                    response=self.log_response(apply_for_cert_issuance_response)))
+
+        return apply_for_cert_issuance_response
 
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
@@ -283,11 +334,18 @@ class ACMEclient(object):
 
     def acme_register(self):
         """
-        Register using a customers account_key.
-        This method should only be called if self.PRIOR_REGISTERED == False
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        The server creates an account and stores the public key used to
+        verify the JWS (i.e., the "jwk" element of the JWS header) to
+        authenticate future requests from the account.
+        The server returns this account object in a 201 (Created) response, with the account URL
+        in a Location header field.
+        This account URL will be used in subsequest requests to ACME, as the "kid" value in the acme header.
         """
         self.logger.info('acme_register')
-        if self.registration_recovery_email:
+        if self.PRIOR_REGISTERED:
+            payload = {"onlyReturnExisting": True}
+        elif self.registration_recovery_email:
             payload = {
                 "termsOfServiceAgreed": True, "contact": [
                     "mailto:{0}".format(
@@ -446,8 +504,7 @@ class ACMEclient(object):
 
     def just_get_me_a_certificate(self):
         self.logger.info('just_get_me_a_certificate')
-        if not self.PRIOR_REGISTERED:
-            self.acme_register()
+        self.acme_register()
         for domain_name in self.all_domain_names:
             # NB: this means we will only get a certificate; self.get_certificate()
             # if all the SAN succed the following steps
