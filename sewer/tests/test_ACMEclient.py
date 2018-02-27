@@ -249,21 +249,6 @@ class TestACMEclient(TestCase):
             self.client.cert()
             self.assertTrue(mock_check_challenge_status.called)
 
-    def test_delete_dns_record_not_called(self):
-        with mock.patch('requests.post') as mock_requests_post, mock.patch(
-                'requests.get') as mock_requests_get, mock.patch(
-                    'sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record'
-                ) as mock_delete_dns_record:
-            content = """
-                          {"status": "pending", "challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
-            self.client.cert()
-            self.assertFalse(mock_delete_dns_record.called)
-
     def test_delete_dns_record_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
