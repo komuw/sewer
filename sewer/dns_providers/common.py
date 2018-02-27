@@ -19,11 +19,7 @@ class BaseDns(object):
         renders a python-requests response as json or as a string
         """
         try:
-            response.content.decode('ascii')  # try and trigger a unicode error.
             log_body = response.json()
-        except UnicodeError:
-            # unicodeError is a subclass of ValueError so we need to capture it first
-            log_body = 'Unicode response.'
         except ValueError:
             log_body = response.content
         return log_body

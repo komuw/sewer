@@ -32,13 +32,10 @@ class TestACMEclient(TestCase):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name,
-                dns_class=self.dns_class,
+                domain_name=self.domain_name, dns_class=self.dns_class,
                 ACME_CHALLENGE_WAIT_PERIOD=0,
-                GET_NONCE_URL=
-                "https://acme-staging.api.letsencrypt.org/directory",
-                ACME_CERTIFICATE_AUTHORITY_URL=
-                "https://acme-staging.api.letsencrypt.org")
+                GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
+                ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
 
     def tearDown(self):
         pass
@@ -55,14 +52,13 @@ class TestACMEclient(TestCase):
                 sewer.Client(
                     domain_name='example.com',
                     dns_class=test_utils.ExmpleDnsProvider(),
-                    ACME_CERTIFICATE_AUTHORITY_URL=
-                    "https://acme-staging.api.letsencrypt.org")
+                    ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
 
             self.assertRaises(ValueError, mock_create_acme_client)
             with self.assertRaises(ValueError) as raised_exception:
                 mock_create_acme_client()
             self.assertIn('Error while getting Acme certificate chain',
-                          raised_exception.exception.message)
+                          str(raised_exception.exception))
 
     def test_user_agent_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -75,9 +71,8 @@ class TestACMEclient(TestCase):
             mock_requests_get.return_value = test_utils.MockResponse(
                 content=content)
 
-            for i in [
-                    'python-requests', 'sewer', 'https://github.com/komuW/sewer'
-            ]:
+            for i in ['python-requests', 'sewer',
+                      'https://github.com/komuW/sewer']:
                 self.assertIn(i, self.client.User_Agent)
 
     def test_certificate_key_is_generated(self):
@@ -93,9 +88,7 @@ class TestACMEclient(TestCase):
             certificate_key = self.client.certificate_key
 
             certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                certificate_key,
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend())
+                certificate_key, password=None, backend=cryptography.hazmat.backends.default_backend())
             self.assertIsInstance(
                 certificate_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
@@ -113,9 +106,7 @@ class TestACMEclient(TestCase):
             account_key = self.client.account_key
 
             account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                account_key,
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend())
+                account_key, password=None, backend=cryptography.hazmat.backends.default_backend())
             self.assertIsInstance(
                 account_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
@@ -130,7 +121,7 @@ class TestACMEclient(TestCase):
                 content=content)
             mock_requests_get.return_value = test_utils.MockResponse(
                 content=content)
-            self.assertIsInstance(self.client.certificate_chain, basestring)
+            self.assertIsInstance(self.client.certificate_chain, str)
 
     def test_acme_registration_is_done(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -164,7 +155,7 @@ class TestACMEclient(TestCase):
             with self.assertRaises(ValueError) as raised_exception:
                 mock_get_certificate()
             self.assertIn('Error while registering',
-                          raised_exception.exception.message)
+                          str(raised_exception.exception))
 
     def test_get_challenge_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -202,13 +193,13 @@ class TestACMEclient(TestCase):
             with self.assertRaises(ValueError) as raised_exception:
                 mock_get_certificate()
             self.assertIn('Error requesting for challenges',
-                          raised_exception.exception.message)
+                          str(raised_exception.exception))
 
     def test_create_dns_record_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.tests.test_utils.ExmpleDnsProvider.create_dns_record'
-                ) as mock_create_dns_record:
+        ) as mock_create_dns_record:
             content = """
                           {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
                       """
@@ -223,7 +214,7 @@ class TestACMEclient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.notify_acme_challenge_set'
-                ) as mock_notify_acme_challenge_set:
+        ) as mock_notify_acme_challenge_set:
             content = """
                           {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
                       """
@@ -238,7 +229,7 @@ class TestACMEclient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.check_challenge_status'
-                ) as mock_check_challenge_status:
+        ) as mock_check_challenge_status:
             content = """
                           {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
                       """
@@ -253,7 +244,7 @@ class TestACMEclient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record'
-                ) as mock_delete_dns_record:
+        ) as mock_delete_dns_record:
             content = """
                           {"status": "valid", "challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
                       """
@@ -297,7 +288,7 @@ class TestACMEclient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.get_challenge'
-                ) as mock_get_challenge, mock.patch(
+        ) as mock_get_challenge, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_register:
             content = """
                           {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
@@ -318,7 +309,7 @@ class TestACMEclient(TestCase):
             with self.assertRaises(ValueError) as raised_exception:
                 mock_get_certificate()
             self.assertIn('Error fetching signed certificate',
-                          raised_exception.exception.message)
+                          str(raised_exception.exception))
 
 
 class TestACMEclientForSAN(TestACMEclient):
@@ -339,14 +330,11 @@ class TestACMEclientForSAN(TestACMEclient):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name,
-                dns_class=self.dns_class,
+                domain_name=self.domain_name, dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
                 ACME_CHALLENGE_WAIT_PERIOD=0,
-                GET_NONCE_URL=
-                "https://acme-staging.api.letsencrypt.org/directory",
-                ACME_CERTIFICATE_AUTHORITY_URL=
-                "https://acme-staging.api.letsencrypt.org")
+                GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
+                ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
         super(TestACMEclientForSAN, self).setUp()
 
 

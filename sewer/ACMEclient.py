@@ -4,7 +4,7 @@ import json
 import base64
 import hashlib
 import binascii
-import urlparse
+import urllib.parse
 import textwrap
 import platform
 
@@ -13,7 +13,7 @@ import OpenSSL
 import cryptography
 from structlog import get_logger
 
-import __version__ as sewer_version
+from . import __version__ as sewer_version
 
 
 class ACMEclient(object):
@@ -116,12 +116,7 @@ class ACMEclient(object):
         """
         # TODO: use this to handle all response logs.
         try:
-            response.content.decode('ascii')  # try and trigger a unicode error.
             log_body = response.json()
-        except UnicodeError:
-            # certificate has been issued
-            # unicodeError is a subclass of ValueError so we need to capture it first
-            log_body = 'Response probably contains a certificate.'
         except ValueError:
             log_body = response.content
         return log_body
@@ -179,30 +174,26 @@ class ACMEclient(object):
         headers = {'User-Agent': self.User_Agent}
         get_certificate_chain_response = requests.get(
             url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
-        certificate_chain = get_certificate_chain_response.content.decode(
-            'utf8')
+        certificate_chain = get_certificate_chain_response.content
         self.logger.info(
             'get_certificate_chain_response',
             status_code=get_certificate_chain_response.status_code)
 
         if get_certificate_chain_response.status_code not in [200, 201]:
             raise ValueError(
-                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
-                format(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
                     status_code=get_certificate_chain_response.status_code,
                     response=self.log_response(get_certificate_chain_response)))
         elif '-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
             raise ValueError(
-                "Error while getting Acme certificate chain: status_code={status_code} response={response}".
-                format(
+                "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
                     status_code=get_certificate_chain_response.status_code,
                     response=self.log_response(get_certificate_chain_response)))
 
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
-        return base64.urlsafe_b64encode(un_encoded_data).decode('utf8').rstrip(
-            '=')
+        return base64.urlsafe_b64encode(un_encoded_data).rstrip(b'=')
 
     def sign_message(self, message):
         self.logger.info('sign_message')
@@ -226,20 +217,28 @@ class ACMEclient(object):
         header = {
             "alg": "RS256",
             "jwk": {
-                "e":
-                self.calculate_safe_base64(
-                    binascii.unhexlify(exponent.encode('utf8'))),
-                "kty":
-                "RSA",
-                "n":
-                self.calculate_safe_base64(
-                    binascii.unhexlify(modulus.encode('utf8')))
-            }
-        }
+                "e": self.calculate_safe_base64(
+                    binascii.unhexlify(
+                        exponent.encode('utf8'))).decode('utf-8'),
+                "kty": "RSA",
+                "n": self.calculate_safe_base64(
+                    binascii.unhexlify(
+                        modulus.encode('utf8'))).decode('utf-8')}}
         return header
 
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
+
+        def convert_to_str(payload):
+            for k, v in payload.items():
+                if isinstance(k, bytes):
+                    k = k.decode('utf-8')
+                if isinstance(v, bytes):
+                    v = v.decode('utf-8')
+                payload[k] = v
+            return payload
+
+        payload = convert_to_str(payload)
         payload64 = self.calculate_safe_base64(
             json.dumps(payload).encode('utf8'))
         protected = self.get_acme_header()
@@ -257,9 +256,9 @@ class ACMEclient(object):
         signature = self.sign_message(
             message="{0}.{1}".format(protected64, payload64))
         data = json.dumps({
-            "protected": protected64,
-            "payload": payload64,
-            "signature": self.calculate_safe_base64(signature)
+            "protected": protected64.decode('utf-8'),
+            "payload": payload64.decode('utf-8'),
+            "signature": self.calculate_safe_base64(signature).decode('utf-8')
         })
         headers = {'User-Agent': self.User_Agent}
         response = requests.post(
@@ -287,8 +286,8 @@ class ACMEclient(object):
                 "resource": "new-reg",
                 "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS
             }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                               '/acme/new-reg')
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+                                   '/acme/new-reg')
         acme_register_response = self.make_signed_acme_request(
             url=url, payload=payload)
         self.logger.info(
@@ -298,8 +297,7 @@ class ACMEclient(object):
 
         if acme_register_response.status_code not in [201, 409]:
             raise ValueError(
-                "Error while registering: status_code={status_code} response={response}".
-                format(
+                "Error while registering: status_code={status_code} response={response}". format(
                     status_code=acme_register_response.status_code,
                     response=self.log_response(acme_register_response)))
 
@@ -314,8 +312,8 @@ class ACMEclient(object):
                 "value": domain_name
             }
         }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                               '/acme/new-authz')
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+                                   '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
             url=url, payload=payload)
         self.logger.info(
@@ -325,8 +323,7 @@ class ACMEclient(object):
 
         if challenge_response.status_code != 201:
             raise ValueError(
-                "Error requesting for challenges: status_code={status_code} response={response}".
-                format(
+                "Error requesting for challenges: status_code={status_code} response={response}". format(
                     status_code=challenge_response.status_code,
                     response=self.log_response(challenge_response)))
 
@@ -390,9 +387,8 @@ class ACMEclient(object):
                     number_of_checks=number_of_checks)
                 if number_of_checks > maximum_number_of_checks_allowed:
                     raise StopIteration(
-                        "Number of checks done is {0} which is greater than the maximum allowed of {1}.".
-                        format(number_of_checks,
-                               maximum_number_of_checks_allowed))
+                        "Number of checks done is {0} which is greater than the maximum allowed of {1}.". format(
+                            number_of_checks, maximum_number_of_checks_allowed))
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
                 self.dns_class.delete_dns_record(
@@ -415,8 +411,8 @@ class ACMEclient(object):
             "resource": "new-cert",
             "csr": self.calculate_safe_base64(self.csr)
         }
-        url = urlparse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                               '/acme/new-cert')
+        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
+                                   '/acme/new-cert')
         get_certificate_response = self.make_signed_acme_request(url, payload)
         self.logger.info(
             'get_certificate_response',
@@ -425,14 +421,14 @@ class ACMEclient(object):
 
         if get_certificate_response.status_code != 201:
             raise ValueError(
-                "Error fetching signed certificate: status_code={status_code} response={response}".
-                format(
+                "Error fetching signed certificate: status_code={status_code} response={response}". format(
                     status_code=get_certificate_response.status_code,
                     response=self.log_response(get_certificate_response)))
 
         base64encoded_cert = base64.b64encode(
-            get_certificate_response.content).decode('utf8')
-        sixty_four_width_cert = textwrap.wrap(base64encoded_cert, 64)
+            get_certificate_response.content.encode('utf-8'))
+        sixty_four_width_cert = textwrap.wrap(
+            base64encoded_cert.decode('utf-8'), 64)
         certificate = '\n'.join(sixty_four_width_cert)
 
         pem_certificate = """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
@@ -455,7 +451,9 @@ class ACMEclient(object):
             self.notify_acme_challenge_set(acme_keyauthorization,
                                            dns_challenge_url)
             self.check_challenge_status(
-                dns_challenge_url, base64_of_acme_keyauthorization, domain_name)
+                dns_challenge_url,
+                base64_of_acme_keyauthorization,
+                domain_name)
         certificate = self.get_certificate()
 
         return certificate

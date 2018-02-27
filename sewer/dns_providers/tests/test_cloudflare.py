@@ -1,4 +1,5 @@
 import mock
+import json
 from unittest import TestCase
 
 import sewer
@@ -36,7 +37,7 @@ class TestCloudflare(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.CloudFlareDns.delete_dns_record'
-                    ) as mock_delete_dns_record:
+        ) as mock_delete_dns_record:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = \
@@ -56,7 +57,7 @@ class TestCloudflare(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.CloudFlareDns.delete_dns_record'
-                    ) as mock_delete_dns_record:
+        ) as mock_delete_dns_record:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = \
@@ -70,15 +71,17 @@ class TestCloudflare(TestCase):
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
                     'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-                    'Content-Type': 'application/json'
-                },
-                'data':
-                '{"content": "mock-base64_of_acme_keyauthorization", "type": "TXT", "name": "_acme-challenge.example.com."}',
-                'timeout':
-                65
-            }
+                    'Content-Type': 'application/json'},
+                'data': '{"content": "mock-base64_of_acme_keyauthorization", "type": "TXT", "name": "_acme-challenge.example.com."}',
+                'timeout': 65}
 
-            self.assertDictEqual(expected, mock_requests_post.call_args[1])
+            self.assertDictEqual(
+                expected['headers'],
+                mock_requests_post.call_args[1]['headers'])
+            self.assertDictEqual(
+                json.loads(
+                    expected['data']), json.loads(
+                    mock_requests_post.call_args[1]['data']))
 
     def test_cloudflare_is_called_by_delete_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(

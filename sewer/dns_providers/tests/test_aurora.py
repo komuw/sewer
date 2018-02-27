@@ -36,9 +36,9 @@ class TestAurora(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.dns_providers.auroradns.get_driver'
-                    ) as mock_get_driver, mock.patch(
+        ) as mock_get_driver, mock.patch(
                         'sewer.AuroraDns.delete_dns_record'
-                    ) as mock_delete_dns_record:
+        ) as mock_delete_dns_record:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = \
@@ -60,7 +60,7 @@ class TestAurora(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.dns_providers.auroradns.get_driver'
-                    ) as mock_get_driver:
+        ) as mock_get_driver:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = test_utils.MockResponse()
