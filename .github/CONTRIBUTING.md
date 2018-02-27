@@ -18,7 +18,7 @@ derivative works of any Contribution, under the MIT License.
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
 - install pre-requiste software:             
 ```shell
-apt-get -y install pandoc && pip install twine wheel pypandoc coverage yapf flake8 mock
+apt-get -y install pandoc && pip3 install -e .[dev,test]
 ```                   
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.

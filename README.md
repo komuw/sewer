@@ -20,8 +20,12 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 ## Installation:
 
 ```shell
-pip install sewer
+pip3 install sewer
 ```           
+sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;         
+```shell
+pip install sewer==0.3.0
+```
 Sewer is in active development and it's API may change in backward incompatible ways.               
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
@@ -266,7 +270,7 @@ print "certificate's key::", certificate_key
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
 - install pre-requiste software:             
 ```shell
-apt-get -y install pandoc && pip install -e .[dev,test]
+apt-get -y install pandoc && pip3 install -e .[dev,test]
 ```                   
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.
