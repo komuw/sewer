@@ -65,10 +65,8 @@ class ACMEclient(object):
             digest='sha256',
             ACME_REQUEST_TIMEOUT=65,
             ACME_CHALLENGE_WAIT_PERIOD=8,
-            GET_NONCE_URL="https://acme-v01.api.letsencrypt.org/directory",
-            ACME_CERTIFICATE_AUTHORITY_URL="https://acme-v01.api.letsencrypt.org",
-            ACME_CERTIFICATE_AUTHORITY_TOS='https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf',
-            ACME_CERTIFICATE_AUTHORITY_CHAIN='https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
+            ACME_DIRECTORY_URL="https://acme-staging-v02.api.letsencrypt.org/directory",
+            ACME_CERTIFICATE_CHAIN_URL='https: // letsencrypt.org / certs / fakelerootx1.pem
     ):
 
         self.logger = get_logger(__name__).bind(
@@ -84,10 +82,17 @@ class ACMEclient(object):
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_CHALLENGE_WAIT_PERIOD = ACME_CHALLENGE_WAIT_PERIOD
-        self.GET_NONCE_URL = GET_NONCE_URL
-        self.ACME_CERTIFICATE_AUTHORITY_URL = ACME_CERTIFICATE_AUTHORITY_URL
-        self.ACME_CERTIFICATE_AUTHORITY_TOS = ACME_CERTIFICATE_AUTHORITY_TOS
-        self.ACME_CERTIFICATE_AUTHORITY_CHAIN = ACME_CERTIFICATE_AUTHORITY_CHAIN
+
+        self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
+        self.ACME_CERTIFICATE_CHAIN_URL = ACME_CERTIFICATE_CHAIN_URL
+        acme_endpoints = self.get_acme_endpoints().json()
+        self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
+        self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
+        self.ACME_KEY_CHANGE_URL = acme_endpoints['keyChange']
+        self.ACME_NEW_ACCOUNT_URL = acme_endpoints['newAccount']
+        self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
+        self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
+
         self.User_Agent = self.get_user_agent()
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
@@ -107,8 +112,9 @@ class ACMEclient(object):
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
         # for staging/test, use:
-        # GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-        # ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org"
+        # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem
+        # for prod use:
+        # ACME_CERTIFICATE_CHAIN_URL = 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
 
     def log_response(self, response):
         """
@@ -129,6 +135,23 @@ class ACMEclient(object):
             machine=platform.machine(),
             sewer_version=sewer_version.__version__,
             sewer_url=sewer_version.__url__)
+
+    def get_acme_endpoints(self):
+        self.logger.info('get_acme_endpoints')
+        headers = {'User-Agent': self.User_Agent}
+        get_acme_endpoints = requests.get(
+            self.ACME_DIRECTORY_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
+        self.logger.info(
+            'get_acme_endpoints_response',
+            status_code=get_acme_endpoints.status_code)
+        if get_acme_endpoints.status_code not in [200, 201]:
+            raise ValueError(
+                "Error while getting Acme endpoints: status_code={status_code} response={response}". format(
+                    status_code=get_acme_endpoints.status_code,
+                    response=self.log_response(get_acme_endpoints)))
+        return get_acme_endpoints
 
     def create_account_key(self):
         self.logger.info('create_account_key')
@@ -170,10 +193,11 @@ class ACMEclient(object):
 
     def get_certificate_chain(self):
         self.logger.info('get_certificate_chain')
-        url = self.ACME_CERTIFICATE_AUTHORITY_CHAIN
         headers = {'User-Agent': self.User_Agent}
         get_certificate_chain_response = requests.get(
-            url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+            self.ACME_CERTIFICATE_CHAIN_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
         certificate_chain = get_certificate_chain_response.content
         self.logger.info(
             'get_certificate_chain_response',
@@ -245,7 +269,7 @@ class ACMEclient(object):
 
         headers = {'User-Agent': self.User_Agent}
         response = requests.get(
-            self.GET_NONCE_URL,
+            self.ACME_GET_NONCE_URL,
             timeout=self.ACME_REQUEST_TIMEOUT,
             headers=headers)
         nonce = response.headers['Replay-Nonce']
@@ -277,14 +301,14 @@ class ACMEclient(object):
         if self.registration_recovery_email:
             payload = {
                 "resource": "new-reg",
-                "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS,
+                "agreement": self.ACME_TOS_URL,
                 "contact":
                 ["mailto:{0}".format(self.registration_recovery_email)]
             }
         else:
             payload = {
                 "resource": "new-reg",
-                "agreement": self.ACME_CERTIFICATE_AUTHORITY_TOS
+                "agreement": self.ACME_TOS_URL
             }
         url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
                                    '/acme/new-reg')
