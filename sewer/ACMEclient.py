@@ -65,9 +65,8 @@ class ACMEclient(object):
             digest='sha256',
             ACME_REQUEST_TIMEOUT=65,
             ACME_CHALLENGE_WAIT_PERIOD=8,
-            ACME_DIRECTORY_URL="https://acme-staging-v02.api.letsencrypt.org/directory",
-            ACME_CERTIFICATE_CHAIN_URL='https: // letsencrypt.org / certs / fakelerootx1.pem
-    ):
+            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
+            ACME_CERTIFICATE_CHAIN_URL='https://letsencrypt.org/certs/fakelerootx1.pem'):
 
         self.logger = get_logger(__name__).bind(
             client_name=self.__class__.__name__)
@@ -112,7 +111,7 @@ class ACMEclient(object):
             ACME_CERTIFICATE_AUTHORITY_URL=self.ACME_CERTIFICATE_AUTHORITY_URL)
 
         # for staging/test, use:
-        # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem
+        # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem'
         # for prod use:
         # ACME_CERTIFICATE_CHAIN_URL = 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
 
