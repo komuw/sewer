@@ -184,7 +184,7 @@ class ACMEclient(object):
                 "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
                     status_code=get_certificate_chain_response.status_code,
                     response=self.log_response(get_certificate_chain_response)))
-        elif '-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
+        elif b'-----BEGIN CERTIFICATE-----' and b'-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
             raise ValueError(
                 "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
                     status_code=get_certificate_chain_response.status_code,
