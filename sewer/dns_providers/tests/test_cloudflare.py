@@ -1,4 +1,5 @@
 import mock
+import json
 from unittest import TestCase
 
 import sewer
@@ -74,7 +75,13 @@ class TestCloudflare(TestCase):
                 'data': '{"content": "mock-base64_of_acme_keyauthorization", "type": "TXT", "name": "_acme-challenge.example.com."}',
                 'timeout': 65}
 
-            self.assertDictEqual(expected, mock_requests_post.call_args[1])
+            self.assertDictEqual(
+                expected['headers'],
+                mock_requests_post.call_args[1]['headers'])
+            self.assertDictEqual(
+                json.loads(
+                    expected['data']), json.loads(
+                    mock_requests_post.call_args[1]['data']))
 
     def test_cloudflare_is_called_by_delete_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
