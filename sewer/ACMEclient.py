@@ -254,8 +254,8 @@ class ACMEclient(object):
 
         protected64 = self.calculate_safe_base64(
             json.dumps(protected).encode('utf8'))
-        signature = self.sign_message(message="{0}.{1}".format(
-            protected64, payload64))
+        signature = self.sign_message(
+            message="{0}.{1}".format(protected64, payload64))
         data = json.dumps({
             "protected": protected64,
             "payload": payload64,
@@ -395,6 +395,8 @@ class ACMEclient(object):
                                maximum_number_of_checks_allowed))
             except Exception as e:
                 self.logger.info('check_challenge', error=str(e))
+                self.dns_class.delete_dns_record(
+                    domain_name, base64_of_acme_keyauthorization)
                 break
             if challenge_status == "pending":
                 time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)

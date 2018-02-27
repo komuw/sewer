@@ -138,8 +138,9 @@ def main():
                 'chosen_dns_provider',
                 message='Using {0} as dns provider.'.format(dns_provider))
         except KeyError as e:
-            logger.info("ERROR:: Please supply {0} as an environment variable.".
-                        format(str(e)))
+            logger.info(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
             raise
 
     elif dns_provider == 'aurora':
@@ -155,8 +156,9 @@ def main():
                 'chosen_dns_provider',
                 message='Using {0} as dns provider.'.format(dns_provider))
         except KeyError as e:
-            logger.info("ERROR:: Please supply {0} as an environment variable.".
-                        format(str(e)))
+            logger.info(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
             raise
     else:
         raise ValueError(

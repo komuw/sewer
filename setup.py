@@ -83,7 +83,7 @@ setup(
     # $ pip install -e .[dev,test]
     extras_require={
         'dev':
-        ['coverage', 'pypandoc', 'twine', 'wheel', 'yapf', 'flake8', 'mock'],
+        ['coverage', 'pypandoc', 'twine', 'wheel', 'yapf', 'flake8', 'mock', 'pylint', 'autopep8'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
@@ -109,7 +109,8 @@ setup(
             'sewer=sewer.cli:main',
             'sewer-cli=sewer.cli:main',
         ],
-    },)
+    },
+)
 
 # python packaging documentation:
 # 1. https://python-packaging.readthedocs.io/en/latest/index.html
