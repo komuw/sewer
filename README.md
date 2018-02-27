@@ -46,23 +46,20 @@ certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
 
-print "your certificate is:", certificate
-print "your certificate's key is:", certificate_key
-print "\n\n"
-print "you can write them to a file then add that file to your favourite webserver."
+print("your certificate is:", certificate)
+print("your certificate's key is:", certificate_key)
+print("your letsencrypt.org account key is:", account_key)
+# NB: your certificate_key and account_key should be SECRET.
+# keep them very safe.
+
+# you can write these out to individual files, eg::
 
 with open('certificate.crt', 'w') as certificate_file:
     certificate_file.write(certificate)
-
 with open('certificate.key', 'w') as certificate_key_file:
     certificate_key_file.write(certificate_key)
-
-print "your account key is:", account_key
-print "IMPORTANT: keep your account key in a very safe and secure place."
-
 with open('account_key.key', 'w') as account_key_file:
     account_key_file.write(account_key)
-
 
 
 # 2. to renew a certificate:
@@ -83,7 +80,6 @@ certificate_key = client.certificate_key
 
 with open('certificate.crt', 'w') as certificate_file:
     certificate_file.write(certificate)
-
 with open('certificate.key', 'w') as certificate_key_file:
     certificate_key_file.write(certificate_key)
 ```
@@ -184,74 +180,68 @@ would do something like;
 import sewer
 import boto3
 
+
 class AWSroute53Dns(sewer.BaseDns):
     def __init__(self,
-                HostedZoneId,
-                AWS_ACCESS_KEY_ID,
-                AWS_SECRET_ACCESS_KEY):
+                 HostedZoneId,
+                 AWS_ACCESS_KEY_ID,
+                 AWS_SECRET_ACCESS_KEY):
         self.dns_provider_name = 'AWS_route53'
-
         self.HostedZoneId = HostedZoneId
-        self.boto_client = boto3.client('route53',
-                                        aws_access_key_id=AWS_ACCESS_KEY_ID,
-                                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        self.boto_client = boto3.client(
+            'route53', aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
     def create_dns_record(self,
-                         domain_name,
-                         base64_of_acme_keyauthorization):
+                          domain_name,
+                          base64_of_acme_keyauthorization):
         """
-        AWS route53 with boto3 documentation; https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
+        AWS route53 with boto3 documentation;
+        https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
         """
         # do whatever is necessary for your particular DNS provider to create a TXT DNS record
         # eg for AWS route53, it will be something like::
-        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
-                                                    ChangeBatch={
-                                                    'Changes': [
-                                                        {
-                                                            'Action': 'CREATE',
-                                                            'ResourceRecordSet': {
-                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
-                                                                'Type': 'TXT',
-                                                                'TTL': 123,
-                                                                'ResourceRecords': [
-                                                                    {
-                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
-                                                                    },
-                                                                ]
-                                                            }
-                                                        },
-                                                    ]
-                                                }
-                                            )
+        self.boto_client.change_resource_record_sets(
+            HostedZoneId=self.HostedZoneId,
+            ChangeBatch={
+                'Changes': [
+                    {
+                        'Action': 'CREATE',
+                        'ResourceRecordSet': {
+                            'Name': '_acme-challenge' + '.' + domain_name + '.',
+                            'Type': 'TXT',
+                            'TTL': 123,
+                            'ResourceRecords': [
+                                {
+                                    'Value': "{0}".format(base64_of_acme_keyauthorization)},
+                            ]}},
+                ]})
+
     def delete_dns_record(self,
                           domain_name,
                           base64_of_acme_keyauthorization):
         # do whatever is necessary for your particular DNS provider to delete a TXT DNS record
         # eg for AWS route53, it will be something like::
-        self.boto_client.change_resource_record_sets(HostedZoneId=self.HostedZoneId,
-                                                    ChangeBatch={
-                                                    'Changes': [
-                                                        {
-                                                            'Action': 'DELETE',
-                                                            'ResourceRecordSet': {
-                                                                'Name': '_acme-challenge' + '.' + domain_name + '.',
-                                                                'Type': 'TXT',
-                                                                'TTL': 123,
-                                                                'ResourceRecords': [
-                                                                    {
-                                                                        'Value': "{0}".format(base64_of_acme_keyauthorization)
-                                                                    },
-                                                                ]
-                                                            }
-                                                        },
-                                                    ]
-                                                }
-                                            )
+        self.boto_client.change_resource_record_sets(
+            HostedZoneId=self.HostedZoneId,
+            ChangeBatch={
+                'Changes': [
+                    {
+                        'Action': 'DELETE',
+                        'ResourceRecordSet': {
+                            'Name': '_acme-challenge' + '.' + domain_name + '.',
+                            'Type': 'TXT',
+                            'TTL': 123,
+                            'ResourceRecords': [
+                                {
+                                    'Value': "{0}".format(base64_of_acme_keyauthorization)},
+                            ]}},
+                ]})
 
 
-custom_route53_dns_class = AWSroute53Dns(HostedZoneId='my-zone',
-                                        AWS_ACCESS_KEY_ID='access-key',
-                                        AWS_SECRET_ACCESS_KEY='secret-access-key')
+custom_route53_dns_class = AWSroute53Dns(
+    HostedZoneId='my-zone', AWS_ACCESS_KEY_ID='access-key',
+    AWS_SECRET_ACCESS_KEY='secret-access-key')
 
 # create a new certificate:
 client = sewer.Client(domain_name='example.com',
@@ -259,12 +249,13 @@ client = sewer.Client(domain_name='example.com',
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
-print "certificate::", certificate
-print "certificate's key::", certificate_key
+print("certificate::", certificate)
+print("certificate's key::", certificate_key)
 ```
 
 ## Development setup:
 - fork this repo.
+- you need to have python3 installed, this project is python3 only since sewer version 0.5.0.
 - cd sewer
 - sudo apt-get install pandoc
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
