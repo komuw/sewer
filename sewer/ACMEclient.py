@@ -354,10 +354,10 @@ class ACMEclient(object):
         payload = {"csr": self.csr}
         send_csr_response = self.make_signed_acme_request(
             url=finalize_url, payload=payload)
-            self.logger.info(
-                'send_csr_response',
-                status_code=send_csr_response.status_code,
-                response=self.log_response(send_csr_response))
+        self.logger.info(
+            'send_csr_response',
+            status_code=send_csr_response.status_code,
+            response=self.log_response(send_csr_response))
 
         if send_csr_response.status_code != 200:
             raise ValueError(
