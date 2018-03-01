@@ -333,8 +333,7 @@ class ACMEclient(object):
         # list
         authorizations = apply_for_cert_issuance_response_json["authorizations"]
         authorization_url = authorizations[0]
-        finalize = apply_for_cert_issuance_response_json["finalize"]
-        certificate_url = apply_for_cert_issuance_response_json["certificate"]
+        finalize_url = apply_for_cert_issuance_response_json["finalize"]
 
         return authorization_url, finalize_url
 
@@ -364,7 +363,9 @@ class ACMEclient(object):
                 "Error sending csr: status_code={status_code} response={response}". format(
                     status_code=send_csr_response.status_code,
                     response=self.log_response(send_csr_response)))
-        return send_csr_response
+        send_csr_response_json = send_csr_response.json()
+        certificate_url = send_csr_response_json["certificate"]
+        return certificate_url
 
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
@@ -495,17 +496,17 @@ class ACMEclient(object):
         """
         self.logger.info('respond_to_challenge')
         payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
-        notify_acme_challenge_set_response = self.make_signed_acme_request(
-            dns_challenge_url,
-            payload)
+        respond_to_challenge_response = self.make_signed_acme_request(
+            dns_challenge_url, payload)
         self.logger.info(
             'respond_to_challenge_response',
-            status_code=notify_acme_challenge_set_response.status_code,
-            response=self.log_response(notify_acme_challenge_set_response))
-        return respond_to_challenge
+            status_code=respond_to_challenge_response.status_code,
+            response=self.log_response(respond_to_challenge_response))
+        return respond_to_challenge_response
 
     def check_authorization_status(
             self,
+            domain_name,
             authorization_url,
             base64_of_acme_keyauthorization):
         """
@@ -581,17 +582,18 @@ class ACMEclient(object):
     def just_get_me_a_certificate(self):
         self.logger.info('just_get_me_a_certificate')
         self.acme_register()
-        authorization_url, finalize_url, certificate_url = self.apply_for_cert_issuance()
+        authorization_url, finalize_url = self.apply_for_cert_issuance()
         dns_token, dns_challenge_url = self.get_challenge(
             url=authorization_url)
         acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
             dns_token)
         self.dns_class.create_dns_record(
             self.domain_name, base64_of_acme_keyauthorization)
-        self.send_csr(finalize_url)
+        certificate_url = self.send_csr(finalize_url)
         self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
         self.check_authorization_status(
-            authorization_url, base64_of_acme_keyauthorization)
+            self.domain_name, authorization_url,
+            base64_of_acme_keyauthorization)
         certificate = self.get_certificate(certificate_url)
 
         # for domain_name in self.all_domain_names:
