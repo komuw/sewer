@@ -4,7 +4,6 @@ import json
 import base64
 import hashlib
 import binascii
-import urllib.parse
 import textwrap
 import platform
 
@@ -64,12 +63,15 @@ class ACMEclient(object):
             bits=2048,
             digest='sha256',
             ACME_REQUEST_TIMEOUT=65,
-            ACME_CHALLENGE_WAIT_PERIOD=8,
+            ACME_AUTH_STATUS_WAIT_PERIOD=8,
+            ACME_AUTH_STATUS_MAX_CHECKS=5,
             ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
             ACME_CERTIFICATE_CHAIN_URL='https://letsencrypt.org/certs/fakelerootx1.pem'):
+        """
+        
+        """
 
-        self.logger = get_logger(__name__).bind(
-            client_name=self.__class__.__name__)
+        self.logger = get_logger(__name__).bind(sewer_client_version=sewer_version.__version__)
 
         self.domain_name = domain_name
         self.dns_class = dns_class
@@ -80,7 +82,8 @@ class ACMEclient(object):
         self.bits = bits
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
-        self.ACME_CHALLENGE_WAIT_PERIOD = ACME_CHALLENGE_WAIT_PERIOD
+        self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
+        self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.ACME_CERTIFICATE_CHAIN_URL = ACME_CERTIFICATE_CHAIN_URL
 
@@ -109,10 +112,9 @@ class ACMEclient(object):
             self.PRIOR_REGISTERED = True
 
         self.logger = self.logger.bind(
-            sewer_client_name=self.__class__.__name__,
             sewer_client_version=sewer_version.__version__,
             domain_names=self.all_domain_names,
-            ACME_DIRECTORY_URL=self.ACME_DIRECTORY_URL)
+            acme_server=self.ACME_DIRECTORY_URL)
 
         # for staging/test, use:
         # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem'
@@ -131,7 +133,6 @@ class ACMEclient(object):
         return log_body
 
     def get_user_agent(self):
-        # TODO: add the sewer-acme versionto the User-Agent
         return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
             system=platform.system(),
@@ -156,21 +157,6 @@ class ACMEclient(object):
                     response=self.log_response(get_acme_endpoints)))
         return get_acme_endpoints
 
-    def get_nonce(self):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
-        Each request to an ACME server must include a fresh unused nonce
-        in order to protect against replay attacks.
-        """
-        self.logger.info('get_nonce')
-        headers = {'User-Agent': self.User_Agent}
-        response = requests.get(
-            self.ACME_GET_NONCE_URL,
-            timeout=self.ACME_REQUEST_TIMEOUT,
-            headers=headers)
-        nonce = response.headers['Replay-Nonce']
-        return nonce
-
     def create_account_key(self):
         self.logger.info('create_account_key')
         return self.create_key()
@@ -187,6 +173,11 @@ class ACMEclient(object):
         return private_key
 
     def create_csr(self):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        The CSR is sent in the base64url-encoded version of the DER format. (NB: this 
+        field uses base64url, and does not include headers, it is different from PEM.)
+        """
         self.logger.info('create_csr')
         X509Req = OpenSSL.crypto.X509Req()
         X509Req.get_subject().CN = self.domain_name
@@ -206,8 +197,7 @@ class ACMEclient(object):
         X509Req.set_pubkey(pk)
         X509Req.set_version(2)
         X509Req.sign(pk, self.digest)
-        return OpenSSL.crypto.dump_certificate_request(
-            OpenSSL.crypto.FILETYPE_ASN1, X509Req)
+        return OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_ASN1, X509Req)
 
     def get_certificate_chain(self):
         self.logger.info('get_certificate_chain')
@@ -231,7 +221,6 @@ class ACMEclient(object):
                 "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
                     status_code=get_certificate_chain_response.status_code,
                     response=self.log_response(get_certificate_chain_response)))
-
         return certificate_chain
 
     def calculate_safe_base64(self, un_encoded_data):
@@ -249,6 +238,21 @@ class ACMEclient(object):
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
                                             self.account_key)
         return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
+
+    def get_nonce(self):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
+        Each request to an ACME server must include a fresh unused nonce
+        in order to protect against replay attacks.
+        """
+        self.logger.info('get_nonce')
+        headers = {'User-Agent': self.User_Agent}
+        response = requests.get(
+            self.ACME_GET_NONCE_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
+        nonce = response.headers['Replay-Nonce']
+        return nonce
 
     def get_acme_header(self, url):
         """
@@ -302,18 +306,14 @@ class ACMEclient(object):
         Once the client believes it has fulfilled the server's requirements,
         it should send a POST request to the order resource's finalize URL.
         The POST body MUST include a CSR:
+
+        The date values seem to be ignored by LetsEncrypt although they are
+        in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
         """
         self.logger.info('apply_for_cert_issuance')
         # TODO: factor in self.all_domain_names instead of just
         # self.domain_name
-        payload = {
-            "identifiers": [{"type": "dns", "value": self.domain_name}],
-            # the date values seem to be ignored by LetsEncrypt although they are
-            # in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
-            #    "notBefore": "2016-01-01T00:00:00Z",
-            #    "notAfter": "2016-01-08T00:00:00Z"
-        }
-
+        payload = {"identifiers": [{"type": "dns", "value": self.domain_name}],}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
             url=url,
@@ -344,6 +344,7 @@ class ACMEclient(object):
         it should send a POST request(include a CSR) to the order resource's finalize URL.
         A request to finalize an order will result in error if the order indicated does not have status "pending",
         if the CSR and order identifiers differ, or if the account is not authorized for the identifiers indicated in the CSR.
+        The CSR is sent in the base64url-encoded version of the DER format(OpenSSL.crypto.FILETYPE_ASN1)
 
         A valid request to finalize an order will return the order to be finalized.
         The client should begin polling the order by sending a
@@ -367,9 +368,28 @@ class ACMEclient(object):
         certificate_url = send_csr_response_json["certificate"]
         return certificate_url
 
+    def stringfy_items(self, payload):
+        """
+        method that takes a dictionary and then converts any keys or values
+        in that are of type bytes into unicode strings.
+        This is necessary esp if you want to then turn that dict into a json string.
+        """
+        if isinstance(payload, str):
+            return payload
+
+        for k, v in payload.items():
+            if isinstance(k, bytes):
+                k = k.decode('utf-8')
+            if isinstance(v, bytes):
+                v = v.decode('utf-8')
+            payload[k] = v
+        return payload
+
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
         headers = {'User-Agent': self.User_Agent}
+        payload = self.stringfy_items(payload)
+
         if payload in ['GET_CHALLENGE', 'GET_CERTIFICATE']:
             response = requests.get(
                 url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
@@ -516,9 +536,8 @@ class ACMEclient(object):
         current authorization object.
         """
         self.logger.info('check_authorization_status')
-        time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
+        time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         number_of_checks = 0
-        maximum_number_of_checks_allowed = 5
         while True:
             try:
                 headers = {'User-Agent': self.User_Agent}
@@ -532,24 +551,24 @@ class ACMEclient(object):
                     status_code=check_authorization_status_response.status_code,
                     response=self.log_response(check_authorization_status_response),
                     number_of_checks=number_of_checks)
-                if number_of_checks > maximum_number_of_checks_allowed:
+                if number_of_checks > self.ACME_AUTH_STATUS_MAX_CHECKS:
                     raise StopIteration(
                         "Number of checks done is {0} which is greater than the maximum allowed of {1}.". format(
-                            number_of_checks, maximum_number_of_checks_allowed))
+                            number_of_checks, self.ACME_AUTH_STATUS_MAX_CHECKS))
             except Exception as e:
-                self.logger.info('check_challenge', error=str(e))
+                self.logger.info('check_authorization_status', error=str(e))
                 self.dns_class.delete_dns_record(
                     domain_name, base64_of_acme_keyauthorization)
                 break
             if authorization_status == "pending":
-                time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
+                time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
             elif authorization_status == "valid":
                 self.dns_class.delete_dns_record(
                     domain_name, base64_of_acme_keyauthorization)
                 break
             else:
                 # for any other status, sleep
-                time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
+                time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         return check_authorization_status_response
 
     def get_certificate(self, certificate_url):
