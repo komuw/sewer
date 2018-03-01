@@ -93,6 +93,10 @@ class ACMEclient(object):
         self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
         self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
+        # unique account identifier
+        # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        self.kid = None
+
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
         self.certificate_chain = self.get_certificate_chain()
@@ -151,6 +155,21 @@ class ACMEclient(object):
                     status_code=get_acme_endpoints.status_code,
                     response=self.log_response(get_acme_endpoints)))
         return get_acme_endpoints
+
+    def get_nonce(self):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
+        Each request to an ACME server must include a fresh unused nonce
+        in order to protect against replay attacks.
+        """
+        self.logger.info('get_nonce')
+        headers = {'User-Agent': self.User_Agent}
+        response = requests.get(
+            self.ACME_GET_NONCE_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
+        nonce = response.headers['Replay-Nonce']
+        return nonce
 
     def create_account_key(self):
         self.logger.info('create_account_key')
@@ -231,8 +250,9 @@ class ACMEclient(object):
                                             self.account_key)
         return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
 
-    def get_acme_header(self):
+    def get_acme_header(self, url):
         """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
         The JWS Protected Header MUST include the following fields:
         - "alg" (Algorithm)
         - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
@@ -241,23 +261,31 @@ class ACMEclient(object):
         - "url"
         """
         self.logger.info('get_acme_header')
-        private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-            self.account_key,
-            password=None,
-            backend=cryptography.hazmat.backends.default_backend())
-        public_key_public_numbers = private_key.public_key().public_numbers()
+        header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
 
-        # private key public exponent in hex format
-        exponent = "{0:x}".format(public_key_public_numbers.e)
-        exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
-        # private key modulus in hex format
-        modulus = "{0:x}".format(public_key_public_numbers.n)
-        header = {
-            "alg": "RS256",
-            "jwk": {
-                "e": self.calculate_safe_base64(binascii.unhexlify(exponent)),
-                "kty": "RSA",
-                "n": self.calculate_safe_base64(binascii.unhexlify(modulus))}}
+        if url in [
+                self.ACME_NEW_ACCOUNT_URL,
+                self.ACME_REVOKE_CERT_URL,
+                "GET_THUMBPRINT"]:
+            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                self.account_key,
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend())
+            public_key_public_numbers = private_key.public_key().public_numbers()
+            # private key public exponent in hex format
+            exponent = "{0:x}".format(public_key_public_numbers.e)
+            exponent = "0{0}".format(exponent) if len(
+                exponent) % 2 else exponent
+            # private key modulus in hex format
+            modulus = "{0:x}".format(public_key_public_numbers.n)
+            jwk = {
+                "kty": "RSA", "e": self.calculate_safe_base64(
+                    binascii.unhexlify(exponent)), "n": self.calculate_safe_base64(
+                    binascii.unhexlify(modulus))}
+            header["jwk"] = jwk
+        else:
+            header["kid"] = self.kid
+
         return header
 
     def apply_for_cert_issuance(self):
@@ -301,35 +329,65 @@ class ACMEclient(object):
                     status_code=apply_for_cert_issuance_response.status_code,
                     response=self.log_response(apply_for_cert_issuance_response)))
 
-        return apply_for_cert_issuance_response
+        apply_for_cert_issuance_response_json = apply_for_cert_issuance_response.json()
+        # list
+        authorizations = apply_for_cert_issuance_response_json["authorizations"]
+        authorization_url = authorizations[0]
+        finalize = apply_for_cert_issuance_response_json["finalize"]
+        certificate_url = apply_for_cert_issuance_response_json["certificate"]
+
+        return authorization_url, finalize_url
+
+    def send_csr(self, finalize_url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        Once the client believes it has fulfilled the server's requirements,
+        it should send a POST request(include a CSR) to the order resource's finalize URL.
+        A request to finalize an order will result in error if the order indicated does not have status "pending",
+        if the CSR and order identifiers differ, or if the account is not authorized for the identifiers indicated in the CSR.
+
+        A valid request to finalize an order will return the order to be finalized.
+        The client should begin polling the order by sending a
+        GET request to the order resource to obtain its current state.
+        """
+        self.logger.info('send_csr')
+        payload = {"csr": self.csr}
+        send_csr_response = self.make_signed_acme_request(
+            url=finalize_url, payload=payload)
+            self.logger.info(
+                'send_csr_response',
+                status_code=send_csr_response.status_code,
+                response=self.log_response(send_csr_response))
+
+        if send_csr_response.status_code != 200:
+            raise ValueError(
+                "Error sending csr: status_code={status_code} response={response}". format(
+                    status_code=send_csr_response.status_code,
+                    response=self.log_response(send_csr_response)))
+        return send_csr_response
 
     def make_signed_acme_request(self, url, payload):
         self.logger.info('make_signed_acme_request')
         headers = {'User-Agent': self.User_Agent}
-
-        payload64 = self.calculate_safe_base64(json.dumps(payload))
-        protected = self.get_acme_header()
-
-        response = requests.get(
-            self.ACME_GET_NONCE_URL,
-            timeout=self.ACME_REQUEST_TIMEOUT,
-            headers=headers)
-        nonce = response.headers['Replay-Nonce']
-        protected["nonce"] = nonce
-        protected["url"] = url
-
-        protected64 = self.calculate_safe_base64(json.dumps(protected))
-        signature = self.sign_message(
-            message="{0}.{1}".format(
-                protected64, payload64))  # bytes
-        data = json.dumps(
-            {"protected": protected64, "payload": payload64,
-             "signature": self.calculate_safe_base64(signature)})
-        response = requests.post(
-            url,
-            data=data.encode('utf8'),
-            timeout=self.ACME_REQUEST_TIMEOUT,
-            headers=headers)
+        if payload in ['GET_CHALLENGE', 'GET_CERTIFICATE']:
+            response = requests.get(
+                url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+        else:
+            payload64 = self.calculate_safe_base64(json.dumps(payload))
+            protected = self.get_acme_header(url)
+            protected64 = self.calculate_safe_base64(json.dumps(protected))
+            signature = self.sign_message(
+                message="{0}.{1}".format(
+                    protected64, payload64))  # bytes
+            signature64 = self.calculate_safe_base64(signature)  # str
+            data = json.dumps(
+                {"protected": protected64, "payload": payload64,
+                 "signature": signature64})
+            response = requests.post(
+                url,
+                data=data.encode('utf8'),
+                timeout=self.ACME_REQUEST_TIMEOUT,
+                headers=headers)
         return response
 
     def acme_register(self):
@@ -367,44 +425,49 @@ class ACMEclient(object):
                     status_code=acme_register_response.status_code,
                     response=self.log_response(acme_register_response)))
 
+        kid = acme_register_response.headers['Location']
+        setattr(self, 'kid', kid)
         return acme_register_response
 
-    def get_challenge(self, domain_name):
+    def get_challenge(self, url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5
+        When a client receives an order(ie after self.apply_for_cert_issuance() succeeds)
+        from the server it downloads the authorization resources by sending
+        GET requests to the indicated URLs.
+
+        If a client wishes to relinquish its authorization to issue
+        certificates for an identifier, then it may request that the server
+        deactivates each authorization associated with it by sending POST
+        requests with the static object {"status": "deactivated"} to each
+        authorization URL.
+        """
         self.logger.info('get_challenge')
-        payload = {
-            "resource": "new-authz",
-            "identifier": {
-                "type": "dns",
-                "value": domain_name
-            }
-        }
-        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                                   '/acme/new-authz')
         challenge_response = self.make_signed_acme_request(
-            url=url, payload=payload)
+            url, payload='GET_CHALLENGE')
         self.logger.info(
             'get_challenge_response',
             status_code=challenge_response.status_code,
             response=self.log_response(challenge_response))
 
-        if challenge_response.status_code != 201:
+        if challenge_response.status_code != 200:
             raise ValueError(
                 "Error requesting for challenges: status_code={status_code} response={response}". format(
                     status_code=challenge_response.status_code,
                     response=self.log_response(challenge_response)))
 
-        for i in challenge_response.json()['challenges']:
+        challenge_response_json = challenge_response.json()
+        for i in challenge_response_json['challenges']:
             if i['type'] == 'dns-01':
                 dns_challenge = i
         dns_token = dns_challenge['token']
-        dns_challenge_url = dns_challenge['uri']
-
+        dns_challenge_url = dns_challenge['url']
         return dns_token, dns_challenge_url
 
     def get_keyauthorization(self, dns_token):
         self.logger.info('get_keyauthorization')
         acme_header_jwk_json = json.dumps(
-            self.get_acme_header()['jwk'],
+            self.get_acme_header("GET_THUMBPRINT")['jwk'],
             sort_keys=True,
             separators=(',', ':'))
         acme_thumbprint = self.calculate_safe_base64(
@@ -415,41 +478,58 @@ class ACMEclient(object):
 
         return acme_keyauthorization, base64_of_acme_keyauthorization
 
-    def notify_acme_challenge_set(self, acme_keyauthorization,
-                                  dns_challenge_url):
-        self.logger.info('notify_acme_challenge_set')
-        payload = {
-            "resource": "challenge",
-            "keyAuthorization": "{0}".format(acme_keyauthorization)
-        }
+    def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        To prove control of the identifier and receive authorization, the
+        client needs to respond with information to complete the challenges.
+        The server is said to "finalize" the authorization when it has
+        completed one of the validations, by assigning the authorization a
+        status of "valid" or "invalid".
+
+        Usually, the validation process will take some time, so the client
+        will need to poll the authorization resource to see when it is finalized.
+        To check on the status of an authorization, the client sends a GET(polling)
+        request to the authorization URL, and the server responds with the
+        current authorization object.
+        """
+        self.logger.info('respond_to_challenge')
+        payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
         notify_acme_challenge_set_response = self.make_signed_acme_request(
-            dns_challenge_url, payload)
+            dns_challenge_url,
+            payload)
         self.logger.info(
-            'notify_acme_challenge_set_response',
+            'respond_to_challenge_response',
             status_code=notify_acme_challenge_set_response.status_code,
             response=self.log_response(notify_acme_challenge_set_response))
-        return notify_acme_challenge_set_response
+        return respond_to_challenge
 
-    def check_challenge_status(self, dns_challenge_url,
-                               base64_of_acme_keyauthorization, domain_name):
-        self.logger.info('check_challenge')
+    def check_authorization_status(
+            self,
+            authorization_url,
+            base64_of_acme_keyauthorization):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        To check on the status of an authorization, the client sends a GET(polling)
+        request to the authorization URL, and the server responds with the
+        current authorization object.
+        """
+        self.logger.info('check_authorization_status')
         time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
         number_of_checks = 0
-        maximum_number_of_checks_allowed = 15
+        maximum_number_of_checks_allowed = 5
         while True:
             try:
                 headers = {'User-Agent': self.User_Agent}
-                check_challenge_status_response = requests.get(
-                    dns_challenge_url,
-                    timeout=self.ACME_REQUEST_TIMEOUT,
-                    headers=headers)
-                challenge_status = check_challenge_status_response.json()[
+                check_authorization_status_response = requests.get(
+                    authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+                authorization_status = check_authorization_status_response.json()[
                     'status']
                 number_of_checks = number_of_checks + 1
                 self.logger.info(
-                    'check_challenge_status_response',
-                    status_code=check_challenge_status_response.status_code,
-                    response=self.log_response(check_challenge_status_response),
+                    'check_authorization_status_response',
+                    status_code=check_authorization_status_response.status_code,
+                    response=self.log_response(check_authorization_status_response),
                     number_of_checks=number_of_checks)
                 if number_of_checks > maximum_number_of_checks_allowed:
                     raise StopIteration(
@@ -460,32 +540,28 @@ class ACMEclient(object):
                 self.dns_class.delete_dns_record(
                     domain_name, base64_of_acme_keyauthorization)
                 break
-            if challenge_status == "pending":
+            if authorization_status == "pending":
                 time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
-            elif challenge_status == "valid":
+            elif authorization_status == "valid":
                 self.dns_class.delete_dns_record(
                     domain_name, base64_of_acme_keyauthorization)
                 break
             else:
                 # for any other status, sleep
                 time.sleep(self.ACME_CHALLENGE_WAIT_PERIOD)
-        return check_challenge_status_response
+        return check_authorization_status_response
 
-    def get_certificate(self):
+    def get_certificate(self, certificate_url):
         self.logger.info('get_certificate')
-        payload = {
-            "resource": "new-cert",
-            "csr": self.calculate_safe_base64(self.csr)
-        }
-        url = urllib.parse.urljoin(self.ACME_CERTIFICATE_AUTHORITY_URL,
-                                   '/acme/new-cert')
-        get_certificate_response = self.make_signed_acme_request(url, payload)
+
+        get_certificate_response = self.make_signed_acme_request(
+            certificate_url, payload='GET_CERTIFICATE')
         self.logger.info(
             'get_certificate_response',
             status_code=get_certificate_response.status_code,
             response=self.log_response(get_certificate_response))
 
-        if get_certificate_response.status_code != 201:
+        if get_certificate_response.status_code != 200:
             raise ValueError(
                 "Error fetching signed certificate: status_code={status_code} response={response}". format(
                     status_code=get_certificate_response.status_code,
@@ -505,31 +581,37 @@ class ACMEclient(object):
     def just_get_me_a_certificate(self):
         self.logger.info('just_get_me_a_certificate')
         self.acme_register()
-        for domain_name in self.all_domain_names:
-            # NB: this means we will only get a certificate; self.get_certificate()
-            # if all the SAN succed the following steps
-            dns_token, dns_challenge_url = self.get_challenge(domain_name)
-            acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
-                dns_token)
-            self.dns_class.create_dns_record(domain_name,
-                                             base64_of_acme_keyauthorization)
-            self.notify_acme_challenge_set(acme_keyauthorization,
-                                           dns_challenge_url)
-            self.check_challenge_status(
-                dns_challenge_url,
-                base64_of_acme_keyauthorization,
-                domain_name)
-        certificate = self.get_certificate()
+        authorization_url, finalize_url, certificate_url = self.apply_for_cert_issuance()
+        dns_token, dns_challenge_url = self.get_challenge(
+            url=authorization_url)
+        acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+            dns_token)
+        self.dns_class.create_dns_record(
+            self.domain_name, base64_of_acme_keyauthorization)
+        self.send_csr(finalize_url)
+        self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
+        self.check_authorization_status(
+            authorization_url, base64_of_acme_keyauthorization)
+        certificate = self.get_certificate(certificate_url)
+
+        # for domain_name in self.all_domain_names:
+        #     # NB: this means we will only get a certificate; self.get_certificate()
+        #     # if all the SAN succed the following steps
+        #     dns_token, dns_challenge_url = self.get_challenge(domain_name)
+        #     acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+        #         dns_token)
+        #     self.dns_class.create_dns_record(domain_name,
+        #                                      base64_of_acme_keyauthorization)
+        #     self.respond_to_challenge(acme_keyauthorization,  dns_challenge_url)
+        #     self.check_authorization_status(
+        #         dns_challenge_url,
+        #         base64_of_acme_keyauthorization,
+        #         domain_name)
+        # certificate = self.get_certificate()
 
         return certificate
 
     def cert(self):
-        """
-        convenience method to get a certificate without much hassle
-        """
-        return self.just_get_me_a_certificate()
-
-    def certificate(self):
         """
         convenience method to get a certificate without much hassle
         """
