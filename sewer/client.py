@@ -412,6 +412,12 @@ class Client(object):
         The server returns this account object in a 201 (Created) response, with the account URL
         in a Location header field.
         This account URL will be used in subsequest requests to ACME, as the "kid" value in the acme header.
+        If the server already has an account registered with the provided
+        account key, then it MUST return a response with a 200 (OK) status
+        code and provide the URL of that account in the Location header field.
+        If there is an existing account with the new key
+        provided, then the server SHOULD use status code 409 (Conflict) and
+        provide the URL of that account in the Location header field
         """
         self.logger.info('acme_register')
         if self.PRIOR_REGISTERED:
@@ -432,7 +438,7 @@ class Client(object):
             status_code=acme_register_response.status_code,
             response=self.log_response(acme_register_response))
 
-        if acme_register_response.status_code not in [201, 409]:
+        if acme_register_response.status_code not in [201, 200, 409]:
             raise ValueError(
                 "Error while registering: status_code={status_code} response={response}". format(
                     status_code=acme_register_response.status_code,
