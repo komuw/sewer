@@ -14,7 +14,7 @@ from structlog import get_logger
 from . import __version__ as sewer_version
 
 
-class ACMEclient(object):
+class Client(object):
     """
     todo: improve documentation.
 
@@ -143,7 +143,7 @@ class ACMEclient(object):
         try:
             log_body = response.json()
         except ValueError:
-            log_body = response.content
+            log_body = response.content[:30]
         return log_body
 
     def get_user_agent(self):

@@ -11,7 +11,7 @@ import sewer
 from . import test_utils
 
 
-class TestACMEclient(TestCase):
+class TestClient(TestCase):
     """
     Todo:
         - mock time.sleep
@@ -312,7 +312,7 @@ class TestACMEclient(TestCase):
                           str(raised_exception.exception))
 
 
-class TestACMEclientForSAN(TestACMEclient):
+class TestClientForSAN(TestClient):
     """
     Test Acme client for SAN certificates.
     """
@@ -335,7 +335,7 @@ class TestACMEclientForSAN(TestACMEclient):
                 ACME_CHALLENGE_WAIT_PERIOD=0,
                 GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
                 ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
-        super(TestACMEclientForSAN, self).setUp()
+        super(TestClientForSAN, self).setUp()
 
 
 # TEST cli
