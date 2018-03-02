@@ -351,7 +351,7 @@ class Client(object):
             status_code=send_csr_response.status_code,
             response=self.log_response(send_csr_response))
 
-        if send_csr_response.status_code != 200:
+        if send_csr_response.status_code not in [200, 201]:
             raise ValueError(
                 "Error sending csr: status_code={status_code} response={response}". format(
                     status_code=send_csr_response.status_code,
@@ -580,7 +580,7 @@ class Client(object):
             status_code=get_certificate_response.status_code,
             response=self.log_response(get_certificate_response))
 
-        if get_certificate_response.status_code != 200:
+        if get_certificate_response.status_code not in [200, 201]:
             raise ValueError(
                 "Error fetching signed certificate: status_code={status_code} response={response}". format(
                     status_code=get_certificate_response.status_code,
