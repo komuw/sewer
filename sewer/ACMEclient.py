@@ -50,7 +50,7 @@ class ACMEclient(object):
         certificate_key = client.certificate_key
 
     todo:
-        - handle exceptions
+        - handle more exceptions
     """
 
     def __init__(
@@ -58,34 +58,55 @@ class ACMEclient(object):
             domain_name,
             dns_class,
             domain_alt_names=[],
-            registration_recovery_email=None,
+            contact_email=None,
             account_key=None,
             bits=2048,
             digest='sha256',
-            ACME_REQUEST_TIMEOUT=65,
+            ACME_REQUEST_TIMEOUT=7,
             ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=5,
-            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
-            ACME_CERTIFICATE_CHAIN_URL='https://letsencrypt.org/certs/fakelerootx1.pem'):
+            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
         """
-        
+        :param domain_name:                  (required) [string]
+            the name that you want to acquire/renew certificates for.
+        :param dns_class:                    (required) [class]
+            a subclass of sewer.common.BaseDns which will be called to create/delete DNS TXT records.
+        :param domain_alt_names:             (optional) [list]
+            list of alternative names that you want to be bundled into the same certificate as domain_name.
+        :param contact_email:                (optional) [string]
+            a contact email address
+        :param account_key:                  (optional) [string]
+            a string whose contents is an ssl certificate that identifies your account on the acme server.
+            if you do not provide one, this client will issue a new certificate else will renew.
+        :param bits:                         (optional) [integer]
+            number of bits that will be used to create your certificates' private key.
+        :param digest:                       (optional) [string]
+            the ssl digest type to be used in signing the certificate signing request(csr)
+        :param ACME_REQUEST_TIMEOUT:         (optional) [integer]
+            the max time that the client will wait for a network call to complete.
+        :param ACME_AUTH_STATUS_WAIT_PERIOD: (optional) [integer]
+            the interval between two consequent client polls on the acme server to check on authorization status
+        :param ACME_AUTH_STATUS_MAX_CHECKS:  (optional) [integer]
+            the max number of times the client will poll the acme server to check on authorization status
+        :param ACME_DIRECTORY_URL:           (optional) [string]
+            the url of the acme servers' directory endpoint
         """
 
-        self.logger = get_logger(__name__).bind(sewer_client_version=sewer_version.__version__)
+        self.logger = get_logger(__name__).bind(
+            sewer_client_version=sewer_version.__version__)
 
         self.domain_name = domain_name
         self.dns_class = dns_class
         self.domain_alt_names = domain_alt_names
         self.all_domain_names = copy.copy(self.domain_alt_names)
         self.all_domain_names.insert(0, self.domain_name)
-        self.registration_recovery_email = registration_recovery_email
+        self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-        self.ACME_CERTIFICATE_CHAIN_URL = ACME_CERTIFICATE_CHAIN_URL
 
         self.User_Agent = self.get_user_agent()
         acme_endpoints = self.get_acme_endpoints().json()
@@ -102,7 +123,6 @@ class ACMEclient(object):
 
         self.certificate_key = self.create_certificate_key()
         self.csr = self.create_csr()
-        self.certificate_chain = self.get_certificate_chain()
 
         if not account_key:
             self.account_key = self.create_account_key()
@@ -115,11 +135,6 @@ class ACMEclient(object):
             sewer_client_version=sewer_version.__version__,
             domain_names=self.all_domain_names,
             acme_server=self.ACME_DIRECTORY_URL)
-
-        # for staging/test, use:
-        # ACME_CERTIFICATE_CHAIN_URL= 'https://letsencrypt.org/certs/fakelerootx1.pem'
-        # for prod use:
-        # ACME_CERTIFICATE_CHAIN_URL = 'https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem'
 
     def log_response(self, response):
         """
@@ -175,7 +190,7 @@ class ACMEclient(object):
     def create_csr(self):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
-        The CSR is sent in the base64url-encoded version of the DER format. (NB: this 
+        The CSR is sent in the base64url-encoded version of the DER format. (NB: this
         field uses base64url, and does not include headers, it is different from PEM.)
         """
         self.logger.info('create_csr')
@@ -197,31 +212,8 @@ class ACMEclient(object):
         X509Req.set_pubkey(pk)
         X509Req.set_version(2)
         X509Req.sign(pk, self.digest)
-        return OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_ASN1, X509Req)
-
-    def get_certificate_chain(self):
-        self.logger.info('get_certificate_chain')
-        headers = {'User-Agent': self.User_Agent}
-        get_certificate_chain_response = requests.get(
-            self.ACME_CERTIFICATE_CHAIN_URL,
-            timeout=self.ACME_REQUEST_TIMEOUT,
-            headers=headers)
-        certificate_chain = get_certificate_chain_response.content
-        self.logger.info(
-            'get_certificate_chain_response',
-            status_code=get_certificate_chain_response.status_code)
-
-        if get_certificate_chain_response.status_code not in [200, 201]:
-            raise ValueError(
-                "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
-                    status_code=get_certificate_chain_response.status_code,
-                    response=self.log_response(get_certificate_chain_response)))
-        elif b'-----BEGIN CERTIFICATE-----' and b'-----END CERTIFICATE-----' not in get_certificate_chain_response.content:
-            raise ValueError(
-                "Error while getting Acme certificate chain: status_code={status_code} response={response}". format(
-                    status_code=get_certificate_chain_response.status_code,
-                    response=self.log_response(get_certificate_chain_response)))
-        return certificate_chain
+        return OpenSSL.crypto.dump_certificate_request(
+            OpenSSL.crypto.FILETYPE_ASN1, X509Req)
 
     def calculate_safe_base64(self, un_encoded_data):
         """
@@ -313,7 +305,8 @@ class ACMEclient(object):
         self.logger.info('apply_for_cert_issuance')
         # TODO: factor in self.all_domain_names instead of just
         # self.domain_name
-        payload = {"identifiers": [{"type": "dns", "value": self.domain_name}],}
+        payload = {"identifiers": [
+            {"type": "dns", "value": self.domain_name}], }
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
             url=url,
@@ -424,11 +417,11 @@ class ACMEclient(object):
         self.logger.info('acme_register')
         if self.PRIOR_REGISTERED:
             payload = {"onlyReturnExisting": True}
-        elif self.registration_recovery_email:
+        elif self.contact_email:
             payload = {
                 "termsOfServiceAgreed": True, "contact": [
                     "mailto:{0}".format(
-                        self.registration_recovery_email)]}
+                        self.contact_email)]}
         else:
             payload = {"termsOfServiceAgreed": True}
 
@@ -551,10 +544,12 @@ class ACMEclient(object):
                     status_code=check_authorization_status_response.status_code,
                     response=self.log_response(check_authorization_status_response),
                     number_of_checks=number_of_checks)
-                if number_of_checks > self.ACME_AUTH_STATUS_MAX_CHECKS:
+                if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
                     raise StopIteration(
-                        "Number of checks done is {0} which is greater than the maximum allowed of {1}.". format(
-                            number_of_checks, self.ACME_AUTH_STATUS_MAX_CHECKS))
+                        "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds.". format(
+                            number_of_checks,
+                            self.ACME_AUTH_STATUS_MAX_CHECKS,
+                            self.ACME_AUTH_STATUS_WAIT_PERIOD))
             except Exception as e:
                 self.logger.info('check_authorization_status', error=str(e))
                 self.dns_class.delete_dns_record(
@@ -587,16 +582,8 @@ class ACMEclient(object):
                     status_code=get_certificate_response.status_code,
                     response=self.log_response(get_certificate_response)))
 
-        base64encoded_cert = base64.b64encode(
-            get_certificate_response.content.encode('utf-8'))
-        sixty_four_width_cert = textwrap.wrap(
-            base64encoded_cert.decode('utf-8'), 64)
-        certificate = '\n'.join(sixty_four_width_cert)
-
-        pem_certificate = """-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n""".format(
-            certificate)
-        pem_certificate_and_chain = pem_certificate + self.certificate_chain
-        return pem_certificate_and_chain
+        pem_certificate = get_certificate_response.content.decode('utf-8')
+        return pem_certificate
 
     def just_get_me_a_certificate(self):
         self.logger.info('just_get_me_a_certificate')
@@ -614,7 +601,6 @@ class ACMEclient(object):
             base64_of_acme_keyauthorization)
         certificate_url = self.send_csr(finalize_url)
         certificate = self.get_certificate(certificate_url)
-
 
         # for domain_name in self.all_domain_names:
         #     # NB: this means we will only get a certificate; self.get_certificate()
