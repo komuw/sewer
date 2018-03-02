@@ -469,7 +469,7 @@ class Client(object):
             status_code=challenge_response.status_code,
             response=self.log_response(challenge_response))
 
-        if challenge_response.status_code != 200:
+        if challenge_response.status_code not in [200, 201]:
             raise ValueError(
                 "Error requesting for challenges: status_code={status_code} response={response}". format(
                     status_code=challenge_response.status_code,
