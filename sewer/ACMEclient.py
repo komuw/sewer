@@ -68,7 +68,7 @@ class ACMEclient(object):
             ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
         """
         :param domain_name:                  (required) [string]
-            the name that you want to acquire/renew certificates for.
+            the name that you want to acquire/renew certificate for. wildcards are allowed.
         :param dns_class:                    (required) [class]
             a subclass of sewer.common.BaseDns which will be called to create/delete DNS TXT records.
         :param domain_alt_names:             (optional) [list]
@@ -85,7 +85,7 @@ class ACMEclient(object):
         :param ACME_REQUEST_TIMEOUT:         (optional) [integer]
             the max time that the client will wait for a network call to complete.
         :param ACME_AUTH_STATUS_WAIT_PERIOD: (optional) [integer]
-            the interval between two consequent client polls on the acme server to check on authorization status
+            the interval between two consecutive client polls on the acme server to check on authorization status
         :param ACME_AUTH_STATUS_MAX_CHECKS:  (optional) [integer]
             the max number of times the client will poll the acme server to check on authorization status
         :param ACME_DIRECTORY_URL:           (optional) [string]
