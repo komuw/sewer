@@ -351,7 +351,7 @@ class ACMEclient(object):
         GET request to the order resource to obtain its current state.
         """
         self.logger.info('send_csr')
-        payload = {"csr": self.csr}
+        payload = {"csr": self.calculate_safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(
             url=finalize_url, payload=payload)
         self.logger.info(
