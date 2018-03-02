@@ -1,4 +1,4 @@
-## Sewer          
+##Sewer          
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuW/sewer/tree/master.svg?style=svg)](https://circleci.com/gh/komuW/sewer/tree/master)
@@ -11,13 +11,14 @@ Sewer currently only supports the DNS mode of validation, I have no plans of sup
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
+3. [Bring your own dns provider](#Bring-your-own-DNS-provider)   
 ... but I will add more as time progresses.                 
 
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
 
 
-## Installation:
+##Installation
 
 ```shell
 pip3 install sewer
@@ -30,7 +31,7 @@ Sewer is in active development and it's API may change in backward incompatible 
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
 
-## Usage:
+##Usage
 
 ```python
 import sewer
@@ -96,7 +97,7 @@ account_key = client.account_key
 ```
 
 
-## CLI:
+##CLI
 Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.            
 Your dns providers credentials need to be supplied as environment variables.
  
@@ -169,7 +170,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 
 
 
-## Features:
+##Features
 - Obtain certificates.
 - Renew certificates.
 - Supports multiple DNS providers.
@@ -181,7 +182,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
-## How to use a custom/unsupported DNS provider:
+##Bring your own DNS provider          
 Currently, sewer only supports cloudflare and Aurora. However, it is very easy to use another dns provider with sewer.          
 All you have to do is create your own dns class that is a child of `sewer.BaseDns` and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     
@@ -264,7 +265,7 @@ print("certificate::", certificate)
 print("certificate's key::", certificate_key)
 ```
 
-## Development setup:
+##Development setup
 - fork this repo.
 - you need to have python3 installed, this project is python3 only since sewer version 0.5.0.
 - cd sewer
@@ -299,11 +300,11 @@ NB: I make no commitment of accepting your pull requests.
 
 
 
-## TODO:
+##TODO
 - support more DNS providers
 - https://github.com/komuW/sewer/milestone/1
 
-## FAQ:
+##FAQ
 - Why another ACME client?          
   I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not 
   find anything satisfactory for use in Python code.
