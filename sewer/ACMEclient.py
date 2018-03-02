@@ -62,9 +62,9 @@ class ACMEclient(object):
             account_key=None,
             bits=2048,
             digest='sha256',
-            ACME_REQUEST_TIMEOUT=7,
-            ACME_AUTH_STATUS_WAIT_PERIOD=8,
-            ACME_AUTH_STATUS_MAX_CHECKS=5,
+            ACME_REQUEST_TIMEOUT=5,
+            ACME_AUTH_STATUS_WAIT_PERIOD=5,
+            ACME_AUTH_STATUS_MAX_CHECKS=3,
             ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
         """
         :param domain_name:                  (required) [string]
