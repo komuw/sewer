@@ -608,12 +608,13 @@ class ACMEclient(object):
             dns_token)
         self.dns_class.create_dns_record(
             self.domain_name, base64_of_acme_keyauthorization)
-        certificate_url = self.send_csr(finalize_url)
         self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
         self.check_authorization_status(
             self.domain_name, authorization_url,
             base64_of_acme_keyauthorization)
+        certificate_url = self.send_csr(finalize_url)
         certificate = self.get_certificate(certificate_url)
+
 
         # for domain_name in self.all_domain_names:
         #     # NB: this means we will only get a certificate; self.get_certificate()
