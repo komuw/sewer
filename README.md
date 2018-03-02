@@ -182,7 +182,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
-##Bring your own DNS provider          
+## Bring your own DNS provider          
 Currently, sewer only supports cloudflare and Aurora. However, it is very easy to use another dns provider with sewer.          
 All you have to do is create your own dns class that is a child of `sewer.BaseDns` and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     
