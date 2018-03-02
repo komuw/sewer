@@ -32,15 +32,17 @@ class TestClient(TestCase):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name, dns_class=self.dns_class,
-                ACME_CHALLENGE_WAIT_PERIOD=0,
-                GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-                ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_AUTH_STATUS_MAX_CHECKS=1,
+                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
 
     def tearDown(self):
         pass
 
-    def test_get_certificate_chain_failure_results_in_exception(self):
+    def test_get_get_acme_endpoints_failure_results_in_exception(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse(
@@ -52,7 +54,7 @@ class TestClient(TestCase):
                 sewer.Client(
                     domain_name='example.com',
                     dns_class=test_utils.ExmpleDnsProvider(),
-                    ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
+                    ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
 
             self.assertRaises(ValueError, mock_create_acme_client)
             with self.assertRaises(ValueError) as raised_exception:
@@ -110,18 +112,6 @@ class TestClient(TestCase):
             self.assertIsInstance(
                 account_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
-
-    def test_certificate_chain_is_generated(self):
-        with mock.patch('requests.post') as mock_requests_post, mock.patch(
-                'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
-            self.assertIsInstance(self.client.certificate_chain, str)
 
     def test_acme_registration_is_done(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -330,13 +320,42 @@ class TestClientForSAN(TestClient):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name, dns_class=self.dns_class,
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
-                ACME_CHALLENGE_WAIT_PERIOD=0,
-                GET_NONCE_URL="https://acme-staging.api.letsencrypt.org/directory",
-                ACME_CERTIFICATE_AUTHORITY_URL="https://acme-staging.api.letsencrypt.org")
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_AUTH_STATUS_MAX_CHECKS=1,
+                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
         super(TestClientForSAN, self).setUp()
 
+
+class TestClientForWildcard(TestClient):
+    """
+    Test Acme client for wildard certificates.
+    """
+
+    def setUp(self):
+        self.domain_name = '*.exampleSTARcom'
+        self.domain_alt_names = [
+            'blog.exampleSAN.com', 'staging.exampleSAN.com',
+            'www.exampleSAN.com'
+        ]
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+
+            self.dns_class = test_utils.ExmpleDnsProvider()
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                domain_alt_names=self.domain_alt_names,
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_AUTH_STATUS_MAX_CHECKS=1,
+                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
+        super(TestClientForWildcard, self).setUp()
 
 # TEST cli
 # from unittest import TestCase

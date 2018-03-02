@@ -118,9 +118,9 @@ def main():
         # TODO: move this to a config.py file.
         # the cli and the client would both read this urls from that config
         # file
-        ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'
+        ACME_DIRECTORY_URL = 'https://acme-staging-v02.api.letsencrypt.org/directory'
     else:
-        ACME_DIRECTORY_URL='https://ACME_DIRECTORY_URL-prod-url'
+        ACME_DIRECTORY_URL = 'https://ACME_DIRECTORY_URL-prod-url'
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
