@@ -11,7 +11,7 @@ Sewer currently only supports the DNS mode of validation, I have no plans of sup
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
-3. [Bring your own dns provider](#Bring-your-own-DNS-provider)   
+3. [Bring your own dns provider](#bring-your-own-dns-provider)   
 ... but I will add more as time progresses.                 
 
 Sewer can be used very easliy programmatically as a library from code.            
