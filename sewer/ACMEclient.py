@@ -595,11 +595,10 @@ class ACMEclient(object):
             dns_token)
         self.dns_class.create_dns_record(
             self.domain_name, base64_of_acme_keyauthorization)
+        time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
+        time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         certificate_url = self.send_csr(finalize_url)
-        self.check_authorization_status(
-            self.domain_name, authorization_url,
-            base64_of_acme_keyauthorization)
         certificate = self.get_certificate(certificate_url)
 
         # for domain_name in self.all_domain_names:
