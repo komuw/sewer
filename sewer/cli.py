@@ -118,11 +118,9 @@ def main():
         # TODO: move this to a config.py file.
         # the cli and the client would both read this urls from that config
         # file
-        GET_NONCE_URL = "https://acme-staging.api.letsencrypt.org/directory"
-        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-staging.api.letsencrypt.org"
+        ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'
     else:
-        GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory"
-        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
+        ACME_DIRECTORY_URL='https://ACME_DIRECTORY_URL-prod-url'
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
@@ -169,10 +167,9 @@ def main():
         domain_name=domain,
         dns_class=dns_class,
         domain_alt_names=alt_domains,
-        registration_recovery_email=email,
+        contact_email=email,
         account_key=account_key,
-        GET_NONCE_URL=GET_NONCE_URL,
-        ACME_CERTIFICATE_AUTHORITY_URL=ACME_CERTIFICATE_AUTHORITY_URL)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
