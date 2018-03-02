@@ -82,6 +82,17 @@ with open('certificate.crt', 'w') as certificate_file:
     certificate_file.write(certificate)
 with open('certificate.key', 'w') as certificate_key_file:
     certificate_key_file.write(certificate_key)
+
+# 3. You can also request/renew wildcard certificates:
+import sewer
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
+                                CLOUDFLARE_EMAIL='example@example.com',
+                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+client = sewer.Client(domain_name='*.example.com',
+                      dns_class=dns_class)
+certificate = client.cert()
+certificate_key = client.certificate_key
+account_key = client.account_key
 ```
 
 

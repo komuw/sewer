@@ -27,6 +27,8 @@ class AuroraDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('create_dns_record')
+        # if we have been given a wildcard name, strip wildcard
+        domain_name = domain_name.lstrip('*.')
 
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(
