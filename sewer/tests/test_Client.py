@@ -2,7 +2,6 @@
 # not to pollute the global namespace.
 # see: https://python-packaging.readthedocs.io/en/latest/testing.html
 
-import json
 import mock
 import cryptography
 from unittest import TestCase
