@@ -61,8 +61,8 @@ class ACMEclient(object):
             account_key=None,
             bits=2048,
             digest='sha256',
-            ACME_REQUEST_TIMEOUT=5,
-            ACME_AUTH_STATUS_WAIT_PERIOD=5,
+            ACME_REQUEST_TIMEOUT=7,
+            ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=3,
             ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
         """
@@ -92,7 +92,7 @@ class ACMEclient(object):
         """
 
         self.logger = get_logger(__name__).bind(
-            sewer_client_version=sewer_version.__version__)
+            sewer_ver=sewer_version.__version__)
 
         self.domain_name = domain_name
         self.dns_class = dns_class
@@ -131,9 +131,9 @@ class ACMEclient(object):
             self.PRIOR_REGISTERED = True
 
         self.logger = self.logger.bind(
-            sewer_client_version=sewer_version.__version__,
+            sewer_ver=sewer_version.__version__,
             domain_names=self.all_domain_names,
-            acme_server=self.ACME_DIRECTORY_URL)
+            acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
 
     def log_response(self, response):
         """
@@ -155,7 +155,7 @@ class ACMEclient(object):
             sewer_url=sewer_version.__url__)
 
     def get_acme_endpoints(self):
-        self.logger.info('\n\n get_acme_endpoints')
+        self.logger.info('get_acme_endpoints')
         headers = {'User-Agent': self.User_Agent}
         get_acme_endpoints = requests.get(
             self.ACME_DIRECTORY_URL,
@@ -192,7 +192,7 @@ class ACMEclient(object):
         The CSR is sent in the base64url-encoded version of the DER format. (NB: this
         field uses base64url, and does not include headers, it is different from PEM.)
         """
-        self.logger.info('\n\n create_csr')
+        self.logger.info('create_csr')
         X509Req = OpenSSL.crypto.X509Req()
         X509Req.get_subject().CN = self.domain_name
 
@@ -301,7 +301,7 @@ class ACMEclient(object):
         The date values seem to be ignored by LetsEncrypt although they are
         in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
         """
-        self.logger.info('\n\n apply_for_cert_issuance')
+        self.logger.info('apply_for_cert_issuance')
         # TODO: factor in self.all_domain_names instead of just
         # self.domain_name
         payload = {"identifiers": [
@@ -342,7 +342,7 @@ class ACMEclient(object):
         The client should begin polling the order by sending a
         GET request to the order resource to obtain its current state.
         """
-        self.logger.info('\n\n send_csr')
+        self.logger.info('send_csr')
         payload = {"csr": self.calculate_safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(
             url=finalize_url, payload=payload)
@@ -413,7 +413,7 @@ class ACMEclient(object):
         in a Location header field.
         This account URL will be used in subsequest requests to ACME, as the "kid" value in the acme header.
         """
-        self.logger.info('\n\n acme_register')
+        self.logger.info('acme_register')
         if self.PRIOR_REGISTERED:
             payload = {"onlyReturnExisting": True}
         elif self.contact_email:
@@ -455,7 +455,7 @@ class ACMEclient(object):
         requests with the static object {"status": "deactivated"} to each
         authorization URL.
         """
-        self.logger.info('\n\n get_challenge')
+        self.logger.info('get_challenge')
         challenge_response = self.make_signed_acme_request(
             url, payload='GET_CHALLENGE')
         self.logger.info(
@@ -506,7 +506,7 @@ class ACMEclient(object):
         request to the authorization URL, and the server responds with the
         current authorization object.
         """
-        self.logger.info('\n\n respond_to_challenge')
+        self.logger.info('respond_to_challenge')
         payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
         respond_to_challenge_response = self.make_signed_acme_request(
             dns_challenge_url, payload)
@@ -534,7 +534,7 @@ class ACMEclient(object):
         The server MUST provide information about its retry state to the
         client via the "errors" field in the challenge and the Retry-After
         """
-        self.logger.info('\n\n check_authorization_status')
+        self.logger.info('check_authorization_status')
         time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         number_of_checks = 0
         while True:
@@ -565,7 +565,7 @@ class ACMEclient(object):
         return check_authorization_status_response
 
     def get_certificate(self, certificate_url):
-        self.logger.info('\n\n get_certificate')
+        self.logger.info('get_certificate')
 
         get_certificate_response = self.make_signed_acme_request(
             certificate_url, payload='GET_CERTIFICATE')
@@ -584,7 +584,7 @@ class ACMEclient(object):
         return pem_certificate
 
     def just_get_me_a_certificate(self):
-        self.logger.info('\n\n just_get_me_a_certificate')
+        self.logger.info('just_get_me_a_certificate')
         self.acme_register()
         authorization_url, finalize_url = self.apply_for_cert_issuance()
         dns_token, dns_challenge_url = self.get_challenge(
@@ -601,6 +601,7 @@ class ACMEclient(object):
             certificate = self.get_certificate(certificate_url)
         except Exception as e:
             self.logger.error('just_get_me_a_certificate', error=str(e))
+            return
         finally:
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)
