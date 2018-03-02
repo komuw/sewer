@@ -2,6 +2,7 @@
 # not to pollute the global namespace.
 # see: https://python-packaging.readthedocs.io/en/latest/testing.html
 
+import json
 import mock
 import cryptography
 from unittest import TestCase
@@ -32,11 +33,8 @@ class TestClient(TestCase):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.Client(
-                domain_name=self.domain_name,
-                dns_class=self.dns_class,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_AUTH_STATUS_MAX_CHECKS=1,
+                domain_name=self.domain_name, dns_class=self.dns_class,
+                ACME_REQUEST_TIMEOUT=1, ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
 
     def tearDown(self):
@@ -59,19 +57,14 @@ class TestClient(TestCase):
             self.assertRaises(ValueError, mock_create_acme_client)
             with self.assertRaises(ValueError) as raised_exception:
                 mock_create_acme_client()
-            self.assertIn('Error while getting Acme certificate chain',
+            self.assertIn('Error while getting Acme endpoints',
                           str(raised_exception.exception))
 
     def test_user_agent_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
 
             for i in ['python-requests', 'sewer',
                       'https://github.com/komuW/sewer']:
@@ -80,13 +73,8 @@ class TestClient(TestCase):
     def test_certificate_key_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             certificate_key = self.client.certificate_key
 
             certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -98,13 +86,8 @@ class TestClient(TestCase):
     def test_account_key_is_generated(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             account_key = self.client.account_key
 
             account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -117,26 +100,18 @@ class TestClient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_registration:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
             self.assertTrue(mock_acme_registration.called)
 
     def test_acme_registration_failure_doesnt_result_in_certificate(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
             mock_requests_post.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
 
             def mock_get_certificate():
                 self.client.cert()
@@ -151,13 +126,8 @@ class TestClient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.get_challenge') as mock_get_challenge:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
             self.client.cert()
             self.assertTrue(mock_get_challenge.called)
@@ -166,15 +136,12 @@ class TestClient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_register:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
             mock_requests_post.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
             mock_acme_register.return_value = test_utils.MockResponse(
-                status_code=201, content=content)
+                status_code=201)
 
             def mock_get_certificate():
                 self.client.cert()
@@ -182,7 +149,7 @@ class TestClient(TestCase):
             self.assertRaises(ValueError, mock_get_certificate)
             with self.assertRaises(ValueError) as raised_exception:
                 mock_get_certificate()
-            self.assertIn('Error requesting for challenges',
+            self.assertIn('Error applying for certificate issuance',
                           str(raised_exception.exception))
 
     def test_create_dns_record_is_called(self):
@@ -190,58 +157,38 @@ class TestClient(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.tests.test_utils.ExmpleDnsProvider.create_dns_record'
         ) as mock_create_dns_record:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
             self.assertTrue(mock_create_dns_record.called)
 
-    def test_notify_acme_challenge_set_is_called(self):
+    def test_respond_to_challenge_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
-                    'sewer.Client.notify_acme_challenge_set'
-        ) as mock_notify_acme_challenge_set:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+                    'sewer.Client.respond_to_challenge'
+        ) as mock_respond_to_challenge:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
-            self.assertTrue(mock_notify_acme_challenge_set.called)
+            self.assertTrue(mock_respond_to_challenge.called)
 
-    def test_check_challenge_status_set_is_called(self):
+    def test_check_authorization_status_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
-                    'sewer.Client.check_challenge_status'
-        ) as mock_check_challenge_status:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+                    'sewer.Client.check_authorization_status'
+        ) as mock_check_authorization_status:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
-            self.assertTrue(mock_check_challenge_status.called)
+            self.assertTrue(mock_check_authorization_status.called)
 
     def test_delete_dns_record_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record'
         ) as mock_delete_dns_record:
-            content = """
-                          {"status": "valid", "challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
             self.assertTrue(mock_delete_dns_record.called)
 
@@ -249,26 +196,16 @@ class TestClient(TestCase):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.get_certificate') as mock_get_certificate:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
             self.assertTrue(mock_get_certificate.called)
 
     def test_certificate_is_issued(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
-            mock_requests_post.return_value = test_utils.MockResponse(
-                content=content)
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content=content)
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
             for i in [
                     '-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'
             ]:
@@ -280,16 +217,13 @@ class TestClient(TestCase):
                     'sewer.Client.get_challenge'
         ) as mock_get_challenge, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_register:
-            content = """
-                          {"challenges": [{"type": "dns-01", "token": "example-token", "uri": "example-uri"}]}
-                      """
             mock_requests_post.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(
-                status_code=400, content=content)
+                status_code=400)
             mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
             mock_acme_register.return_value = test_utils.MockResponse(
-                status_code=409, content=content)
+                status_code=409)
 
             def mock_get_certificate():
                 self.client.cert()
@@ -298,7 +232,7 @@ class TestClient(TestCase):
 
             with self.assertRaises(ValueError) as raised_exception:
                 mock_get_certificate()
-            self.assertIn('Error fetching signed certificate',
+            self.assertIn('Error applying for certificate',
                           str(raised_exception.exception))
 
 
@@ -325,7 +259,6 @@ class TestClientForSAN(TestClient):
                 domain_alt_names=self.domain_alt_names,
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_AUTH_STATUS_MAX_CHECKS=1,
                 ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
         super(TestClientForSAN, self).setUp()
 
