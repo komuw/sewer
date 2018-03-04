@@ -570,44 +570,45 @@ class Client(object):
                 time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         return check_authorization_status_response
 
-    def get_certificate(self, certificate_url):
-        self.logger.info('get_certificate')
+    def download_certificate(self, certificate_url):
+        self.logger.info('download_certificate')
 
-        get_certificate_response = self.make_signed_acme_request(
-            certificate_url, payload='GET_CERTIFICATE')
+        download_certificate_response = self.make_signed_acme_request(
+            certificate_url, payload='download_certificate')
         self.logger.info(
-            'get_certificate_response',
-            status_code=get_certificate_response.status_code,
-            response=self.log_response(get_certificate_response))
+            'download_certificate_response',
+            status_code=download_certificate_response.status_code,
+            response=self.log_response(download_certificate_response))
 
-        if get_certificate_response.status_code not in [200, 201]:
+        if download_certificate_response.status_code not in [200, 201]:
             raise ValueError(
                 "Error fetching signed certificate: status_code={status_code} response={response}". format(
-                    status_code=get_certificate_response.status_code,
-                    response=self.log_response(get_certificate_response)))
+                    status_code=download_certificate_response.status_code,
+                    response=self.log_response(download_certificate_response)))
 
-        pem_certificate = get_certificate_response.content.decode('utf-8')
+        pem_certificate = download_certificate_response.content.decode('utf-8')
         return pem_certificate
 
-    def just_get_me_a_certificate(self):
-        self.logger.info('just_get_me_a_certificate')
-        self.acme_register()
-        authorization_url, finalize_url = self.apply_for_cert_issuance()
-        dns_token, dns_challenge_url = self.get_challenge(
-            url=authorization_url)
-        acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
-            dns_token)
+    def get_certificate(self):
+        self.logger.info('get_certificate')
+        base64_of_acme_keyauthorization = "placeholder"
         try:
+            self.acme_register()
+            authorization_url, finalize_url = self.apply_for_cert_issuance()
+            dns_token, dns_challenge_url = self.get_challenge(
+                url=authorization_url)
+            acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+                dns_token)
             self.dns_class.create_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)
             self.check_authorization_status(
                 authorization_url, base64_of_acme_keyauthorization)
             self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
             certificate_url = self.send_csr(finalize_url)
-            certificate = self.get_certificate(certificate_url)
+            certificate = self.download_certificate(certificate_url)
         except Exception as e:
-            self.logger.error('just_get_me_a_certificate', error=str(e))
-            return
+            self.logger.error('get_certificate', error=str(e))
+            raise e
         finally:
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)
@@ -633,7 +634,7 @@ class Client(object):
         """
         convenience method to get a certificate without much hassle
         """
-        return self.just_get_me_a_certificate()
+        return self.get_certificate()
 
     def renew(self):
         """
@@ -642,4 +643,4 @@ class Client(object):
         An issuance request counts as a renewal if it contains the exact same set of hostnames as a previously issued certificate.
             https://letsencrypt.org/docs/rate-limits/
         """
-        return self.just_get_me_a_certificate()
+        return self.cert()
