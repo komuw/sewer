@@ -611,21 +611,6 @@ class Client(object):
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)
 
-        # for domain_name in self.all_domain_names:
-        #     # NB: this means we will only get a certificate; self.get_certificate()
-        #     # if all the SAN succed the following steps
-        #     dns_token, dns_challenge_url = self.get_challenge(domain_name)
-        #     acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
-        #         dns_token)
-        #     self.dns_class.create_dns_record(domain_name,
-        #                                      base64_of_acme_keyauthorization)
-        #     self.respond_to_challenge(acme_keyauthorization,  dns_challenge_url)
-        #     self.check_authorization_status(
-        #         dns_challenge_url,
-        #         base64_of_acme_keyauthorization,
-        #         domain_name)
-        # certificate = self.get_certificate()
-
         return certificate
 
     def cert(self):
