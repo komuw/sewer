@@ -97,21 +97,20 @@ class Client(object):
 
         self.logger = get_logger(__name__).bind(
             sewer_ver=sewer_version.__version__)
-
+        self.domain_name = domain_name
+        self.dns_class = dns_class
+        self.domain_alt_names = domain_alt_names
+        self.contact_email = contact_email
+        self.bits = bits
+        self.digest = digest
+        self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
+        self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
+        self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
+        self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
+        self.CLI = CLI
         try:
-            self.domain_name = domain_name
-            self.dns_class = dns_class
-            self.domain_alt_names = domain_alt_names
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
-            self.contact_email = contact_email
-            self.bits = bits
-            self.digest = digest
-            self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
-            self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
-            self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
-            self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-            self.CLI = CLI
 
             self.User_Agent = self.get_user_agent()
             acme_endpoints = self.get_acme_endpoints().json()
@@ -142,7 +141,7 @@ class Client(object):
                 acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
         except Exception as e:
             self.logger.error('Unable to intialise client.', error=str(e))
-            if CLI:
+            if self.CLI:
                 sys.exit(1)
             else:
                 raise e

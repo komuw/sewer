@@ -6,10 +6,7 @@ class BaseDns(object):
     """
 
     def __init__(self):
-        self.dns_provider_name = None
-        if self.dns_provider_name is None:
-            raise ValueError(
-                'The class attribute dns_provider_name ought to be defined.')
+        self.dns_provider_name = self.__class__.__name__
 
         self.logger = get_logger(__name__).bind(
             dns_provider_name=self.dns_provider_name)

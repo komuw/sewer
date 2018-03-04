@@ -6,7 +6,6 @@
 from libcloud.dns.providers import get_driver
 from libcloud.dns.types import Provider, RecordType
 import tldextract
-from structlog import get_logger
 from . import common
 
 
@@ -15,15 +14,13 @@ class AuroraDns(common.BaseDns):
     Todo: re-organize this class so that we make it easier to mock things out to
     facilitate better tests.
     """
+    dns_provider_name = 'aurora'
 
     def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY):
 
         self.AURORA_API_KEY = AURORA_API_KEY
         self.AURORA_SECRET_KEY = AURORA_SECRET_KEY
-        self.dns_provider_name = 'aurora'
-
-        self.logger = get_logger(__name__).bind(
-            dns_provider_name=self.dns_provider_name)
+        super(AuroraDns, self).__init__()
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('create_dns_record')
