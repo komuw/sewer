@@ -1,3 +1,4 @@
+import sys
 import time
 import copy
 import json
@@ -64,7 +65,8 @@ class Client(object):
             ACME_REQUEST_TIMEOUT=7,
             ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=3,
-            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
+            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
+            CLI=False):
         """
         :param domain_name:                  (required) [string]
             the name that you want to acquire/renew certificate for. wildcards are allowed.
@@ -89,51 +91,61 @@ class Client(object):
             the max number of times the client will poll the acme server to check on authorization status
         :param ACME_DIRECTORY_URL:           (optional) [string]
             the url of the acme servers' directory endpoint
+        :param CLI:                          (optional) [bool]
+            whether the Client is been instantiated from the commandline or as a python lib.
         """
 
         self.logger = get_logger(__name__).bind(
             sewer_ver=sewer_version.__version__)
 
-        self.domain_name = domain_name
-        self.dns_class = dns_class
-        self.domain_alt_names = domain_alt_names
-        self.all_domain_names = copy.copy(self.domain_alt_names)
-        self.all_domain_names.insert(0, self.domain_name)
-        self.contact_email = contact_email
-        self.bits = bits
-        self.digest = digest
-        self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
-        self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
-        self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
-        self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
+        try:
+            self.domain_name = domain_name
+            self.dns_class = dns_class
+            self.domain_alt_names = domain_alt_names
+            self.all_domain_names = copy.copy(self.domain_alt_names)
+            self.all_domain_names.insert(0, self.domain_name)
+            self.contact_email = contact_email
+            self.bits = bits
+            self.digest = digest
+            self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
+            self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
+            self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
+            self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
+            self.CLI = CLI
 
-        self.User_Agent = self.get_user_agent()
-        acme_endpoints = self.get_acme_endpoints().json()
-        self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
-        self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
-        self.ACME_KEY_CHANGE_URL = acme_endpoints['keyChange']
-        self.ACME_NEW_ACCOUNT_URL = acme_endpoints['newAccount']
-        self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
-        self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
+            self.User_Agent = self.get_user_agent()
+            acme_endpoints = self.get_acme_endpoints().json()
+            self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
+            self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
+            self.ACME_KEY_CHANGE_URL = acme_endpoints['keyChange']
+            self.ACME_NEW_ACCOUNT_URL = acme_endpoints['newAccount']
+            self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
+            self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
-        # unique account identifier
-        # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
-        self.kid = None
+            # unique account identifier
+            # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+            self.kid = None
 
-        self.certificate_key = self.create_certificate_key()
-        self.csr = self.create_csr()
+            self.certificate_key = self.create_certificate_key()
+            self.csr = self.create_csr()
 
-        if not account_key:
-            self.account_key = self.create_account_key()
-            self.PRIOR_REGISTERED = False
-        else:
-            self.account_key = account_key
-            self.PRIOR_REGISTERED = True
+            if not account_key:
+                self.account_key = self.create_account_key()
+                self.PRIOR_REGISTERED = False
+            else:
+                self.account_key = account_key
+                self.PRIOR_REGISTERED = True
 
-        self.logger = self.logger.bind(
-            sewer_ver=sewer_version.__version__,
-            domain_names=self.all_domain_names,
-            acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
+            self.logger = self.logger.bind(
+                sewer_ver=sewer_version.__version__,
+                domain_names=self.all_domain_names,
+                acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
+        except Exception as e:
+            self.logger.error('Unable to intialise client.', error=str(e))
+            if CLI:
+                sys.exit(1)
+            else:
+                raise e
 
     def log_response(self, response):
         """
@@ -606,7 +618,10 @@ class Client(object):
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
             self.logger.error('get_certificate', error=str(e))
-            raise e
+            if self.CLI:
+                sys.exit(1)
+            else:
+                raise e
         finally:
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)

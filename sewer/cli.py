@@ -31,8 +31,12 @@ def main():
     """
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
-    parser = argparse.ArgumentParser(
-        prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
+    parser = argparse.ArgumentParser(prog='sewer',
+                                     description="""Sewer is a Let's Encrypt(ACME) client.
+            Example usage::
+            CLOUDFLARE_EMAIL=example@example.com
+            CLOUDFLARE_DNS_ZONE_ID=some-zone
+            CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domain example.com --action run""")
     parser.add_argument(
         "--version",
         action='version',
@@ -169,7 +173,8 @@ def main():
         domain_alt_names=alt_domains,
         contact_email=email,
         account_key=account_key,
-        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
+        CLI=True)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
