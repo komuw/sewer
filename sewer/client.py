@@ -171,12 +171,12 @@ class Client(object):
                     response=self.log_response(get_acme_endpoints)))
         return get_acme_endpoints
 
-    def create_account_key(self):
-        self.logger.info('create_account_key')
-        return self.create_key()
-
     def create_certificate_key(self):
         self.logger.info('create_certificate_key')
+        return self.create_key()
+
+    def create_account_key(self):
+        self.logger.info('create_account_key')
         return self.create_key()
 
     def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
@@ -214,74 +214,50 @@ class Client(object):
         return OpenSSL.crypto.dump_certificate_request(
             OpenSSL.crypto.FILETYPE_ASN1, X509Req)
 
-    def calculate_safe_base64(self, un_encoded_data):
+    def acme_register(self):
         """
-        takes in a string or bytes
-        returns a string
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        The server creates an account and stores the public key used to
+        verify the JWS (i.e., the "jwk" element of the JWS header) to
+        authenticate future requests from the account.
+        The server returns this account object in a 201 (Created) response, with the account URL
+        in a Location header field.
+        This account URL will be used in subsequest requests to ACME, as the "kid" value in the acme header.
+        If the server already has an account registered with the provided
+        account key, then it MUST return a response with a 200 (OK) status
+        code and provide the URL of that account in the Location header field.
+        If there is an existing account with the new key
+        provided, then the server SHOULD use status code 409 (Conflict) and
+        provide the URL of that account in the Location header field
         """
-        if isinstance(un_encoded_data, str):
-            un_encoded_data = un_encoded_data.encode('utf8')
-        r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b'=')
-        return r.decode('utf8')
-
-    def sign_message(self, message):
-        self.logger.info('sign_message')
-        pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.account_key)
-        return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
-
-    def get_nonce(self):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
-        Each request to an ACME server must include a fresh unused nonce
-        in order to protect against replay attacks.
-        """
-        self.logger.info('get_nonce')
-        headers = {'User-Agent': self.User_Agent}
-        response = requests.get(
-            self.ACME_GET_NONCE_URL,
-            timeout=self.ACME_REQUEST_TIMEOUT,
-            headers=headers)
-        nonce = response.headers['Replay-Nonce']
-        return nonce
-
-    def get_acme_header(self, url):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
-        The JWS Protected Header MUST include the following fields:
-        - "alg" (Algorithm)
-        - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
-        - "kid" (Key ID, for all other requests). gotten from self.ACME_NEW_ACCOUNT_URL
-        - "nonce". gotten from self.ACME_GET_NONCE_URL
-        - "url"
-        """
-        self.logger.info('get_acme_header')
-        header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
-
-        if url in [
-                self.ACME_NEW_ACCOUNT_URL,
-                self.ACME_REVOKE_CERT_URL,
-                "GET_THUMBPRINT"]:
-            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                self.account_key,
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend())
-            public_key_public_numbers = private_key.public_key().public_numbers()
-            # private key public exponent in hex format
-            exponent = "{0:x}".format(public_key_public_numbers.e)
-            exponent = "0{0}".format(exponent) if len(
-                exponent) % 2 else exponent
-            # private key modulus in hex format
-            modulus = "{0:x}".format(public_key_public_numbers.n)
-            jwk = {
-                "kty": "RSA", "e": self.calculate_safe_base64(
-                    binascii.unhexlify(exponent)), "n": self.calculate_safe_base64(
-                    binascii.unhexlify(modulus))}
-            header["jwk"] = jwk
+        self.logger.info('acme_register')
+        if self.PRIOR_REGISTERED:
+            payload = {"onlyReturnExisting": True}
+        elif self.contact_email:
+            payload = {
+                "termsOfServiceAgreed": True, "contact": [
+                    "mailto:{0}".format(
+                        self.contact_email)]}
         else:
-            header["kid"] = self.kid
+            payload = {"termsOfServiceAgreed": True}
 
-        return header
+        url = self.ACME_NEW_ACCOUNT_URL
+        acme_register_response = self.make_signed_acme_request(
+            url=url, payload=payload)
+        self.logger.info(
+            'acme_register_response',
+            status_code=acme_register_response.status_code,
+            response=self.log_response(acme_register_response))
+
+        if acme_register_response.status_code not in [201, 200, 409]:
+            raise ValueError(
+                "Error while registering: status_code={status_code} response={response}". format(
+                    status_code=acme_register_response.status_code,
+                    response=self.log_response(acme_register_response)))
+
+        kid = acme_register_response.headers['Location']
+        setattr(self, 'kid', kid)
+        return acme_register_response
 
     def apply_for_cert_issuance(self):
         """
@@ -328,125 +304,6 @@ class Client(object):
         finalize_url = apply_for_cert_issuance_response_json["finalize"]
 
         return authorization_url, finalize_url
-
-    def send_csr(self, finalize_url):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
-        Once the client believes it has fulfilled the server's requirements,
-        it should send a POST request(include a CSR) to the order resource's finalize URL.
-        A request to finalize an order will result in error if the order indicated does not have status "pending",
-        if the CSR and order identifiers differ, or if the account is not authorized for the identifiers indicated in the CSR.
-        The CSR is sent in the base64url-encoded version of the DER format(OpenSSL.crypto.FILETYPE_ASN1)
-
-        A valid request to finalize an order will return the order to be finalized.
-        The client should begin polling the order by sending a
-        GET request to the order resource to obtain its current state.
-        """
-        self.logger.info('send_csr')
-        payload = {"csr": self.calculate_safe_base64(self.csr)}
-        send_csr_response = self.make_signed_acme_request(
-            url=finalize_url, payload=payload)
-        self.logger.info(
-            'send_csr_response',
-            status_code=send_csr_response.status_code,
-            response=self.log_response(send_csr_response))
-
-        if send_csr_response.status_code not in [200, 201]:
-            raise ValueError(
-                "Error sending csr: status_code={status_code} response={response}". format(
-                    status_code=send_csr_response.status_code,
-                    response=self.log_response(send_csr_response)))
-        send_csr_response_json = send_csr_response.json()
-        certificate_url = send_csr_response_json["certificate"]
-        return certificate_url
-
-    def stringfy_items(self, payload):
-        """
-        method that takes a dictionary and then converts any keys or values
-        in that are of type bytes into unicode strings.
-        This is necessary esp if you want to then turn that dict into a json string.
-        """
-        if isinstance(payload, str):
-            return payload
-
-        for k, v in payload.items():
-            if isinstance(k, bytes):
-                k = k.decode('utf-8')
-            if isinstance(v, bytes):
-                v = v.decode('utf-8')
-            payload[k] = v
-        return payload
-
-    def make_signed_acme_request(self, url, payload):
-        self.logger.info('make_signed_acme_request')
-        headers = {'User-Agent': self.User_Agent}
-        payload = self.stringfy_items(payload)
-
-        if payload in ['GET_CHALLENGE', 'GET_CERTIFICATE']:
-            response = requests.get(
-                url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
-        else:
-            payload64 = self.calculate_safe_base64(json.dumps(payload))
-            protected = self.get_acme_header(url)
-            protected64 = self.calculate_safe_base64(json.dumps(protected))
-            signature = self.sign_message(
-                message="{0}.{1}".format(
-                    protected64, payload64))  # bytes
-            signature64 = self.calculate_safe_base64(signature)  # str
-            data = json.dumps(
-                {"protected": protected64, "payload": payload64,
-                 "signature": signature64})
-            response = requests.post(
-                url,
-                data=data.encode('utf8'),
-                timeout=self.ACME_REQUEST_TIMEOUT,
-                headers=headers)
-        return response
-
-    def acme_register(self):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
-        The server creates an account and stores the public key used to
-        verify the JWS (i.e., the "jwk" element of the JWS header) to
-        authenticate future requests from the account.
-        The server returns this account object in a 201 (Created) response, with the account URL
-        in a Location header field.
-        This account URL will be used in subsequest requests to ACME, as the "kid" value in the acme header.
-        If the server already has an account registered with the provided
-        account key, then it MUST return a response with a 200 (OK) status
-        code and provide the URL of that account in the Location header field.
-        If there is an existing account with the new key
-        provided, then the server SHOULD use status code 409 (Conflict) and
-        provide the URL of that account in the Location header field
-        """
-        self.logger.info('acme_register')
-        if self.PRIOR_REGISTERED:
-            payload = {"onlyReturnExisting": True}
-        elif self.contact_email:
-            payload = {
-                "termsOfServiceAgreed": True, "contact": [
-                    "mailto:{0}".format(
-                        self.contact_email)]}
-        else:
-            payload = {"termsOfServiceAgreed": True}
-
-        url = self.ACME_NEW_ACCOUNT_URL
-        acme_register_response = self.make_signed_acme_request(
-            url=url, payload=payload)
-        self.logger.info(
-            'acme_register_response',
-            status_code=acme_register_response.status_code,
-            response=self.log_response(acme_register_response))
-
-        if acme_register_response.status_code not in [201, 200, 409]:
-            raise ValueError(
-                "Error while registering: status_code={status_code} response={response}". format(
-                    status_code=acme_register_response.status_code,
-                    response=self.log_response(acme_register_response)))
-
-        kid = acme_register_response.headers['Location']
-        setattr(self, 'kid', kid)
-        return acme_register_response
 
     def get_challenge(self, url):
         """
@@ -497,31 +354,6 @@ class Client(object):
 
         return acme_keyauthorization, base64_of_acme_keyauthorization
 
-    def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
-        To prove control of the identifier and receive authorization, the
-        client needs to respond with information to complete the challenges.
-        The server is said to "finalize" the authorization when it has
-        completed one of the validations, by assigning the authorization a
-        status of "valid" or "invalid".
-
-        Usually, the validation process will take some time, so the client
-        will need to poll the authorization resource to see when it is finalized.
-        To check on the status of an authorization, the client sends a GET(polling)
-        request to the authorization URL, and the server responds with the
-        current authorization object.
-        """
-        self.logger.info('respond_to_challenge')
-        payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
-        respond_to_challenge_response = self.make_signed_acme_request(
-            dns_challenge_url, payload)
-        self.logger.info(
-            'respond_to_challenge_response',
-            status_code=respond_to_challenge_response.status_code,
-            response=self.log_response(respond_to_challenge_response))
-        return respond_to_challenge_response
-
     def check_authorization_status(
             self,
             authorization_url,
@@ -570,6 +402,62 @@ class Client(object):
                 time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         return check_authorization_status_response
 
+    def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        To prove control of the identifier and receive authorization, the
+        client needs to respond with information to complete the challenges.
+        The server is said to "finalize" the authorization when it has
+        completed one of the validations, by assigning the authorization a
+        status of "valid" or "invalid".
+
+        Usually, the validation process will take some time, so the client
+        will need to poll the authorization resource to see when it is finalized.
+        To check on the status of an authorization, the client sends a GET(polling)
+        request to the authorization URL, and the server responds with the
+        current authorization object.
+        """
+        self.logger.info('respond_to_challenge')
+        payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
+        respond_to_challenge_response = self.make_signed_acme_request(
+            dns_challenge_url, payload)
+        self.logger.info(
+            'respond_to_challenge_response',
+            status_code=respond_to_challenge_response.status_code,
+            response=self.log_response(respond_to_challenge_response))
+        return respond_to_challenge_response
+
+    def send_csr(self, finalize_url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        Once the client believes it has fulfilled the server's requirements,
+        it should send a POST request(include a CSR) to the order resource's finalize URL.
+        A request to finalize an order will result in error if the order indicated does not have status "pending",
+        if the CSR and order identifiers differ, or if the account is not authorized for the identifiers indicated in the CSR.
+        The CSR is sent in the base64url-encoded version of the DER format(OpenSSL.crypto.FILETYPE_ASN1)
+
+        A valid request to finalize an order will return the order to be finalized.
+        The client should begin polling the order by sending a
+        GET request to the order resource to obtain its current state.
+        """
+        self.logger.info('send_csr')
+        payload = {"csr": self.calculate_safe_base64(self.csr)}
+        send_csr_response = self.make_signed_acme_request(
+            url=finalize_url, payload=payload)
+        self.logger.info(
+            'send_csr_response',
+            status_code=send_csr_response.status_code,
+            response=self.log_response(send_csr_response))
+
+        if send_csr_response.status_code not in [200, 201]:
+            raise ValueError(
+                "Error sending csr: status_code={status_code} response={response}". format(
+                    status_code=send_csr_response.status_code,
+                    response=self.log_response(send_csr_response)))
+        send_csr_response_json = send_csr_response.json()
+        certificate_url = send_csr_response_json["certificate"]
+        return certificate_url
+
     def download_certificate(self, certificate_url):
         self.logger.info('download_certificate')
 
@@ -588,6 +476,116 @@ class Client(object):
 
         pem_certificate = download_certificate_response.content.decode('utf-8')
         return pem_certificate
+
+    def sign_message(self, message):
+        self.logger.info('sign_message')
+        pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
+                                            self.account_key)
+        return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
+
+    def get_nonce(self):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
+        Each request to an ACME server must include a fresh unused nonce
+        in order to protect against replay attacks.
+        """
+        self.logger.info('get_nonce')
+        headers = {'User-Agent': self.User_Agent}
+        response = requests.get(
+            self.ACME_GET_NONCE_URL,
+            timeout=self.ACME_REQUEST_TIMEOUT,
+            headers=headers)
+        nonce = response.headers['Replay-Nonce']
+        return nonce
+
+    def stringfy_items(self, payload):
+        """
+        method that takes a dictionary and then converts any keys or values
+        in that are of type bytes into unicode strings.
+        This is necessary esp if you want to then turn that dict into a json string.
+        """
+        if isinstance(payload, str):
+            return payload
+
+        for k, v in payload.items():
+            if isinstance(k, bytes):
+                k = k.decode('utf-8')
+            if isinstance(v, bytes):
+                v = v.decode('utf-8')
+            payload[k] = v
+        return payload
+
+    def calculate_safe_base64(self, un_encoded_data):
+        """
+        takes in a string or bytes
+        returns a string
+        """
+        if isinstance(un_encoded_data, str):
+            un_encoded_data = un_encoded_data.encode('utf8')
+        r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b'=')
+        return r.decode('utf8')
+
+    def get_acme_header(self, url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        The JWS Protected Header MUST include the following fields:
+        - "alg" (Algorithm)
+        - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
+        - "kid" (Key ID, for all other requests). gotten from self.ACME_NEW_ACCOUNT_URL
+        - "nonce". gotten from self.ACME_GET_NONCE_URL
+        - "url"
+        """
+        self.logger.info('get_acme_header')
+        header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
+        if url in [
+                self.ACME_NEW_ACCOUNT_URL,
+                self.ACME_REVOKE_CERT_URL,
+                "GET_THUMBPRINT"]:
+            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                self.account_key,
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend())
+            public_key_public_numbers = private_key.public_key().public_numbers()
+            # private key public exponent in hex format
+            exponent = "{0:x}".format(public_key_public_numbers.e)
+            exponent = "0{0}".format(exponent) if len(
+                exponent) % 2 else exponent
+            # private key modulus in hex format
+            modulus = "{0:x}".format(public_key_public_numbers.n)
+            jwk = {
+                "kty": "RSA", "e": self.calculate_safe_base64(
+                    binascii.unhexlify(exponent)), "n": self.calculate_safe_base64(
+                    binascii.unhexlify(modulus))}
+            header["jwk"] = jwk
+        else:
+            header["kid"] = self.kid
+        return header
+
+    def make_signed_acme_request(self, url, payload):
+        self.logger.info('make_signed_acme_request')
+        headers = {'User-Agent': self.User_Agent}
+        payload = self.stringfy_items(payload)
+
+        if payload in ['GET_CHALLENGE', 'GET_CERTIFICATE']:
+            response = requests.get(
+                url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+        else:
+            payload64 = self.calculate_safe_base64(json.dumps(payload))
+            protected = self.get_acme_header(url)
+            protected64 = self.calculate_safe_base64(json.dumps(protected))
+            signature = self.sign_message(
+                message="{0}.{1}".format(
+                    protected64, payload64))  # bytes
+            signature64 = self.calculate_safe_base64(signature)  # str
+            data = json.dumps(
+                {"protected": protected64, "payload": payload64,
+                 "signature": signature64})
+            response = requests.post(
+                url,
+                data=data.encode('utf8'),
+                timeout=self.ACME_REQUEST_TIMEOUT,
+                headers=headers)
+        return response
 
     def get_certificate(self):
         self.logger.info('get_certificate')
