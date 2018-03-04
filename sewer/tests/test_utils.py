@@ -22,7 +22,9 @@ class MockResponse(object):
 
     def __init__(self,
                  status_code=201,
-                 content={}):
+                 content=None):
+        if not content:
+            content = {}
         self.status_code = status_code
         content.update({
             "newNonce": "http://localhost/newNonce",

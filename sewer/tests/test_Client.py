@@ -66,7 +66,7 @@ class TestClient(TestCase):
             mock_requests_get.return_value = test_utils.MockResponse()
 
             for i in ['python-requests', 'sewer',
-                      'https://github.com/komuW/sewer']:
+                      'https://github.com/komuw/sewer']:
                 self.assertIn(i, self.client.User_Agent)
 
     def test_certificate_key_is_generated(self):

@@ -57,7 +57,7 @@ class Client(object):
             self,
             domain_name,
             dns_class,
-            domain_alt_names=[],
+            domain_alt_names=None,
             contact_email=None,
             account_key=None,
             bits=2048,
@@ -99,6 +99,8 @@ class Client(object):
             sewer_ver=sewer_version.__version__)
         self.domain_name = domain_name
         self.dns_class = dns_class
+        if not domain_alt_names:
+            domain_alt_names = []
         self.domain_alt_names = domain_alt_names
         self.contact_email = contact_email
         self.bits = bits
@@ -146,7 +148,8 @@ class Client(object):
             else:
                 raise e
 
-    def log_response(self, response):
+    @staticmethod
+    def log_response(response):
         """
         renders response as json or as a string
         """
@@ -157,7 +160,8 @@ class Client(object):
             log_body = response.content[:30]
         return log_body
 
-    def get_user_agent(self):
+    @staticmethod
+    def get_user_agent():
         return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
             system=platform.system(),
@@ -509,7 +513,8 @@ class Client(object):
         nonce = response.headers['Replay-Nonce']
         return nonce
 
-    def stringfy_items(self, payload):
+    @staticmethod
+    def stringfy_items(payload):
         """
         method that takes a dictionary and then converts any keys or values
         in that are of type bytes into unicode strings.
@@ -526,7 +531,8 @@ class Client(object):
             payload[k] = v
         return payload
 
-    def calculate_safe_base64(self, un_encoded_data):
+    @staticmethod
+    def calculate_safe_base64(un_encoded_data):
         """
         takes in a string or bytes
         returns a string
