@@ -244,6 +244,21 @@ class TestClient(TestCase):
             ]:
                 self.assertIn(i, self.client.renew())
 
+    def test_right_args_to_client(self):
+        def mock_instantiate_client():
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
+                domain_alt_names="domain_alt_names")
+        with self.assertRaises(ValueError) as raised_exception:
+            mock_instantiate_client()
+        self.assertIn(
+            'domain_alt_names should be of type:: None or list', str(
+                raised_exception.exception))
+
 
 class TestClientForSAN(TestClient):
     """
