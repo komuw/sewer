@@ -100,16 +100,16 @@ class Client(object):
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
-                "domain_alt_names should be of type:: None or list. You entered {0}".format(
+                """domain_alt_names should be of type:: None or list. You entered {0}""".format(
                     type(domain_alt_names)))
         elif not isinstance(contact_email, (type(None), str)):
             raise ValueError(
-                "contact_email should be of type:: None or str. You entered {0}".format(
+                """contact_email should be of type:: None or str. You entered {0}""".format(
                     type(contact_email)))
         elif not isinstance(account_key, (type(None), str)):
             raise ValueError(
-                "account_key should be of type:: None or str. You entered {0}".format(
-                    type(account_key)))
+                """account_key should be of type:: None or str. You entered {0}.
+                More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
 
         self.domain_name = domain_name
         self.dns_class = dns_class
