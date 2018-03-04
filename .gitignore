@@ -29,6 +29,7 @@ README.html
 
 #Coverage
 .coverage
+htmlcov/
 
 # Setuptools distribution folder.
 /dist/

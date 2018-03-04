@@ -234,6 +234,16 @@ class TestClient(TestCase):
             self.assertIn('Error applying for certificate',
                           str(raised_exception.exception))
 
+    def test_certificate_is_issued_for_renewal(self):
+        with mock.patch('requests.post') as mock_requests_post, mock.patch(
+                'requests.get') as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+            for i in [
+                    '-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----'
+            ]:
+                self.assertIn(i, self.client.renew())
+
 
 class TestClientForSAN(TestClient):
     """
