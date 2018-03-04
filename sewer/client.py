@@ -278,10 +278,10 @@ class Client(object):
         in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
         """
         self.logger.info('apply_for_cert_issuance')
-        # TODO: factor in self.all_domain_names instead of just
-        # self.domain_name
-        payload = {"identifiers": [
-            {"type": "dns", "value": self.domain_name}], }
+        identifiers = []
+        for domain_name in self.all_domain_names:
+            identifiers.append({"type": "dns", "value": domain_name})
+        payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
             url=url,
