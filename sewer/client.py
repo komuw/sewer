@@ -194,11 +194,11 @@ class Client(object):
 
     def create_certificate_key(self):
         self.logger.info('create_certificate_key')
-        return self.create_key()
+        return self.create_key().decode()
 
     def create_account_key(self):
         self.logger.info('create_account_key')
-        return self.create_key()
+        return self.create_key().decode()
 
     def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
         key = OpenSSL.crypto.PKey()
@@ -228,7 +228,7 @@ class Client(object):
                 'subjectAltName'.encode('utf8'), critical=False, value=SAN)
         ])
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.certificate_key)
+                                            self.certificate_key.encode())
         X509Req.set_pubkey(pk)
         X509Req.set_version(2)
         X509Req.sign(pk, self.digest)
@@ -302,6 +302,8 @@ class Client(object):
         identifiers = []
         for domain_name in self.all_domain_names:
             identifiers.append({"type": "dns", "value": domain_name})
+
+        identifiers_auths = copy.copy(identifiers)
         payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
@@ -319,12 +321,13 @@ class Client(object):
                     response=self.log_response(apply_for_cert_issuance_response)))
 
         apply_for_cert_issuance_response_json = apply_for_cert_issuance_response.json()
-        # list
         authorizations = apply_for_cert_issuance_response_json["authorizations"]
-        authorization_url = authorizations[0]
+        authorization_urls = authorizations  # list
         finalize_url = apply_for_cert_issuance_response_json["finalize"]
+        for k, v in enumerate(identifiers_auths):
+            v.update({'authorization_url': authorization_urls[k]})
 
-        return authorization_url, finalize_url
+        return identifiers_auths, finalize_url
 
     def get_challenge(self, url):
         """
@@ -341,7 +344,7 @@ class Client(object):
         """
         self.logger.info('get_challenge')
         challenge_response = self.make_signed_acme_request(
-            url, payload='GET_CHALLENGE')
+            url, payload='GET_Z_CHALLENGE')
         self.logger.info(
             'get_challenge_response',
             status_code=challenge_response.status_code,
@@ -483,7 +486,7 @@ class Client(object):
         self.logger.info('download_certificate')
 
         download_certificate_response = self.make_signed_acme_request(
-            certificate_url, payload='download_certificate')
+            certificate_url, payload='DOWNLOAD_Z_CERTIFICATE')
         self.logger.info(
             'download_certificate_response',
             status_code=download_certificate_response.status_code,
@@ -501,7 +504,7 @@ class Client(object):
     def sign_message(self, message):
         self.logger.info('sign_message')
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.account_key)
+                                            self.account_key.encode())
         return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
 
     def get_nonce(self):
@@ -565,7 +568,7 @@ class Client(object):
                 self.ACME_REVOKE_CERT_URL,
                 "GET_THUMBPRINT"]:
             private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                self.account_key,
+                self.account_key.encode(),
                 password=None,
                 backend=cryptography.hazmat.backends.default_backend())
             public_key_public_numbers = private_key.public_key().public_numbers()
@@ -589,7 +592,7 @@ class Client(object):
         headers = {'User-Agent': self.User_Agent}
         payload = self.stringfy_items(payload)
 
-        if payload in ['GET_CHALLENGE', 'GET_CERTIFICATE']:
+        if payload in ['GET_Z_CHALLENGE', 'DOWNLOAD_Z_CERTIFICATE']:
             response = requests.get(
                 url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
         else:
@@ -613,18 +616,24 @@ class Client(object):
     def get_certificate(self):
         self.logger.info('get_certificate')
         base64_of_acme_keyauthorization = "placeholder"
+        dns_names_to_delete = []
         try:
             self.acme_register()
-            authorization_url, finalize_url = self.apply_for_cert_issuance()
-            dns_token, dns_challenge_url = self.get_challenge(
-                url=authorization_url)
-            acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
-                dns_token)
-            self.dns_class.create_dns_record(
-                self.domain_name, base64_of_acme_keyauthorization)
-            self.check_authorization_status(
-                authorization_url, base64_of_acme_keyauthorization)
-            self.respond_to_challenge(acme_keyauthorization, dns_challenge_url)
+            identifiers_auths, finalize_url = self.apply_for_cert_issuance()
+            for identifier_auth in identifiers_auths:
+                authorization_url = identifier_auth['authorization_url']
+                dns_name = identifier_auth['value']
+                dns_names_to_delete.append(dns_name)
+                dns_token, dns_challenge_url = self.get_challenge(
+                    url=authorization_url)
+                acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+                    dns_token)
+                self.dns_class.create_dns_record(
+                    dns_name, base64_of_acme_keyauthorization)
+                self.check_authorization_status(
+                    authorization_url, base64_of_acme_keyauthorization)
+                self.respond_to_challenge(
+                    acme_keyauthorization, dns_challenge_url)
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
@@ -633,8 +642,9 @@ class Client(object):
                 error=str(e))
             raise e
         finally:
-            self.dns_class.delete_dns_record(
-                self.domain_name, base64_of_acme_keyauthorization)
+            for dns_name in dns_names_to_delete:
+                self.dns_class.delete_dns_record(
+                    dns_name, base64_of_acme_keyauthorization)
 
         return certificate
 

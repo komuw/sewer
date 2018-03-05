@@ -77,7 +77,7 @@ class TestClient(TestCase):
             certificate_key = self.client.certificate_key
 
             certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                certificate_key, password=None, backend=cryptography.hazmat.backends.default_backend())
+                certificate_key.encode(), password=None, backend=cryptography.hazmat.backends.default_backend())
             self.assertIsInstance(
                 certificate_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
@@ -90,7 +90,7 @@ class TestClient(TestCase):
             account_key = self.client.account_key
 
             account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                account_key, password=None, backend=cryptography.hazmat.backends.default_backend())
+                account_key.encode(), password=None, backend=cryptography.hazmat.backends.default_backend())
             self.assertIsInstance(
                 account_key_private_key,
                 cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey)
