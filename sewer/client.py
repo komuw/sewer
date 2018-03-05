@@ -194,11 +194,11 @@ class Client(object):
 
     def create_certificate_key(self):
         self.logger.info('create_certificate_key')
-        return self.create_key()
+        return self.create_key().decode()
 
     def create_account_key(self):
         self.logger.info('create_account_key')
-        return self.create_key()
+        return self.create_key().decode()
 
     def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
         key = OpenSSL.crypto.PKey()
@@ -228,7 +228,7 @@ class Client(object):
                 'subjectAltName'.encode('utf8'), critical=False, value=SAN)
         ])
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.certificate_key)
+                                            self.certificate_key.encode())
         X509Req.set_pubkey(pk)
         X509Req.set_version(2)
         X509Req.sign(pk, self.digest)
@@ -504,7 +504,7 @@ class Client(object):
     def sign_message(self, message):
         self.logger.info('sign_message')
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM,
-                                            self.account_key)
+                                            self.account_key.encode())
         return OpenSSL.crypto.sign(pk, message.encode('utf8'), self.digest)
 
     def get_nonce(self):
@@ -568,7 +568,7 @@ class Client(object):
                 self.ACME_REVOKE_CERT_URL,
                 "GET_THUMBPRINT"]:
             private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                self.account_key,
+                self.account_key.encode(),
                 password=None,
                 backend=cryptography.hazmat.backends.default_backend())
             public_key_public_numbers = private_key.public_key().public_numbers()
