@@ -6,13 +6,20 @@ class MockResponse(object):
     mock python-requests Response object
     """
 
-    def __init__(self, status_code=200, content='{"something": "ok"}'):
+    def __init__(self, status_code=200, content=None):
+        if not content:
+            content = {}
+
+        content.update({
+            'something': 'ok',
+            'result': [{'name': 'example.com', 'id': 'some-mock-dns-zone-id'}]
+        })
+        self.content = json.dumps(content).encode()
         self.status_code = status_code
-        self.content = content
         self.headers = {}
 
     def json(self):
-        return json.loads(self.content)
+        return json.loads(self.content.decode())
 
 
 class mockLibcloudDriverZone(object):
