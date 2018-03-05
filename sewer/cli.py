@@ -29,10 +29,15 @@ def main():
         --domain example.com \
         --action renew
     """
+    logger = get_logger(__name__)
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
-    parser = argparse.ArgumentParser(
-        prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
+    parser = argparse.ArgumentParser(prog='sewer',
+                                     description="""Sewer is a Let's Encrypt(ACME) client.
+            Example usage::
+            CLOUDFLARE_EMAIL=example@example.com
+            CLOUDFLARE_DNS_ZONE_ID=some-zone
+            CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domain example.com --action run""")
     parser.add_argument(
         "--version",
         action='version',
@@ -97,7 +102,6 @@ def main():
         eg: --action run")
 
     args = parser.parse_args()
-    logger = get_logger(__name__)
 
     dns_provider = args.dns
     domain = args.domain
@@ -175,7 +179,7 @@ def main():
 
     # write out account_key in current directory
     with open('{0}.account.key'.format(file_name), 'w') as account_file:
-        account_file.write(account_key)
+        account_file.write(account_key.decode())
     logger.info(
         "write_account_key",
         message='account key succesfully written to current directory.')
@@ -189,8 +193,8 @@ def main():
 
     # write out certificate and certificate key in current directory
     with open('{0}.crt'.format(file_name), 'w') as certificate_file:
-        certificate_file.write(certificate)
+        certificate_file.write(certificate.decode())
     with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
-        certificate_key_file.write(certificate_key)
+        certificate_key_file.write(certificate_key.decode())
 
     logger.info("the_end", message=message)

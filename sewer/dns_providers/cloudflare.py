@@ -2,7 +2,6 @@ import json
 import urllib.parse
 
 import requests
-from structlog import get_logger
 
 from . import common
 
@@ -10,6 +9,7 @@ from . import common
 class CloudFlareDns(common.BaseDns):
     """
     """
+    dns_provider_name = 'cloudflare'
 
     def __init__(
             self,
@@ -22,16 +22,13 @@ class CloudFlareDns(common.BaseDns):
         self.CLOUDFLARE_EMAIL = CLOUDFLARE_EMAIL
         self.CLOUDFLARE_API_KEY = CLOUDFLARE_API_KEY
         self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
-        self.dns_provider_name = 'cloudflare'
         self.HTTP_TIMEOUT = 65  # seconds
 
         if CLOUDFLARE_API_BASE_URL[-1] != '/':
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + '/'
         else:
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
-
-        self.logger = get_logger(__name__).bind(
-            dns_provider_name=self.dns_provider_name)
+        super(CloudFlareDns, self).__init__()
 
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('create_dns_record')

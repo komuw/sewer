@@ -56,7 +56,7 @@ class Client(object):
             self,
             domain_name,
             dns_class,
-            domain_alt_names=[],
+            domain_alt_names=None,
             contact_email=None,
             account_key=None,
             bits=2048,
@@ -94,11 +94,24 @@ class Client(object):
         self.logger = get_logger(__name__).bind(
             sewer_ver=sewer_version.__version__)
 
+        if not isinstance(domain_alt_names, (type(None), list)):
+            raise ValueError(
+                """domain_alt_names should be of type:: None or list. You entered {0}""".format(
+                    type(domain_alt_names)))
+        elif not isinstance(contact_email, (type(None), str)):
+            raise ValueError(
+                """contact_email should be of type:: None or str. You entered {0}""".format(
+                    type(contact_email)))
+        elif not isinstance(account_key, (type(None), str)):
+            raise ValueError(
+                """account_key should be of type:: None or str. You entered {0}.
+                More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
+
         self.domain_name = domain_name
         self.dns_class = dns_class
+        if not domain_alt_names:
+            domain_alt_names = []
         self.domain_alt_names = domain_alt_names
-        self.all_domain_names = copy.copy(self.domain_alt_names)
-        self.all_domain_names.insert(0, self.domain_name)
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
@@ -106,36 +119,43 @@ class Client(object):
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
+        try:
+            self.all_domain_names = copy.copy(self.domain_alt_names)
+            self.all_domain_names.insert(0, self.domain_name)
 
-        self.User_Agent = self.get_user_agent()
-        acme_endpoints = self.get_acme_endpoints().json()
-        self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
-        self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
-        self.ACME_KEY_CHANGE_URL = acme_endpoints['keyChange']
-        self.ACME_NEW_ACCOUNT_URL = acme_endpoints['newAccount']
-        self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
-        self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
+            self.User_Agent = self.get_user_agent()
+            acme_endpoints = self.get_acme_endpoints().json()
+            self.ACME_GET_NONCE_URL = acme_endpoints['newNonce']
+            self.ACME_TOS_URL = acme_endpoints['meta']['termsOfService']
+            self.ACME_KEY_CHANGE_URL = acme_endpoints['keyChange']
+            self.ACME_NEW_ACCOUNT_URL = acme_endpoints['newAccount']
+            self.ACME_NEW_ORDER_URL = acme_endpoints['newOrder']
+            self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
-        # unique account identifier
-        # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
-        self.kid = None
+            # unique account identifier
+            # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+            self.kid = None
 
-        self.certificate_key = self.create_certificate_key()
-        self.csr = self.create_csr()
+            self.certificate_key = self.create_certificate_key()
+            self.csr = self.create_csr()
 
-        if not account_key:
-            self.account_key = self.create_account_key()
-            self.PRIOR_REGISTERED = False
-        else:
-            self.account_key = account_key
-            self.PRIOR_REGISTERED = True
+            if not account_key:
+                self.account_key = self.create_account_key()
+                self.PRIOR_REGISTERED = False
+            else:
+                self.account_key = account_key
+                self.PRIOR_REGISTERED = True
 
-        self.logger = self.logger.bind(
-            sewer_ver=sewer_version.__version__,
-            domain_names=self.all_domain_names,
-            acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
+            self.logger = self.logger.bind(
+                sewer_ver=sewer_version.__version__,
+                domain_names=self.all_domain_names,
+                acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
+        except Exception as e:
+            self.logger.error('Unable to intialise client.', error=str(e))
+            raise e
 
-    def log_response(self, response):
+    @staticmethod
+    def log_response(response):
         """
         renders response as json or as a string
         """
@@ -146,7 +166,8 @@ class Client(object):
             log_body = response.content[:30]
         return log_body
 
-    def get_user_agent(self):
+    @staticmethod
+    def get_user_agent():
         return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
             system=platform.system(),
@@ -278,10 +299,10 @@ class Client(object):
         in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
         """
         self.logger.info('apply_for_cert_issuance')
-        # TODO: factor in self.all_domain_names instead of just
-        # self.domain_name
-        payload = {"identifiers": [
-            {"type": "dns", "value": self.domain_name}], }
+        identifiers = []
+        for domain_name in self.all_domain_names:
+            identifiers.append({"type": "dns", "value": domain_name})
+        payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
             url=url,
@@ -498,7 +519,8 @@ class Client(object):
         nonce = response.headers['Replay-Nonce']
         return nonce
 
-    def stringfy_items(self, payload):
+    @staticmethod
+    def stringfy_items(payload):
         """
         method that takes a dictionary and then converts any keys or values
         in that are of type bytes into unicode strings.
@@ -515,7 +537,8 @@ class Client(object):
             payload[k] = v
         return payload
 
-    def calculate_safe_base64(self, un_encoded_data):
+    @staticmethod
+    def calculate_safe_base64(un_encoded_data):
         """
         takes in a string or bytes
         returns a string
@@ -605,26 +628,13 @@ class Client(object):
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
-            self.logger.error('get_certificate', error=str(e))
+            self.logger.error(
+                'Error: Unable to issue certificate.',
+                error=str(e))
             raise e
         finally:
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)
-
-        # for domain_name in self.all_domain_names:
-        #     # NB: this means we will only get a certificate; self.get_certificate()
-        #     # if all the SAN succed the following steps
-        #     dns_token, dns_challenge_url = self.get_challenge(domain_name)
-        #     acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
-        #         dns_token)
-        #     self.dns_class.create_dns_record(domain_name,
-        #                                      base64_of_acme_keyauthorization)
-        #     self.respond_to_challenge(acme_keyauthorization,  dns_challenge_url)
-        #     self.check_authorization_status(
-        #         dns_challenge_url,
-        #         base64_of_acme_keyauthorization,
-        #         domain_name)
-        # certificate = self.get_certificate()
 
         return certificate
 

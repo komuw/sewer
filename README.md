@@ -204,6 +204,7 @@ class AWSroute53Dns(sewer.BaseDns):
         self.boto_client = boto3.client(
             'route53', aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        super(AWSroute53Dns, self).__init__()
 
     def create_dns_record(self,
                           domain_name,
