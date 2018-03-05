@@ -1,4 +1,3 @@
-import sys
 import time
 import copy
 import json
@@ -65,8 +64,7 @@ class Client(object):
             ACME_REQUEST_TIMEOUT=7,
             ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=3,
-            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
-            CLI=False):
+            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory'):
         """
         :param domain_name:                  (required) [string]
             the name that you want to acquire/renew certificate for. wildcards are allowed.
@@ -91,8 +89,6 @@ class Client(object):
             the max number of times the client will poll the acme server to check on authorization status
         :param ACME_DIRECTORY_URL:           (optional) [string]
             the url of the acme servers' directory endpoint
-        :param CLI:                          (optional) [bool]
-            whether the Client is been instantiated from the commandline or as a python lib.
         """
 
         self.logger = get_logger(__name__).bind(
@@ -123,7 +119,6 @@ class Client(object):
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-        self.CLI = CLI
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
@@ -157,10 +152,7 @@ class Client(object):
                 acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
         except Exception as e:
             self.logger.error('Unable to intialise client.', error=str(e))
-            if self.CLI:
-                sys.exit(1)
-            else:
-                raise e
+            raise e
 
     @staticmethod
     def log_response(response):
@@ -636,11 +628,10 @@ class Client(object):
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
-            self.logger.error('get_certificate', error=str(e))
-            if self.CLI:
-                sys.exit(1)
-            else:
-                raise e
+            self.logger.error(
+                'Error: Unable to issue certificate.',
+                error=str(e))
+            raise e
         finally:
             self.dns_class.delete_dns_record(
                 self.domain_name, base64_of_acme_keyauthorization)

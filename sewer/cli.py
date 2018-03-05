@@ -29,6 +29,7 @@ def main():
         --domain example.com \
         --action renew
     """
+    logger = get_logger(__name__)
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
     parser = argparse.ArgumentParser(prog='sewer',
@@ -101,7 +102,6 @@ def main():
         eg: --action run")
 
     args = parser.parse_args()
-    logger = get_logger(__name__)
 
     dns_provider = args.dns
     domain = args.domain
@@ -173,8 +173,7 @@ def main():
         domain_alt_names=alt_domains,
         contact_email=email,
         account_key=account_key,
-        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
-        CLI=True)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
