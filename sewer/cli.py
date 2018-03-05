@@ -12,7 +12,6 @@ def main():
     Usage:
         1. To get a new certificate:
         CLOUDFLARE_EMAIL=example@example.com \
-        CLOUDFLARE_DNS_ZONE_ID=some-zone \
         CLOUDFLARE_API_KEY=api-key \
         sewer \
         --dns cloudflare \
@@ -21,7 +20,6 @@ def main():
 
         2. To renew a certificate:
         CLOUDFLARE_EMAIL=example@example.com \
-        CLOUDFLARE_DNS_ZONE_ID=some-zone \
         CLOUDFLARE_API_KEY=api-key \
         sewer \
         --account_key /path/to/your/account.key \
@@ -36,7 +34,6 @@ def main():
                                      description="""Sewer is a Let's Encrypt(ACME) client.
             Example usage::
             CLOUDFLARE_EMAIL=example@example.com
-            CLOUDFLARE_DNS_ZONE_ID=some-zone
             CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domain example.com --action run""")
     parser.add_argument(
         "--version",
@@ -131,10 +128,8 @@ def main():
         try:
             CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
             CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
-            CLOUDFLARE_DNS_ZONE_ID = os.environ['CLOUDFLARE_DNS_ZONE_ID']
 
             dns_class = CloudFlareDns(
-                CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)
             logger.info(

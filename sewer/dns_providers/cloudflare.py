@@ -13,12 +13,10 @@ class CloudFlareDns(common.BaseDns):
 
     def __init__(
             self,
-            CLOUDFLARE_DNS_ZONE_ID,
             CLOUDFLARE_EMAIL,
             CLOUDFLARE_API_KEY,
             CLOUDFLARE_API_BASE_URL='https://api.cloudflare.com/client/v4/'):
-
-        self.CLOUDFLARE_DNS_ZONE_ID = CLOUDFLARE_DNS_ZONE_ID
+        self.CLOUDFLARE_DNS_ZONE_ID = None
         self.CLOUDFLARE_EMAIL = CLOUDFLARE_EMAIL
         self.CLOUDFLARE_API_KEY = CLOUDFLARE_API_KEY
         self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
@@ -30,10 +28,42 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
         super(CloudFlareDns, self).__init__()
 
+    def find_dns_zone(self, domain_name):
+        self.logger.info('find_dns_zone')
+        url = urllib.parse.urljoin(
+            self.CLOUDFLARE_API_BASE_URL,
+            'zones?status=active')
+        headers = {
+            'X-Auth-Email': self.CLOUDFLARE_EMAIL,
+            'X-Auth-Key': self.CLOUDFLARE_API_KEY,
+            'Content-Type': 'application/json'
+        }
+        find_dns_zone_response = requests.get(
+            url, headers=headers, timeout=self.HTTP_TIMEOUT)
+        self.logger.info('find_dns_zone_response',
+                         status_code=find_dns_zone_response.status_code)
+        if find_dns_zone_response.status_code != 200:
+            raise ValueError(
+                "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
+                    status_code=find_dns_zone_response.status_code,
+                    response=self.log_response(find_dns_zone_response)))
+
+        result = find_dns_zone_response.json()['result']
+        for i in result:
+            if i['name'] in domain_name:
+                setattr(self, 'CLOUDFLARE_DNS_ZONE_ID', i['id'])
+        if isinstance(self.CLOUDFLARE_DNS_ZONE_ID, type(None)):
+            raise ValueError(
+                "Error unable to get DNS zone for domain_name={domain_name}: status_code={status_code} response={response}".format(
+                    domain_name=domain_name,
+                    status_code=find_dns_zone_response.status_code,
+                    response=self.log_response(find_dns_zone_response)))
+
     def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
         self.logger.info('create_dns_record')
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
+        self.find_dns_zone(domain_name)
 
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(

@@ -14,7 +14,6 @@ class TestCloudflare(TestCase):
     def setUp(self):
         self.domain_name = 'example.com'
         self.base64_of_acme_keyauthorization = 'mock-base64_of_acme_keyauthorization'
-        self.CLOUDFLARE_DNS_ZONE_ID = 'mock-zone-id'
         self.CLOUDFLARE_EMAIL = 'mock-email@example.com'
         self.CLOUDFLARE_API_KEY = 'mock-api-key'
         self.CLOUDFLARE_API_BASE_URL = 'https://some-mock-url.com'
@@ -24,7 +23,6 @@ class TestCloudflare(TestCase):
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             self.dns_class = sewer.CloudFlareDns(
-                CLOUDFLARE_DNS_ZONE_ID=self.CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY,
                 CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL)
@@ -90,14 +88,12 @@ class TestCloudflare(TestCase):
             mock_requests_post.return_value = \
                 mock_requests_delete.return_value = test_utils.MockResponse()
 
-            mock_requests_get.return_value = test_utils.MockResponse(
-                content="""{"result": [{"id": "some-id"}]}""")
+            mock_requests_get.return_value = test_utils.MockResponse()
 
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name,
                 base64_of_acme_keyauthorization=self.
                 base64_of_acme_keyauthorization)
-
             self.assertTrue(mock_requests_get.called)
             expected = {
                 'headers': {
@@ -109,5 +105,5 @@ class TestCloudflare(TestCase):
             }
             self.assertDictEqual(expected, mock_requests_delete.call_args[1])
             self.assertIn(
-                'https://some-mock-url.com/zones/mock-zone-id/dns_records/some-id',
+                'https://some-mock-url.com/zones/None/dns_records/some-mock-dns-zone-id',
                 str(mock_requests_delete.call_args))
