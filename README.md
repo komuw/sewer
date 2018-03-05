@@ -36,8 +36,7 @@ Sewer is in active development and it's API may change in backward incompatible 
 ```python
 import sewer
 
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                CLOUDFLARE_EMAIL='example@example.com',
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
                                 CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
 # 1. to create a new certificate:
@@ -66,8 +65,7 @@ with open('account_key.key', 'w') as account_key_file:
 # 2. to renew a certificate:
 import sewer
 
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                CLOUDFLARE_EMAIL='example@example.com',
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
                                 CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
 with open('account_key.key', 'r') as account_key_file:
@@ -86,8 +84,7 @@ with open('certificate.key', 'w') as certificate_key_file:
 
 # 3. You can also request/renew wildcard certificates:
 import sewer
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                CLOUDFLARE_EMAIL='example@example.com',
+dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
                                 CLOUDFLARE_API_KEY='nsa-grade-api-key')
 client = sewer.Client(domain_name='*.example.com',
                       dns_class=dns_class)
@@ -104,7 +101,6 @@ Your dns providers credentials need to be supplied as environment variables.
 To get certificate, run:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
-CLOUDFLARE_DNS_ZONE_ID=some-zone \
 CLOUDFLARE_API_KEY=api-key \
 sewer \
 --dns cloudflare \
@@ -115,7 +111,6 @@ sewer \
 To renew a certificate, run:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
-CLOUDFLARE_DNS_ZONE_ID=some-zone \
 CLOUDFLARE_API_KEY=api-key \
 sewer \
 --account_key /path/to/your/account.key \
@@ -317,7 +312,6 @@ NB: I make no commitment of accepting your pull requests.
 Here's the ouput of running sewer using the cli app:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
-CLOUDFLARE_DNS_ZONE_ID=random \
 CLOUDFLARE_API_KEY=nsa-grade-api-key \
 sewer \
 --endpoint staging \

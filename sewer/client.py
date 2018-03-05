@@ -20,8 +20,7 @@ class Client(object):
 
     usage:
         import sewer
-        dns_class = sewer.CloudFlareDns(CLOUDFLARE_DNS_ZONE_ID='random',
-                                        CLOUDFLARE_EMAIL='example@example.com',
+        dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
                                         CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
         1. to create a new certificate.

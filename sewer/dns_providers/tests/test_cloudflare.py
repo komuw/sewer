@@ -14,7 +14,6 @@ class TestCloudflare(TestCase):
     def setUp(self):
         self.domain_name = 'example.com'
         self.base64_of_acme_keyauthorization = 'mock-base64_of_acme_keyauthorization'
-        self.CLOUDFLARE_DNS_ZONE_ID = 'mock-zone-id'
         self.CLOUDFLARE_EMAIL = 'mock-email@example.com'
         self.CLOUDFLARE_API_KEY = 'mock-api-key'
         self.CLOUDFLARE_API_BASE_URL = 'https://some-mock-url.com'
@@ -24,7 +23,6 @@ class TestCloudflare(TestCase):
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             self.dns_class = sewer.CloudFlareDns(
-                CLOUDFLARE_DNS_ZONE_ID=self.CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY,
                 CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL)
