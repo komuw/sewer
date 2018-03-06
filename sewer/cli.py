@@ -33,8 +33,12 @@ def main():
     parser = argparse.ArgumentParser(prog='sewer',
                                      description="""Sewer is a Let's Encrypt(ACME) client.
             Example usage::
-            CLOUDFLARE_EMAIL=example@example.com
-            CLOUDFLARE_API_KEY=api-key sewer --dns cloudflare --domain example.com --action run""")
+            CLOUDFLARE_EMAIL=example@example.com \
+            CLOUDFLARE_API_KEY=api-key \
+            sewer \
+            --dns cloudflare \
+            --domain example.com \
+            --action run""")
     parser.add_argument(
         "--version",
         action='version',
@@ -58,6 +62,7 @@ def main():
         required=True,
         help="The domain/subdomain name for which \
         you want to get/renew certificate for. \
+        wildcards are also supported \
         eg: --domain example.com")
     parser.add_argument(
         "--alt_domains",
@@ -73,7 +78,7 @@ def main():
         type=str,
         required=False,
         help="The name to use for certificate \
-        certificate key and account key. Default is value of domain.")
+        certificate key and account key. Default is name of domain.")
     parser.add_argument(
         "--endpoint",
         type=str,
