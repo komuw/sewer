@@ -321,30 +321,22 @@ sewer \
 --domain subdomain.example.com \
 --action run            
 
-2017-08-03 22:58.16 chosen_dns_provider            message=Using cloudflare as dns provider.
-2017-08-03 22:58.16 create_certificate_key         client_name=Client
-2017-08-03 22:58.16 create_csr                     client_name=Client
-2017-08-03 22:58.16 get_certificate_chain          client_name=Client
-2017-08-03 22:58.18 get_certificate_chain_response client_name=Client status_code=200
-2017-08-03 22:58.18 create_account_key             client_name=Client
-2017-08-03 22:58.19 write_account_key              message=account key succesfully written to current directory.
-2017-08-03 22:58.19 just_get_me_a_certificate      ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=Client domain_names=['example.com', 'blog.example.com'] sewer_client_name=Client sewer_client_version=0.2.8
+2018-03-06 18:08.41 chosen_dns_provider            message=Using cloudflare as dns provider.
 
-2017-08-03 22:58.19 acme_register                  ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=Client domain_names=['example.com', 'blog.example.com'] sewer_client_name=Client sewer_client_version=0.2.8
-2017-08-03 22:58.22 acme_register_response         ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=Client domain_names=['example.com', 'blog.example.com'] response={u'Status': u'valid', u'agreement': u'https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf', u'contact': [], u'createdAt': u'2017-08-03T19:58:22.829066395Z',  u'id': 2898386} sewer_client_name=Client sewer_client_version=0.2.8 status_code=201
-.
-.
-.
-2017-08-03 22:58.26 create_dns_record              dns_provider_name=cloudflare
-2017-08-03 22:58.31 create_cloudflare_dns_record_response dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'proxiable': False, u'locked': False, u'name': u'_acme-challenge.example.com', u'created_on': u'2017-08-03T19:58:30.877292Z'}, u'success': True} status_code=200
-.
-.
-.
-2017-08-03 22:58.40 delete_dns_record              dns_provider_name=cloudflare
-2017-08-03 22:58.44 delete_dns_record_response     dns_provider_name=cloudflare response={u'errors': [], u'messages': [], u'result': {u'id': u'06ea612fa03ff12ba95dcf5ba32d7709'}, u'success': True} status_code=200
+2018-03-06 18:08.46 acme_register                  acme_server=https://acme-staging... domain_names=['subdomain.example.com'] sewer_version=0.5.0b
+2018-03-06 18:08.52 acme_register_response         acme_server=https://acme-staging... domain_names=['subdomain.example.com']
 
-2017-08-03 22:59.08 get_certificate                ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=Client domain_names=['example.com', 'blog.example.com'] sewer_client_name=Client sewer_client_version=0.2.8
-2017-08-03 22:59.12 get_certificate_response       ACME_CERTIFICATE_AUTHORITY_URL=https://acme-staging.api.letsencrypt.org client_name=Client domain_names=['example.com', 'blog.example.com'] response=Response probably contains a certificate. sewer_client_name=Client sewer_client_version=0.2.8 status_code=201
+2018-03-06 18:08.52 apply_for_cert_issuance        acme_server=https://acme-staging... domain_names=['subdomain.example.com'] sewer_version=0.5.0b
+2018-03-06 18:09.01 apply_for_cert_issuance_response acme_server=https://acme-staging... domain_names=['subdomain.example.com']
 
-2017-08-03 22:59.12 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
+2018-03-06 18:09.08 create_dns_record              dns_provider_name=CloudFlareDns
+2018-03-06 18:09.16 create_cloudflare_dns_record_response dns_provider_name=CloudFlareDns status_code=200
+
+2018-03-06 18:09.36 send_csr                       acme_server=https://acme-staging... domain_names=['subdomain.example.com'] sewer_version=0.5.0b
+2018-03-06 18:09.45 send_csr_response              acme_server=https://acme-staging... domain_names=['subdomain.example.com']
+
+2018-03-06 18:09.45 download_certificate           acme_server=https://acme-staging... domain_names=['subdomain.example.com'] sewer_version=0.5.0b
+2018-03-06 18:09.50 download_certificate_response  acme_server=https://acme-staging... domain_names=['subdomain.example.com']
+
+2018-03-06 18:09.54 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
 ```
