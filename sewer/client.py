@@ -91,7 +91,7 @@ class Client(object):
         """
 
         self.logger = get_logger(__name__).bind(
-            sewer_ver=sewer_version.__version__)
+            sewer_version=sewer_version.__version__)
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
@@ -146,7 +146,7 @@ class Client(object):
                 self.PRIOR_REGISTERED = True
 
             self.logger = self.logger.bind(
-                sewer_ver=sewer_version.__version__,
+                sewer_version=sewer_version.__version__,
                 domain_names=self.all_domain_names,
                 acme_server=self.ACME_DIRECTORY_URL[:20] + '...')
         except Exception as e:

@@ -318,7 +318,7 @@ CLOUDFLARE_API_KEY=nsa-grade-api-key \
 sewer \
 --endpoint staging \
 --dns cloudflare \
---domains subdomain.example.com \
+--domain subdomain.example.com \
 --action run            
 
 2017-08-03 22:58.16 chosen_dns_provider            message=Using cloudflare as dns provider.
