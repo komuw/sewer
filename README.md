@@ -169,6 +169,8 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 - Obtain certificates.
 - Renew certificates.
 - Supports multiple DNS providers.
+- Supports wildcard certificates
+- Supports acme version 2 only.
 - [Bring your own dns provider](#bring-your-own-dns-provider) 
 - Support for SAN certificates.
 - Can be used as a python library as well as a command line(CLI) application.
