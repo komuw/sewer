@@ -1,15 +1,20 @@
-from structlog import get_logger
+import logging
 
 
 class BaseDns(object):
     """
     """
 
-    def __init__(self):
+    def __init__(self, LOG_LEVEL='INFO'):
+        self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
 
-        self.logger = get_logger(__name__).bind(
-            dns_provider_name=self.dns_provider_name)
+        self.logger = logging.getLogger()
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(self.LOG_LEVEL)
 
     def log_response(self, response):
         """

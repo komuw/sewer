@@ -47,6 +47,8 @@ class AuroraDns(common.BaseDns):
             name=subDomain,
             type=RecordType.TXT,
             data=base64_of_acme_keyauthorization)
+
+        self.logger.info('create_dns_record_success')
         return
 
     def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
@@ -91,4 +93,5 @@ class AuroraDns(common.BaseDns):
                 self.logger.info('Record ' + subDomain + '.' + domainSuffix +
                                  ' not found. No record to delete.')
 
+        self.logger.info('delete_dns_record_success')
         return

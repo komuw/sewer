@@ -1,7 +1,6 @@
 import os
+import logging
 import argparse
-
-from structlog import get_logger
 
 from . import Client
 from . import __version__ as sewer_version
@@ -27,7 +26,6 @@ def main():
         --domain example.com \
         --action renew
     """
-    logger = get_logger(__name__)
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
     parser = argparse.ArgumentParser(prog='sewer',
@@ -102,6 +100,14 @@ def main():
         help="The action that you want to perform. \
         Either run (get a new certificate) or renew (renew a certificate). \
         eg: --action run")
+    parser.add_argument(
+        "--loglevel",
+        type=str,
+        required=False,
+        default='INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        help="The log level to output log messages at. \
+        eg: --loglevel DEBUG")
 
     args = parser.parse_args()
 
@@ -113,6 +119,14 @@ def main():
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
+    loglevel = args.loglevel
+
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(loglevel)
 
     if account_key:
         account_key = account_key.read()
@@ -138,10 +152,10 @@ def main():
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)
             logger.info(
-                'chosen_dns_provider',
-                message='Using {0} as dns provider.'.format(dns_provider))
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
         except KeyError as e:
-            logger.info(
+            logger.error(
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
@@ -156,10 +170,10 @@ def main():
                 AURORA_API_KEY=AURORA_API_KEY,
                 AURORA_SECRET_KEY=AURORA_SECRET_KEY)
             logger.info(
-                'chosen_dns_provider',
-                message='Using {0} as dns provider.'.format(dns_provider))
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
         except KeyError as e:
-            logger.info(
+            logger.error(
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
@@ -180,9 +194,7 @@ def main():
     # write out account_key in current directory
     with open('{0}.account.key'.format(file_name), 'w') as account_file:
         account_file.write(account_key)
-    logger.info(
-        "write_account_key",
-        message='account key succesfully written to current directory.')
+    logger.info('account key succesfully written to current directory.')
 
     if action == 'renew':
         message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
@@ -197,4 +209,4 @@ def main():
     with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
 
-    logger.info("the_end", message=message)
+    logger.info("the_end. {0}".format(message))
