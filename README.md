@@ -205,7 +205,7 @@ class AWSroute53Dns(sewer.BaseDns):
 
     def create_dns_record(self,
                           domain_name,
-                          base64_of_acme_keyauthorization):
+                          domain_dns_value):
         """
         AWS route53 with boto3 documentation;
         https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
@@ -224,13 +224,13 @@ class AWSroute53Dns(sewer.BaseDns):
                             'TTL': 123,
                             'ResourceRecords': [
                                 {
-                                    'Value': "{0}".format(base64_of_acme_keyauthorization)},
+                                    'Value': "{0}".format(domain_dns_value)},
                             ]}},
                 ]})
 
     def delete_dns_record(self,
                           domain_name,
-                          base64_of_acme_keyauthorization):
+                          domain_dns_value):
         # do whatever is necessary for your particular DNS provider to delete a TXT DNS record
         # eg for AWS route53, it will be something like::
         self.boto_client.change_resource_record_sets(
@@ -245,7 +245,7 @@ class AWSroute53Dns(sewer.BaseDns):
                             'TTL': 123,
                             'ResourceRecords': [
                                 {
-                                    'Value': "{0}".format(base64_of_acme_keyauthorization)},
+                                    'Value': "{0}".format(domain_dns_value)},
                             ]}},
                 ]})
 
