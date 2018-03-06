@@ -68,7 +68,7 @@ class Client(object):
         :param domain_name:                  (required) [string]
             the name that you want to acquire/renew certificate for. wildcards are allowed.
         :param dns_class:                    (required) [class]
-            a subclass of sewer.common.BaseDns which will be called to create/delete DNS TXT records.
+            a subclass of sewer.BaseDns which will be called to create/delete DNS TXT records.
         :param domain_alt_names:             (optional) [list]
             list of alternative names that you want to be bundled into the same certificate as domain_name.
         :param contact_email:                (optional) [string]
