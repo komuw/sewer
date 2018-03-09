@@ -74,8 +74,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'requests', 'structlog', 'pyopenssl', 'cryptography', 'tldextract',
-        'apache-libcloud'
+        'requests', 'pyopenssl', 'cryptography', 'tldextract', 'apache-libcloud'
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

@@ -157,6 +157,7 @@ optional arguments:
   --action {run,renew}  The action that you want to perform. Either run (get a
                         new certificate) or renew (renew a certificate). eg:
                         --action run
+  --loglevel LEVEL      The log level to output log messages at. eg: --loglevel INFO
 ```
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
