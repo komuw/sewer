@@ -62,7 +62,7 @@ class CloudFlareDns(common.BaseDns):
 
         self.logger.debug('find_dns_zone_success')
 
-    def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('create_dns_record')
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
@@ -71,7 +71,7 @@ class CloudFlareDns(common.BaseDns):
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(
             domain_name=domain_name,
-            base64_of_acme_keyauthorization=base64_of_acme_keyauthorization)
+            domain_dns_value=domain_dns_value)
         url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                    'zones/{0}/dns_records'.format(
                                        self.CLOUDFLARE_DNS_ZONE_ID))
@@ -83,7 +83,7 @@ class CloudFlareDns(common.BaseDns):
         body = {
             "type": "TXT",
             "name": '_acme-challenge' + '.' + domain_name + '.',
-            "content": "{0}".format(base64_of_acme_keyauthorization)
+            "content": "{0}".format(domain_dns_value)
         }
         create_cloudflare_dns_record_response = requests.post(
             url,
@@ -102,7 +102,7 @@ class CloudFlareDns(common.BaseDns):
                     response=self.log_response(create_cloudflare_dns_record_response)))
         self.logger.info('create_dns_record_end')
 
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('delete_dns_record')
 
         class MockResponse(object):

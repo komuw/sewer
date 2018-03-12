@@ -26,21 +26,21 @@ class BaseDns(object):
             log_body = response.content
         return log_body
 
-    def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def create_dns_record(self, domain_name, domain_dns_value):
         """
         Method that creates/adds a dns TXT record for a domain/subdomain name on
         a chosen DNS provider.
 
         :param domain_name: :string: The domain/subdomain name whose dns record ought to be
             created/added on a chosen DNS provider.
-        :param base64_of_acme_keyauthorization: :string: The value/content of the TXT record that will be
+        :param domain_dns_value: :string: The value/content of the TXT record that will be
             created/added for the given domain/subdomain
 
         This method should return None
 
         Basic Usage:
             If the value of the `domain_name` variable is example.com and the value of
-            `base64_of_acme_keyauthorization` is HAJA_4MkowIFByHhFaP8u035skaM91lTKplKld
+            `domain_dns_value` is HAJA_4MkowIFByHhFaP8u035skaM91lTKplKld
             Then, your implementation of this method ought to create a DNS TXT record
             whose name is '_acme-challenge' + '.' + domain_name + '.' (ie: _acme-challenge.example.com. )
             and whose value/content is HAJA_4MkowIFByHhFaP8u035skaM91lTKplKld
@@ -61,14 +61,14 @@ class BaseDns(object):
         raise NotImplementedError(
             'create_dns_record method must be implemented.')
 
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def delete_dns_record(self, domain_name, domain_dns_value):
         """
         Method that deletes/removes a dns TXT record for a domain/subdomain name on
         a chosen DNS provider.
 
         :param domain_name: :string: The domain/subdomain name whose dns record ought to be
             deleted/removed on a chosen DNS provider.
-        :param base64_of_acme_keyauthorization: :string: The value/content of the TXT record that will be
+        :param domain_dns_value: :string: The value/content of the TXT record that will be
             deleted/removed for the given domain/subdomain
 
         This method should return None

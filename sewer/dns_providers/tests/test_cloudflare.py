@@ -13,7 +13,7 @@ class TestCloudflare(TestCase):
 
     def setUp(self):
         self.domain_name = 'example.com'
-        self.base64_of_acme_keyauthorization = 'mock-base64_of_acme_keyauthorization'
+        self.domain_dns_value = 'mock-domain_dns_value'
         self.CLOUDFLARE_EMAIL = 'mock-email@example.com'
         self.CLOUDFLARE_API_KEY = 'mock-api-key'
         self.CLOUDFLARE_API_BASE_URL = 'https://some-mock-url.com'
@@ -43,11 +43,11 @@ class TestCloudflare(TestCase):
 
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name,
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization)
+                domain_dns_value=self.
+                domain_dns_value)
             mock_delete_dns_record.assert_called_once_with(
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization,
+                domain_dns_value=self.
+                domain_dns_value,
                 domain_name=self.domain_name)
 
     def test_cloudflare_is_called_by_create_dns_record(self):
@@ -63,14 +63,14 @@ class TestCloudflare(TestCase):
 
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name,
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization)
+                domain_dns_value=self.
+                domain_dns_value)
             expected = {
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
                     'X-Auth-Key': self.CLOUDFLARE_API_KEY,
                     'Content-Type': 'application/json'},
-                'data': '{"content": "mock-base64_of_acme_keyauthorization", "type": "TXT", "name": "_acme-challenge.example.com."}',
+                'data': '{"content": "mock-domain_dns_value", "type": "TXT", "name": "_acme-challenge.example.com."}',
                 'timeout': 65}
 
             self.assertDictEqual(
@@ -92,8 +92,8 @@ class TestCloudflare(TestCase):
 
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name,
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization)
+                domain_dns_value=self.
+                domain_dns_value)
             self.assertTrue(mock_requests_get.called)
             expected = {
                 'headers': {

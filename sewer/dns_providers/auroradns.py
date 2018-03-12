@@ -22,7 +22,7 @@ class AuroraDns(common.BaseDns):
         self.AURORA_SECRET_KEY = AURORA_SECRET_KEY
         super(AuroraDns, self).__init__()
 
-    def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('create_dns_record')
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
@@ -30,7 +30,7 @@ class AuroraDns(common.BaseDns):
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(
             domain_name=domain_name,
-            base64_of_acme_keyauthorization=base64_of_acme_keyauthorization)
+            domain_dns_value=domain_dns_value)
 
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + '.' + extractedDomain.suffix
@@ -46,12 +46,12 @@ class AuroraDns(common.BaseDns):
         zone.create_record(
             name=subDomain,
             type=RecordType.TXT,
-            data=base64_of_acme_keyauthorization)
+            data=domain_dns_value)
 
         self.logger.info('create_dns_record_success')
         return
 
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('delete_dns_record')
 
         extractedDomain = tldextract.extract(domain_name)
