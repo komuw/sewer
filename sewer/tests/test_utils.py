@@ -8,10 +8,10 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
     def __init__(self):
         self.dns_provider_name = 'example_dns_provider'
 
-    def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def create_dns_record(self, domain_name, domain_dns_value):
         pass
 
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def delete_dns_record(self, domain_name, domain_dns_value):
         pass
 
 

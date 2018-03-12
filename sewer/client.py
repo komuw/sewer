@@ -390,8 +390,7 @@ class Client(object):
 
     def check_authorization_status(
             self,
-            authorization_url,
-            base64_of_acme_keyauthorization):
+            authorization_url):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
         To check on the status of an authorization, the client sends a GET(polling)
@@ -629,7 +628,7 @@ class Client(object):
 
     def get_certificate(self):
         self.logger.debug('get_certificate')
-        base64_of_acme_keyauthorization = "placeholder"
+        domain_dns_value = "placeholder"
         dns_names_to_delete = []
         try:
             self.acme_register()
@@ -640,12 +639,10 @@ class Client(object):
                 dns_names_to_delete.append(dns_name)
                 dns_token, dns_challenge_url = self.get_challenge(
                     url=authorization_url)
-                acme_keyauthorization, base64_of_acme_keyauthorization = self.get_keyauthorization(
+                acme_keyauthorization, domain_dns_value = self.get_keyauthorization(
                     dns_token)
-                self.dns_class.create_dns_record(
-                    dns_name, base64_of_acme_keyauthorization)
-                self.check_authorization_status(
-                    authorization_url, base64_of_acme_keyauthorization)
+                self.dns_class.create_dns_record(dns_name, domain_dns_value)
+                self.check_authorization_status(authorization_url)
                 self.respond_to_challenge(
                     acme_keyauthorization, dns_challenge_url)
             certificate_url = self.send_csr(finalize_url)
@@ -656,8 +653,7 @@ class Client(object):
             raise e
         finally:
             for dns_name in dns_names_to_delete:
-                self.dns_class.delete_dns_record(
-                    dns_name, base64_of_acme_keyauthorization)
+                self.dns_class.delete_dns_record(dns_name, domain_dns_value)
 
         return certificate
 
