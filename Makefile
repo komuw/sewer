@@ -5,7 +5,7 @@ upload:
 	@python setup.py sdist
 	@python setup.py bdist_wheel
 	@twine upload dist/* -r testpypi
-	@sudo pip3 install -U -i https://testpypi.python.org/pypi sewer
+	@pip3 install -U -i https://testpypi.python.org/pypi sewer
 
 uploadprod:
 	@rm -rf build
@@ -14,7 +14,7 @@ uploadprod:
 	@python setup.py sdist
 	@python setup.py bdist_wheel
 	@twine upload dist/*
-	@sudo pip3 install -U sewer
+	@pip3 install -U sewer
 
 test:
 	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
