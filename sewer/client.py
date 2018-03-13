@@ -63,7 +63,7 @@ class Client(object):
             ACME_REQUEST_TIMEOUT=7,
             ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=3,
-            ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
+            ACME_DIRECTORY_URL='https://acme-v02.api.letsencrypt.org/directory',
             LOG_LEVEL='INFO'):
         """
         :param domain_name:                  (required) [string]
@@ -619,6 +619,7 @@ class Client(object):
             data = json.dumps(
                 {"protected": protected64, "payload": payload64,
                  "signature": signature64})
+            headers.update({"Content-Type": "application/jose+json"})
             response = requests.post(
                 url,
                 data=data.encode('utf8'),

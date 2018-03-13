@@ -140,7 +140,7 @@ def main():
         # file
         ACME_DIRECTORY_URL = 'https://acme-staging-v02.api.letsencrypt.org/directory'
     else:
-        ACME_DIRECTORY_URL = 'https://ACME_DIRECTORY_URL-prod-url'
+        ACME_DIRECTORY_URL = 'https://acme-v02.api.letsencrypt.org/directory'
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
