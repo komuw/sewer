@@ -6,7 +6,6 @@
 from libcloud.dns.providers import get_driver
 from libcloud.dns.types import Provider, RecordType
 import tldextract
-from structlog import get_logger
 from . import common
 
 
@@ -15,23 +14,23 @@ class AuroraDns(common.BaseDns):
     Todo: re-organize this class so that we make it easier to mock things out to
     facilitate better tests.
     """
+    dns_provider_name = 'aurora'
 
     def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY):
 
         self.AURORA_API_KEY = AURORA_API_KEY
         self.AURORA_SECRET_KEY = AURORA_SECRET_KEY
-        self.dns_provider_name = 'aurora'
+        super(AuroraDns, self).__init__()
 
-        self.logger = get_logger(__name__).bind(
-            dns_provider_name=self.dns_provider_name)
-
-    def create_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('create_dns_record')
+        # if we have been given a wildcard name, strip wildcard
+        domain_name = domain_name.lstrip('*.')
 
         # delete any prior existing DNS authorizations that may exist already
         self.delete_dns_record(
             domain_name=domain_name,
-            base64_of_acme_keyauthorization=base64_of_acme_keyauthorization)
+            domain_dns_value=domain_dns_value)
 
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + '.' + extractedDomain.suffix
@@ -47,10 +46,12 @@ class AuroraDns(common.BaseDns):
         zone.create_record(
             name=subDomain,
             type=RecordType.TXT,
-            data=base64_of_acme_keyauthorization)
+            data=domain_dns_value)
+
+        self.logger.info('create_dns_record_success')
         return
 
-    def delete_dns_record(self, domain_name, base64_of_acme_keyauthorization):
+    def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('delete_dns_record')
 
         extractedDomain = tldextract.extract(domain_name)
@@ -69,14 +70,28 @@ class AuroraDns(common.BaseDns):
         for x in records:
             if x.name == subDomain and x.type == 'TXT':
                 record_id = x.id
-                self.logger.info('Found record ' + subDomain + '.' +
-                                 domainSuffix + ' with id : ' + record_id + '.')
-                record = driver.get_record(zone_id=zone.id, record_id=record_id)
+                self.logger.info(
+                    'Found record ' +
+                    subDomain +
+                    '.' +
+                    domainSuffix +
+                    ' with id : ' +
+                    record_id +
+                    '.')
+                record = driver.get_record(
+                    zone_id=zone.id, record_id=record_id)
                 driver.delete_record(record)
-                self.logger.info('Deleted record ' + subDomain + '.' +
-                                 domainSuffix + ' with id : ' + record_id + '.')
+                self.logger.info(
+                    'Deleted record ' +
+                    subDomain +
+                    '.' +
+                    domainSuffix +
+                    ' with id : ' +
+                    record_id +
+                    '.')
             else:
                 self.logger.info('Record ' + subDomain + '.' + domainSuffix +
                                  ' not found. No record to delete.')
 
+        self.logger.info('delete_dns_record_success')
         return

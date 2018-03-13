@@ -16,7 +16,7 @@ class TestAurora(TestCase):
 
     def setUp(self):
         self.domain_name = 'example.com'
-        self.base64_of_acme_keyauthorization = 'mock-base64_of_acme_keyauthorization'
+        self.domain_dns_value = 'mock-domain_dns_value'
         self.AURORA_API_KEY = 'mock-aurora-api-key'
         self.AURORA_SECRET_KEY = 'mock-aurora-secret-key'
 
@@ -36,9 +36,9 @@ class TestAurora(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.dns_providers.auroradns.get_driver'
-                    ) as mock_get_driver, mock.patch(
+        ) as mock_get_driver, mock.patch(
                         'sewer.AuroraDns.delete_dns_record'
-                    ) as mock_delete_dns_record:
+        ) as mock_delete_dns_record:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = \
@@ -48,11 +48,11 @@ class TestAurora(TestCase):
 
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name,
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization)
+                domain_dns_value=self.
+                domain_dns_value)
             mock_delete_dns_record.assert_called_once_with(
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization,
+                domain_dns_value=self.
+                domain_dns_value,
                 domain_name=self.domain_name)
 
     def test_aurora_is_called_by_delete_dns_record(self):
@@ -60,7 +60,7 @@ class TestAurora(TestCase):
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
                         'sewer.dns_providers.auroradns.get_driver'
-                    ) as mock_get_driver:
+        ) as mock_get_driver:
             mock_requests_post.return_value = \
                 mock_requests_get.return_value = \
                 mock_requests_delete.return_value = test_utils.MockResponse()
@@ -69,5 +69,5 @@ class TestAurora(TestCase):
 
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name,
-                base64_of_acme_keyauthorization=self.
-                base64_of_acme_keyauthorization)
+                domain_dns_value=self.
+                domain_dns_value)

@@ -1,10 +1,9 @@
 import os
+import logging
 import argparse
 
-from structlog import get_logger
-
 from . import Client
-import __version__ as sewer_version
+from . import __version__ as sewer_version
 
 
 def main():
@@ -12,7 +11,6 @@ def main():
     Usage:
         1. To get a new certificate:
         CLOUDFLARE_EMAIL=example@example.com \
-        CLOUDFLARE_DNS_ZONE_ID=some-zone \
         CLOUDFLARE_API_KEY=api-key \
         sewer \
         --dns cloudflare \
@@ -21,7 +19,6 @@ def main():
 
         2. To renew a certificate:
         CLOUDFLARE_EMAIL=example@example.com \
-        CLOUDFLARE_DNS_ZONE_ID=some-zone \
         CLOUDFLARE_API_KEY=api-key \
         sewer \
         --account_key /path/to/your/account.key \
@@ -31,8 +28,15 @@ def main():
     """
     # TODO: enable people to specify the location where they want certificate and keys to be stored.
     # currently, we store them in the directory from which sewer is ran
-    parser = argparse.ArgumentParser(
-        prog='sewer', description="Sewer is a Let's Encrypt(ACME) client.")
+    parser = argparse.ArgumentParser(prog='sewer',
+                                     description="""Sewer is a Let's Encrypt(ACME) client.
+            Example usage::
+            CLOUDFLARE_EMAIL=example@example.com \
+            CLOUDFLARE_API_KEY=api-key \
+            sewer \
+            --dns cloudflare \
+            --domain example.com \
+            --action run""")
     parser.add_argument(
         "--version",
         action='version',
@@ -56,6 +60,7 @@ def main():
         required=True,
         help="The domain/subdomain name for which \
         you want to get/renew certificate for. \
+        wildcards are also supported \
         eg: --domain example.com")
     parser.add_argument(
         "--alt_domains",
@@ -71,7 +76,7 @@ def main():
         type=str,
         required=False,
         help="The name to use for certificate \
-        certificate key and account key. Default is value of domain.")
+        certificate key and account key. Default is name of domain.")
     parser.add_argument(
         "--endpoint",
         type=str,
@@ -95,9 +100,16 @@ def main():
         help="The action that you want to perform. \
         Either run (get a new certificate) or renew (renew a certificate). \
         eg: --action run")
+    parser.add_argument(
+        "--loglevel",
+        type=str,
+        required=False,
+        default='INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        help="The log level to output log messages at. \
+        eg: --loglevel DEBUG")
 
     args = parser.parse_args()
-    logger = get_logger(__name__)
 
     dns_provider = args.dns
     domain = args.domain
@@ -107,6 +119,14 @@ def main():
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
+    loglevel = args.loglevel
+
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(loglevel)
 
     if account_key:
         account_key = account_key.read()
@@ -116,29 +136,26 @@ def main():
         file_name = '{0}'.format(domain)
     if endpoint == 'staging':
         # TODO: move this to a config.py file.
-        # the cli and the client would both read this urls from that config file
-        GET_NONCE_URL = "https://acme-staging.api.letsencrypt.org/directory"
-        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-staging.api.letsencrypt.org"
+        # the cli and the client would both read this urls from that config
+        # file
+        ACME_DIRECTORY_URL = 'https://acme-staging-v02.api.letsencrypt.org/directory'
     else:
-        GET_NONCE_URL = "https://acme-v01.api.letsencrypt.org/directory"
-        ACME_CERTIFICATE_AUTHORITY_URL = "https://acme-v01.api.letsencrypt.org"
+        ACME_DIRECTORY_URL = 'https://acme-v02.api.letsencrypt.org/directory'
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
         try:
             CLOUDFLARE_EMAIL = os.environ['CLOUDFLARE_EMAIL']
             CLOUDFLARE_API_KEY = os.environ['CLOUDFLARE_API_KEY']
-            CLOUDFLARE_DNS_ZONE_ID = os.environ['CLOUDFLARE_DNS_ZONE_ID']
 
             dns_class = CloudFlareDns(
-                CLOUDFLARE_DNS_ZONE_ID=CLOUDFLARE_DNS_ZONE_ID,
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY)
             logger.info(
-                'chosen_dns_provider',
-                message='Using {0} as dns provider.'.format(dns_provider))
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
         except KeyError as e:
-            logger.info(
+            logger.error(
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
@@ -153,10 +170,10 @@ def main():
                 AURORA_API_KEY=AURORA_API_KEY,
                 AURORA_SECRET_KEY=AURORA_SECRET_KEY)
             logger.info(
-                'chosen_dns_provider',
-                message='Using {0} as dns provider.'.format(dns_provider))
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
         except KeyError as e:
-            logger.info(
+            logger.error(
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
@@ -168,19 +185,16 @@ def main():
         domain_name=domain,
         dns_class=dns_class,
         domain_alt_names=alt_domains,
-        registration_recovery_email=email,
+        contact_email=email,
         account_key=account_key,
-        GET_NONCE_URL=GET_NONCE_URL,
-        ACME_CERTIFICATE_AUTHORITY_URL=ACME_CERTIFICATE_AUTHORITY_URL)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
     # write out account_key in current directory
     with open('{0}.account.key'.format(file_name), 'w') as account_file:
         account_file.write(account_key)
-    logger.info(
-        "write_account_key",
-        message='account key succesfully written to current directory.')
+    logger.info('account key succesfully written to current directory.')
 
     if action == 'renew':
         message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
@@ -195,4 +209,4 @@ def main():
     with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
 
-    logger.info("the_end", message=message)
+    logger.info("the_end. {0}".format(message))

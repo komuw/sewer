@@ -14,7 +14,7 @@ except ImportError:
     long_description = codecs.open('README.md').read()
 
 with open(os.path.join(here, 'sewer', '__version__.py'), 'r') as f:
-    exec (f.read(), about)
+    exec(f.read(), about)
 
 setup(
     name=about['__title__'],
@@ -74,16 +74,15 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'requests', 'structlog', 'pyopenssl', 'cryptography', 'tldextract',
-        'apache-libcloud'
+        'requests', 'pyopenssl', 'cryptography', 'tldextract', 'apache-libcloud'
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
-    # $ pip install -e .[dev,test]
+    # $ pip3 install -e .[dev,test]
     extras_require={
-        'dev':
-        ['coverage', 'pypandoc', 'twine', 'wheel', 'yapf', 'flake8', 'mock', 'pylint', 'autopep8'],
+        'dev': ['coverage', 'pypandoc', 'twine', 'wheel', 'autopep8'],
+        'test': ['flake8', 'mock', 'pylint'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
@@ -115,12 +114,12 @@ setup(
 # python packaging documentation:
 # 1. https://python-packaging.readthedocs.io/en/latest/index.html
 # 2. https://python-packaging-user-guide.readthedocs.io/tutorials/distributing-packages
-# a) pip install wheel twine
-# b) pip install -e .
+# a) pip3 install wheel twine
+# b) pip3 install -e .
 # c) python setup.py sdist
 # d) python setup.py bdist_wheel
 # e) DONT use python setup.py register and python setup.py upload. They use http
 # f) twine upload dist/* -r testpypi
-# g) pip install -i https://testpypi.python.org/pypi <package name>
+# g) pip3 install -i https://testpypi.python.org/pypi <package name>
 # h) twine upload dist/*   # prod pypi
-# i) pip install <package name>
+# i) pip3 install <package name>
