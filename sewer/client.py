@@ -353,7 +353,7 @@ class Client(object):
         res = associate_authorizations_with_identifiers_response.json()
         domain = res['identifier']['value']
         wildcard = res.get("wildcard")
-        return {'domain':domain, 'url':url, wildcard: wildcard}
+        return {'domain':domain, 'url':url, 'wildcard': wildcard}
 
 
     def get_challenge(self, url):
@@ -653,6 +653,7 @@ class Client(object):
         try:
             self.acme_register()
             identifiers_auths, finalize_url = self.apply_for_cert_issuance()
+            self.logger.debug('identifieer auth. {0}'.format(identifiers_auths))
             for identifier_auth in identifiers_auths:
                 authorization_url = identifier_auth['url']
                 dns_name = identifier_auth['domain']
