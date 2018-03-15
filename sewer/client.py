@@ -311,7 +311,6 @@ class Client(object):
         for domain_name in self.all_domain_names:
             identifiers.append({"type": "dns", "value": domain_name})
 
-        identifiers_auths = copy.copy(identifiers)
         payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
@@ -329,14 +328,33 @@ class Client(object):
                     response=self.log_response(apply_for_cert_issuance_response)))
 
         apply_for_cert_issuance_response_json = apply_for_cert_issuance_response.json()
-        authorizations = apply_for_cert_issuance_response_json["authorizations"]
-        authorization_urls = authorizations  # list
         finalize_url = apply_for_cert_issuance_response_json["finalize"]
-        for k, v in enumerate(identifiers_auths):
-            v.update({'authorization_url': authorization_urls[k]})
+        authorizations = apply_for_cert_issuance_response_json["authorizations"]
+        identifiers_auths = []
+        for url in authorizations:
+            identifiers_auths.append(self.associate_authorizations_with_identifiers(url))
 
         self.logger.info('apply_for_cert_issuance_success')
         return identifiers_auths, finalize_url
+
+    def associate_authorizations_with_identifiers(self,url):
+        self.logger.debug('associate_authorizations_with_identifiers')
+        headers = {'User-Agent': self.User_Agent}
+        associate_authorizations_with_identifiers_response = requests.get(url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+        self.logger.debug(
+            'associate_authorizations_with_identifiers_response. status_code={0}. response={1}'.format(
+                associate_authorizations_with_identifiers_response.status_code,
+                self.log_response(associate_authorizations_with_identifiers_response)))
+        if associate_authorizations_with_identifiers_response.status_code not in [200, 201]:
+            raise ValueError(
+                "Error associating auth urls with identifiers: status_code={status_code} response={response}".format(
+                    status_code=associate_authorizations_with_identifiers_response.status_code,
+                    response=self.log_response(associate_authorizations_with_identifiers_response)))
+        res = associate_authorizations_with_identifiers_response.json()
+        domain = res['identifier']['value']
+        wildcard = res.get("wildcard")
+        return {'domain':domain, 'url':url, 'wildcard': wildcard}
+
 
     def get_challenge(self, url):
         """
@@ -635,9 +653,10 @@ class Client(object):
         try:
             self.acme_register()
             identifiers_auths, finalize_url = self.apply_for_cert_issuance()
+            self.logger.debug('identifieer auth. {0}'.format(identifiers_auths))
             for identifier_auth in identifiers_auths:
-                authorization_url = identifier_auth['authorization_url']
-                dns_name = identifier_auth['value']
+                authorization_url = identifier_auth['url']
+                dns_name = identifier_auth['domain']
                 dns_names_to_delete.append(dns_name)
                 dns_token, dns_challenge_url = self.get_challenge(
                     url=authorization_url)
