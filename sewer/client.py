@@ -97,7 +97,8 @@ class Client(object):
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(message)s')
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        if not self.logger.handlers:
+            self.logger.addHandler(handler)
         self.logger.setLevel(LOG_LEVEL)
 
         if not isinstance(domain_alt_names, (type(None), list)):
