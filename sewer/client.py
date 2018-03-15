@@ -141,7 +141,7 @@ class Client(object):
             self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
             # unique account identifier
-            # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+            # https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
             self.kid = None
 
             self.certificate_key = self.create_certificate_key()
@@ -217,7 +217,7 @@ class Client(object):
 
     def create_csr(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         The CSR is sent in the base64url-encoded version of the DER format. (NB: this
         field uses base64url, and does not include headers, it is different from PEM.)
         """
@@ -245,7 +245,7 @@ class Client(object):
 
     def acme_register(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.3
         The server creates an account and stores the public key used to
         verify the JWS (i.e., the "jwk" element of the JWS header) to
         authenticate future requests from the account.
@@ -290,7 +290,7 @@ class Client(object):
 
     def apply_for_cert_issuance(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         The order object returned by the server represents a promise that if
         the client fulfills the server's requirements before the "expires"
         time, then the server will be willing to finalize the order upon
@@ -304,7 +304,7 @@ class Client(object):
         The POST body MUST include a CSR:
 
         The date values seem to be ignored by LetsEncrypt although they are
-        in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         """
         self.logger.info('apply_for_cert_issuance')
         identifiers = []
@@ -340,7 +340,7 @@ class Client(object):
 
     def get_challenge(self, url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5
         When a client receives an order(ie after self.apply_for_cert_issuance() succeeds)
         from the server it downloads the authorization resources by sending
         GET requests to the indicated URLs.
@@ -393,12 +393,12 @@ class Client(object):
             self,
             authorization_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To check on the status of an authorization, the client sends a GET(polling)
         request to the authorization URL, and the server responds with the
         current authorization object.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-8.2
         Clients SHOULD NOT respond to challenges until they believe that the
         server's queries will succeed. If a server's initial validation
         query fails, the server SHOULD retry[intended to address things like propagation delays in
@@ -438,7 +438,7 @@ class Client(object):
 
     def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To prove control of the identifier and receive authorization, the
         client needs to respond with information to complete the challenges.
         The server is said to "finalize" the authorization when it has
@@ -465,7 +465,7 @@ class Client(object):
 
     def send_csr(self, finalize_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         Once the client believes it has fulfilled the server's requirements,
         it should send a POST request(include a CSR) to the order resource's finalize URL.
         A request to finalize an order will result in error if the order indicated does not have status "pending",
@@ -523,7 +523,7 @@ class Client(object):
 
     def get_nonce(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.4
         Each request to an ACME server must include a fresh unused nonce
         in order to protect against replay attacks.
         """
@@ -567,7 +567,7 @@ class Client(object):
 
     def get_acme_header(self, url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
         The JWS Protected Header MUST include the following fields:
         - "alg" (Algorithm)
         - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
