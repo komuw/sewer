@@ -187,7 +187,8 @@ def main():
         domain_alt_names=alt_domains,
         contact_email=email,
         account_key=account_key,
-        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
+        LOG_LEVEL=loglevel)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
