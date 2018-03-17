@@ -68,10 +68,6 @@ class CloudFlareDns(common.BaseDns):
         domain_name = domain_name.lstrip('*.')
         self.find_dns_zone(domain_name)
 
-        # delete any prior existing DNS authorizations that may exist already
-        self.delete_dns_record(
-            domain_name=domain_name,
-            domain_dns_value=domain_dns_value)
         url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                    'zones/{0}/dns_records'.format(
                                        self.CLOUDFLARE_DNS_ZONE_ID))
