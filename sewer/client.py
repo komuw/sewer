@@ -90,16 +90,8 @@ class Client(object):
         :param ACME_DIRECTORY_URL:           (optional) [string]
             the url of the acme servers' directory endpoint
         :param LOG_LEVEL:                    (optional) [string]
-            the level to output log messages at
+            the level to output log messages at. one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
         """
-
-        self.logger = logging.getLogger()
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(message)s')
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
-        self.logger.setLevel(LOG_LEVEL)
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
@@ -113,6 +105,9 @@ class Client(object):
             raise ValueError(
                 """account_key should be of type:: None or str. You entered {0}.
                 More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
+        elif LOG_LEVEL not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            raise ValueError(
+                """LOG_LEVEL should be one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. not {0}""".format(LOG_LEVEL))
 
         self.domain_name = domain_name
         self.dns_class = dns_class
@@ -126,7 +121,16 @@ class Client(object):
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-        self.LOG_LEVEL = LOG_LEVEL
+        self.LOG_LEVEL = LOG_LEVEL.upper()
+
+        self.logger = logging.getLogger()
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        if not self.logger.handlers:
+            self.logger.addHandler(handler)
+        self.logger.setLevel(LOG_LEVEL)
+
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
