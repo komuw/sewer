@@ -16,6 +16,8 @@ uploadprod:
 	@twine upload dist/*
 	@pip3 install -U sewer
 
+# you can run single testcase as;
+# python -m unittest sewer.tests.test_Client.TestClient.test_something
 test:
 	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
 	@printf "\n coverage erase::\n" && coverage erase
