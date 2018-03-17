@@ -336,8 +336,7 @@ class Client(object):
         authorizations = apply_for_cert_issuance_response_json["authorizations"]
         identifiers_auths = []
         for url in authorizations:
-            identifiers_auths.append(
-                self.associate_authorizations_with_identifiers(url))
+            identifiers_auths.append(self.get_identifier_authorization(url))
 
         self.logger.debug(
             'apply_for_cert_issuance. identifiers_auths={0}'.format(
@@ -345,23 +344,31 @@ class Client(object):
         self.logger.info('apply_for_cert_issuance_success')
         return identifiers_auths, finalize_url
 
-    def associate_authorizations_with_identifiers(self, url):
-        self.logger.debug('associate_authorizations_with_identifiers')
+    def get_identifier_authorization(self, url):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5
+        When a client receives an order from the server it downloads the
+        authorization resources by sending GET requests to the indicated
+        URLs.  If the client initiates authorization using a request to the
+        new authorization resource, it will have already received the pending
+        authorization object in the response to that request.
+        """
+        self.logger.debug('get_identifier_authorization')
         headers = {'User-Agent': self.User_Agent}
-        associate_authorizations_with_identifiers_response = requests.get(
+        get_identifier_authorization_response = requests.get(
             url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
         self.logger.debug(
-            'associate_authorizations_with_identifiers_response. status_code={0}. response={1}'.format(
-                associate_authorizations_with_identifiers_response.status_code,
-                self.log_response(associate_authorizations_with_identifiers_response)))
-        if associate_authorizations_with_identifiers_response.status_code not in [
+            'get_identifier_authorization_response. status_code={0}. response={1}'.format(
+                get_identifier_authorization_response.status_code,
+                self.log_response(get_identifier_authorization_response)))
+        if get_identifier_authorization_response.status_code not in [
                 200,
                 201]:
             raise ValueError(
-                "Error associating auth urls with identifiers: status_code={status_code} response={response}".format(
-                    status_code=associate_authorizations_with_identifiers_response.status_code,
-                    response=self.log_response(associate_authorizations_with_identifiers_response)))
-        res = associate_authorizations_with_identifiers_response.json()
+                "Error getting identifier authorization: status_code={status_code} response={response}".format(
+                    status_code=get_identifier_authorization_response.status_code,
+                    response=self.log_response(get_identifier_authorization_response)))
+        res = get_identifier_authorization_response.json()
         domain = res['identifier']['value']
         wildcard = res.get("wildcard")
         if wildcard:
