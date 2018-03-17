@@ -68,10 +68,6 @@ class CloudFlareDns(common.BaseDns):
         domain_name = domain_name.lstrip('*.')
         self.find_dns_zone(domain_name)
 
-        # delete any prior existing DNS authorizations that may exist already
-        self.delete_dns_record(
-            domain_name=domain_name,
-            domain_dns_value=domain_dns_value)
         url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL,
                                    'zones/{0}/dns_records'.format(
                                        self.CLOUDFLARE_DNS_ZONE_ID))
@@ -91,8 +87,9 @@ class CloudFlareDns(common.BaseDns):
             data=json.dumps(body),
             timeout=self.HTTP_TIMEOUT)
         self.logger.debug(
-            'create_cloudflare_dns_record_response. status_code={0}'.format(
-                create_cloudflare_dns_record_response.status_code))
+            'create_cloudflare_dns_record_response. status_code={0}. response={1}'.format(
+                create_cloudflare_dns_record_response.status_code,
+                self.log_response(create_cloudflare_dns_record_response)))
         if create_cloudflare_dns_record_response.status_code != 200:
             # raise error so that we do not continue to make calls to ACME
             # server
@@ -148,8 +145,9 @@ class CloudFlareDns(common.BaseDns):
             delete_dns_record_response = requests.delete(
                 url, headers=headers, timeout=self.HTTP_TIMEOUT)
             self.logger.debug(
-                'delete_dns_record_response. status_code={0}'.format(
-                    delete_dns_record_response.status_code))
+                'delete_dns_record_response. status_code={0}. response={1}'.format(
+                    delete_dns_record_response.status_code,
+                    self.log_response(delete_dns_record_response)))
             if delete_dns_record_response.status_code != 200:
                 # extended logging for debugging
                 # we do not need to raise exception

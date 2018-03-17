@@ -90,15 +90,8 @@ class Client(object):
         :param ACME_DIRECTORY_URL:           (optional) [string]
             the url of the acme servers' directory endpoint
         :param LOG_LEVEL:                    (optional) [string]
-            the level to output log messages at
+            the level to output log messages at. one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
         """
-
-        self.logger = logging.getLogger()
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(LOG_LEVEL)
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
@@ -112,6 +105,9 @@ class Client(object):
             raise ValueError(
                 """account_key should be of type:: None or str. You entered {0}.
                 More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
+        elif LOG_LEVEL.upper() not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            raise ValueError(
+                """LOG_LEVEL should be one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. not {0}""".format(LOG_LEVEL))
 
         self.domain_name = domain_name
         self.dns_class = dns_class
@@ -125,7 +121,16 @@ class Client(object):
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-        self.LOG_LEVEL = LOG_LEVEL
+        self.LOG_LEVEL = LOG_LEVEL.upper()
+
+        self.logger = logging.getLogger()
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        if not self.logger.handlers:
+            self.logger.addHandler(handler)
+        self.logger.setLevel(self.LOG_LEVEL)
+
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
@@ -140,7 +145,7 @@ class Client(object):
             self.ACME_REVOKE_CERT_URL = acme_endpoints['revokeCert']
 
             # unique account identifier
-            # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+            # https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
             self.kid = None
 
             self.certificate_key = self.create_certificate_key()
@@ -216,7 +221,7 @@ class Client(object):
 
     def create_csr(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         The CSR is sent in the base64url-encoded version of the DER format. (NB: this
         field uses base64url, and does not include headers, it is different from PEM.)
         """
@@ -244,7 +249,7 @@ class Client(object):
 
     def acme_register(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.3
         The server creates an account and stores the public key used to
         verify the JWS (i.e., the "jwk" element of the JWS header) to
         authenticate future requests from the account.
@@ -289,7 +294,7 @@ class Client(object):
 
     def apply_for_cert_issuance(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         The order object returned by the server represents a promise that if
         the client fulfills the server's requirements before the "expires"
         time, then the server will be willing to finalize the order upon
@@ -303,14 +308,13 @@ class Client(object):
         The POST body MUST include a CSR:
 
         The date values seem to be ignored by LetsEncrypt although they are
-        in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         """
         self.logger.info('apply_for_cert_issuance')
         identifiers = []
         for domain_name in self.all_domain_names:
             identifiers.append({"type": "dns", "value": domain_name})
 
-        identifiers_auths = copy.copy(identifiers)
         payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(
@@ -328,18 +332,45 @@ class Client(object):
                     response=self.log_response(apply_for_cert_issuance_response)))
 
         apply_for_cert_issuance_response_json = apply_for_cert_issuance_response.json()
-        authorizations = apply_for_cert_issuance_response_json["authorizations"]
-        authorization_urls = authorizations  # list
         finalize_url = apply_for_cert_issuance_response_json["finalize"]
-        for k, v in enumerate(identifiers_auths):
-            v.update({'authorization_url': authorization_urls[k]})
+        authorizations = apply_for_cert_issuance_response_json["authorizations"]
+        identifiers_auths = []
+        for url in authorizations:
+            identifiers_auths.append(
+                self.associate_authorizations_with_identifiers(url))
 
+        self.logger.debug(
+            'apply_for_cert_issuance. identifiers_auths={0}'.format(
+                identifiers_auths))
         self.logger.info('apply_for_cert_issuance_success')
         return identifiers_auths, finalize_url
 
+    def associate_authorizations_with_identifiers(self, url):
+        self.logger.debug('associate_authorizations_with_identifiers')
+        headers = {'User-Agent': self.User_Agent}
+        associate_authorizations_with_identifiers_response = requests.get(
+            url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+        self.logger.debug(
+            'associate_authorizations_with_identifiers_response. status_code={0}. response={1}'.format(
+                associate_authorizations_with_identifiers_response.status_code,
+                self.log_response(associate_authorizations_with_identifiers_response)))
+        if associate_authorizations_with_identifiers_response.status_code not in [
+                200,
+                201]:
+            raise ValueError(
+                "Error associating auth urls with identifiers: status_code={status_code} response={response}".format(
+                    status_code=associate_authorizations_with_identifiers_response.status_code,
+                    response=self.log_response(associate_authorizations_with_identifiers_response)))
+        res = associate_authorizations_with_identifiers_response.json()
+        domain = res['identifier']['value']
+        wildcard = res.get("wildcard")
+        if wildcard:
+            domain = "*." + domain
+        return {'domain': domain, 'url': url, 'wildcard': wildcard}
+
     def get_challenge(self, url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5
         When a client receives an order(ie after self.apply_for_cert_issuance() succeeds)
         from the server it downloads the authorization resources by sending
         GET requests to the indicated URLs.
@@ -392,12 +423,12 @@ class Client(object):
             self,
             authorization_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To check on the status of an authorization, the client sends a GET(polling)
         request to the authorization URL, and the server responds with the
         current authorization object.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-8.2
         Clients SHOULD NOT respond to challenges until they believe that the
         server's queries will succeed. If a server's initial validation
         query fails, the server SHOULD retry[intended to address things like propagation delays in
@@ -437,7 +468,7 @@ class Client(object):
 
     def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To prove control of the identifier and receive authorization, the
         client needs to respond with information to complete the challenges.
         The server is said to "finalize" the authorization when it has
@@ -464,7 +495,7 @@ class Client(object):
 
     def send_csr(self, finalize_url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         Once the client believes it has fulfilled the server's requirements,
         it should send a POST request(include a CSR) to the order resource's finalize URL.
         A request to finalize an order will result in error if the order indicated does not have status "pending",
@@ -522,7 +553,7 @@ class Client(object):
 
     def get_nonce(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.4
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.4
         Each request to an ACME server must include a fresh unused nonce
         in order to protect against replay attacks.
         """
@@ -566,7 +597,7 @@ class Client(object):
 
     def get_acme_header(self, url):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
         The JWS Protected Header MUST include the following fields:
         - "alg" (Algorithm)
         - "jwk" (JSON Web Key, only for requests to new-account and revoke-cert resources)
@@ -635,8 +666,8 @@ class Client(object):
             self.acme_register()
             identifiers_auths, finalize_url = self.apply_for_cert_issuance()
             for identifier_auth in identifiers_auths:
-                authorization_url = identifier_auth['authorization_url']
-                dns_name = identifier_auth['value']
+                authorization_url = identifier_auth['url']
+                dns_name = identifier_auth['domain']
                 dns_names_to_delete.append(dns_name)
                 dns_token, dns_challenge_url = self.get_challenge(
                     url=authorization_url)

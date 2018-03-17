@@ -27,11 +27,6 @@ class AuroraDns(common.BaseDns):
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
 
-        # delete any prior existing DNS authorizations that may exist already
-        self.delete_dns_record(
-            domain_name=domain_name,
-            domain_dns_value=domain_dns_value)
-
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + '.' + extractedDomain.suffix
 

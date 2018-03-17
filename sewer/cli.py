@@ -125,7 +125,8 @@ def main():
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(message)s')
     handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if not logger.handlers:
+        logger.addHandler(handler)
     logger.setLevel(loglevel)
 
     if account_key:
@@ -187,7 +188,8 @@ def main():
         domain_alt_names=alt_domains,
         contact_email=email,
         account_key=account_key,
-        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL)
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
+        LOG_LEVEL=loglevel)
     certificate_key = client.certificate_key
     account_key = client.account_key
 
