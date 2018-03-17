@@ -129,7 +129,7 @@ class Client(object):
         handler.setFormatter(formatter)
         if not self.logger.handlers:
             self.logger.addHandler(handler)
-        self.logger.setLevel(LOG_LEVEL)
+        self.logger.setLevel(self.LOG_LEVEL)
 
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
