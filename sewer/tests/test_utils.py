@@ -28,17 +28,19 @@ class MockResponse(object):
         self.status_code = status_code
         content.update({
             "newNonce": "http://localhost/newNonce",
-                        "keyChange": "http://localhost/keyChange",
-                        "newAccount": "http://localhost/newAccount",
-                        "newOrder": "http://localhost/newOrder",
-                        "revokeCert": "http://localhost/revokeCert",
-                        "challenges": [{"type": "dns-01", "token": "example-token", "url": "http://localhost/challenge-url"}],
-                        "authorizations": ["http://localhost/authorization-url"],
-                        "finalize": "http://localhost/finalize-url",
-                        "status": "pending",
-                        "certificate": "http://localhost/certificate-url",
-                        "meta": {"termsOfService": "http:localhost/termsOfService"},
-                        "dummy-certificate": '-----BEGIN CERTIFICATE----- some-mock-certificate -----END CERTIFICATE-----'
+            "keyChange": "http://localhost/keyChange",
+            "newAccount": "http://localhost/newAccount",
+            "newOrder": "http://localhost/newOrder",
+            "revokeCert": "http://localhost/revokeCert",
+            "challenges": [{"type": "dns-01", "token": "example-token", "url": "http://localhost/challenge-url"}],
+            "authorizations": ["http://localhost/authorization-url"],
+            "finalize": "http://localhost/finalize-url",
+            "status": "pending",
+            "certificate": "http://localhost/certificate-url",
+            "meta": {"termsOfService": "http:localhost/termsOfService"},
+            "dummy-certificate": '-----BEGIN CERTIFICATE----- some-mock-certificate -----END CERTIFICATE-----',
+            "identifier": {"value": "example.com"},
+            "wildcard": None
         })
 
         self.content = json.dumps(content).encode()
