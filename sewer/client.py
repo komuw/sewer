@@ -335,6 +335,9 @@ class Client(object):
             identifiers_auths.append(
                 self.associate_authorizations_with_identifiers(url))
 
+        self.logger.debug(
+            'apply_for_cert_issuance. identifiers_auths={0}'.format(
+                identifiers_auths))
         self.logger.info('apply_for_cert_issuance_success')
         return identifiers_auths, finalize_url
 
@@ -658,8 +661,6 @@ class Client(object):
         try:
             self.acme_register()
             identifiers_auths, finalize_url = self.apply_for_cert_issuance()
-            self.logger.debug(
-                'identifieer auth. {0}'.format(identifiers_auths))
             for identifier_auth in identifiers_auths:
                 authorization_url = identifier_auth['url']
                 dns_name = identifier_auth['domain']
