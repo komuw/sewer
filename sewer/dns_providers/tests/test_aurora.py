@@ -31,7 +31,7 @@ class TestAurora(TestCase):
     def tearDown(self):
         pass
 
-    def test_delete_dns_record_is_called_by_create_dns_record(self):
+    def test_delete_dns_record_is_not_called_by_create_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'requests.delete') as mock_requests_delete, mock.patch(
@@ -50,10 +50,7 @@ class TestAurora(TestCase):
                 domain_name=self.domain_name,
                 domain_dns_value=self.
                 domain_dns_value)
-            mock_delete_dns_record.assert_called_once_with(
-                domain_dns_value=self.
-                domain_dns_value,
-                domain_name=self.domain_name)
+            self.assertFalse(mock_delete_dns_record.called)
 
     def test_aurora_is_called_by_delete_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
