@@ -647,20 +647,34 @@ class Client(object):
         try:
             self.acme_register()
             authorizations, finalize_url = self.apply_for_cert_issuance()
+            responders = []
             for url in authorizations:
                 identifier_auth = self.get_identifier_authorization(url)
                 authorization_url = identifier_auth['url']
                 dns_name = identifier_auth['domain']
-                dns_names_to_delete.append(dns_name)
                 dns_token = identifier_auth['dns_token']
                 dns_challenge_url = identifier_auth['dns_challenge_url']
 
                 acme_keyauthorization, domain_dns_value = self.get_keyauthorization(
                     dns_token)
                 self.dns_class.create_dns_record(dns_name, domain_dns_value)
-                self.check_authorization_status(authorization_url)
+                dns_names_to_delete.append(
+                    {'dns_name': dns_name,
+                     'domain_dns_value': domain_dns_value})
+                responders.append(
+                    {'authorization_url': authorization_url,
+                     'acme_keyauthorization': acme_keyauthorization,
+                     'dns_challenge_url': dns_challenge_url})
+
+            # for a case where you want certificates for *.exmaple.com and example.com
+            # you have to create both dns records AND then respond to the challenge.
+            # see issues/83
+            for i in responders:
+                self.check_authorization_status(i['authorization_url'])
                 self.respond_to_challenge(
-                    acme_keyauthorization, dns_challenge_url)
+                    i['acme_keyauthorization'],
+                    i['dns_challenge_url'])
+
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
@@ -668,8 +682,9 @@ class Client(object):
                 'Error: Unable to issue certificate. error={0}'.format(str(e)))
             raise e
         finally:
-            for dns_name in dns_names_to_delete:
-                self.dns_class.delete_dns_record(dns_name, domain_dns_value)
+            for i in dns_names_to_delete:
+                self.dns_class.delete_dns_record(
+                    i['dns_name'], i['domain_dns_value'])
 
         return certificate
 
