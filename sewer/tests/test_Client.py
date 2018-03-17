@@ -19,7 +19,7 @@ class TestClient(TestCase):
         - add tests for the cli
         - modularize this tests
         - separate happy path tests from sad path tests.
-            eg test_get_challenge_is_called and test_get_challenge_is_not_called
+            eg test_get_identifier_authorization_is_called and test_get_identifier_authorization_is_not_called
             should be in different testClasses
     """
 
@@ -121,17 +121,20 @@ class TestClient(TestCase):
             self.assertIn('Error while registering',
                           str(raised_exception.exception))
 
-    def test_get_challenge_is_called(self):
+    def test_get_identifier_authorization_is_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
-                    'sewer.Client.get_challenge') as mock_get_challenge:
+                    'sewer.Client.get_identifier_authorization') as mock_get_identifier_authorization:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
+            mock_get_identifier_authorization.return_value = {
+                'domain': 'example.com', 'url': 'http://localhost',
+                'wildcard': None, 'dns_token': 'dns_token',
+                'dns_challenge_url': 'dns_challenge_url'}
             self.client.cert()
-            self.assertTrue(mock_get_challenge.called)
+            self.assertTrue(mock_get_identifier_authorization.called)
 
-    def test_get_challenge_is_not_called(self):
+    def test_get_identifier_authorization_is_not_called(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_register:
@@ -213,14 +216,17 @@ class TestClient(TestCase):
     def test_certificate_is_not_issued(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
                 'requests.get') as mock_requests_get, mock.patch(
-                    'sewer.Client.get_challenge'
-        ) as mock_get_challenge, mock.patch(
+                    'sewer.Client.get_identifier_authorization'
+        ) as mock_get_identifier_authorization, mock.patch(
                     'sewer.Client.acme_register') as mock_acme_register:
             mock_requests_post.return_value = test_utils.MockResponse(
                 status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(
                 status_code=400)
-            mock_get_challenge.return_value = 'dns_token', 'dns_challenge_url'
+            mock_get_identifier_authorization.return_value = {
+                'domain': 'example.com', 'url': 'http://localhost',
+                'wildcard': None, 'dns_token': 'dns_token',
+                'dns_challenge_url': 'dns_challenge_url'}
             mock_acme_register.return_value = test_utils.MockResponse(
                 status_code=409)
 
