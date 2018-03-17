@@ -105,7 +105,7 @@ class Client(object):
             raise ValueError(
                 """account_key should be of type:: None or str. You entered {0}.
                 More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
-        elif LOG_LEVEL not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+        elif LOG_LEVEL.upper() not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
             raise ValueError(
                 """LOG_LEVEL should be one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. not {0}""".format(LOG_LEVEL))
 
