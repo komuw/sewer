@@ -81,7 +81,7 @@ class CloudFlareDns(common.BaseDns):
         create_cloudflare_dns_record_response = requests.post(
             url,
             headers=headers,
-            data=body,
+            json=body,
             timeout=self.HTTP_TIMEOUT)
         self.logger.debug(
             'create_cloudflare_dns_record_response. status_code={0}. response={1}'.format(
