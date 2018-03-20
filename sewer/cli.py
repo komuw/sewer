@@ -52,7 +52,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora'],
+        choices=['cloudflare', 'aurora', 'acmedns'],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",

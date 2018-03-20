@@ -125,7 +125,7 @@ To see help:
 sewer --help                 
         
 usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY] --dns
-             {cloudflare,aurora} --domain DOMAIN
+             {cloudflare,aurora,acmedns} --domain DOMAIN
              [--alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
              [--email EMAIL] --action {run,renew}
