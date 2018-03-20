@@ -65,8 +65,7 @@ class TestCloudflare(TestCase):
             expected = {
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-                    'Content-Type': 'application/json'},
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY},
                 'data': '{"content": "mock-domain_dns_value", "type": "TXT", "name": "_acme-challenge.example.com."}',
                 'timeout': 65}
 
@@ -75,8 +74,7 @@ class TestCloudflare(TestCase):
                 mock_requests_post.call_args[1]['headers'])
             self.assertDictEqual(
                 json.loads(
-                    expected['data']), json.loads(
-                    mock_requests_post.call_args[1]['data']))
+                    expected['data']), mock_requests_post.call_args[1]['json'])
 
     def test_cloudflare_is_called_by_delete_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, mock.patch(
@@ -95,8 +93,7 @@ class TestCloudflare(TestCase):
             expected = {
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-                    'Content-Type': 'application/json'
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY
                 },
                 'timeout': 65
             }
