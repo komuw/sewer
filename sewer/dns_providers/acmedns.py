@@ -1,5 +1,6 @@
 import urllib.parse
 
+from dns.resolver import Resolver
 import requests
 
 from . import common
@@ -12,11 +13,9 @@ class AcmeDnsDns(common.BaseDns):
 
     def __init__(
             self,
-            ACME_DNS_SUBDOMAIN,
             ACME_DNS_API_USER,
             ACME_DNS_API_KEY,
             ACME_DNS_API_BASE_URL):
-        self.ACME_DNS_SUBDOMAIN = ACME_DNS_SUBDOMAIN
         self.ACME_DNS_API_USER = ACME_DNS_API_USER
         self.ACME_DNS_API_KEY = ACME_DNS_API_KEY
         self.HTTP_TIMEOUT = 65  # seconds
@@ -31,7 +30,11 @@ class AcmeDnsDns(common.BaseDns):
         self.logger.info('create_dns_record')
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
-        # TODO determine subdomain based on domain_name
+
+        resolver = Resolver(configure=False)
+        resolver.nameservers = ['8.8.8.8']
+        answer = resolver.query('_acme-challenge.{0}.'.format(domain_name), 'TXT')
+        subdomain, _ = str(answer.canonical_name).split('.', 1)
 
         url = urllib.parse.urljoin(self.ACME_DNS_API_BASE_URL, 'update')
         headers = {
@@ -39,7 +42,7 @@ class AcmeDnsDns(common.BaseDns):
             'X-Api-Key': self.ACME_DNS_API_KEY,
         }
         body = {
-            "subdomain": self.ACME_DNS_SUBDOMAIN,
+            "subdomain": subdomain,
             "txt": domain_dns_value,
         }
         update_acmedns_dns_record_response = requests.post(
