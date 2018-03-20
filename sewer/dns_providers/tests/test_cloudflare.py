@@ -65,8 +65,7 @@ class TestCloudflare(TestCase):
             expected = {
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-                    'Content-Type': 'application/json'},
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY},
                 'data': '{"content": "mock-domain_dns_value", "type": "TXT", "name": "_acme-challenge.example.com."}',
                 'timeout': 65}
 
@@ -95,8 +94,7 @@ class TestCloudflare(TestCase):
             expected = {
                 'headers': {
                     'X-Auth-Email': self.CLOUDFLARE_EMAIL,
-                    'X-Auth-Key': self.CLOUDFLARE_API_KEY,
-                    'Content-Type': 'application/json'
+                    'X-Auth-Key': self.CLOUDFLARE_API_KEY
                 },
                 'timeout': 65
             }
