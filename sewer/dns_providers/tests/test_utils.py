@@ -63,3 +63,7 @@ def mockLibcloudGetDriver(provider):
     a mock of the libcloud.dns.providers.get_driver function
     """
     return mockLibcloudDriver
+
+
+class MockDnsResolver(object):
+    canonical_name = 'canonical.name'
