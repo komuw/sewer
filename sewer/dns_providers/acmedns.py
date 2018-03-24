@@ -33,7 +33,8 @@ class AcmeDnsDns(common.BaseDns):
 
         resolver = Resolver(configure=False)
         resolver.nameservers = ['8.8.8.8']
-        answer = resolver.query('_acme-challenge.{0}.'.format(domain_name), 'TXT')
+        answer = resolver.query(
+            '_acme-challenge.{0}.'.format(domain_name), 'TXT')
         subdomain, _ = str(answer.canonical_name).split('.', 1)
 
         url = urllib.parse.urljoin(self.ACME_DNS_API_BASE_URL, 'update')
@@ -46,10 +47,10 @@ class AcmeDnsDns(common.BaseDns):
             "txt": domain_dns_value,
         }
         update_acmedns_dns_record_response = requests.post(
-                url,
-                headers=headers,
-                json=body,
-                timeout=self.HTTP_TIMEOUT)
+            url,
+            headers=headers,
+            json=body,
+            timeout=self.HTTP_TIMEOUT)
         self.logger.debug(
             'update_acmedns_dns_record_response. status_code={0}. response={1}'.format(
                 update_acmedns_dns_record_response.status_code,
