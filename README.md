@@ -138,7 +138,7 @@ optional arguments:
   --account_key ACCOUNT_KEY
                         The path to your letsencrypt/acme account key. eg:
                         --account_key /home/myaccount.key
-  --dns {cloudflare,aurora}
+  --dns {cloudflare,aurora,acmedns}
                         The name of the dns provider that you want to use.
   --domain DOMAIN       The domain/subdomain name for which you want to
                         get/renew certificate for. eg: --domain example.com
