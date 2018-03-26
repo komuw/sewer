@@ -5,7 +5,8 @@
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
 
 
-Sewer is a Let's Encrypt(ACME) client.         
+Sewer is a Let's Encrypt(ACME) client.           
+It is name is derived from Kenyan hip hop artiste, Kitu Sewer.                        
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
 Sewer currently only supports the DNS mode of validation, I have no plans of supporting other modes of validation.                 
 The currently supported DNS providers are:         
