@@ -58,6 +58,7 @@ class Client(object):
             domain_alt_names=None,
             contact_email=None,
             account_key=None,
+            certificate_key=None,
             bits=2048,
             digest='sha256',
             ACME_REQUEST_TIMEOUT=7,
@@ -76,6 +77,9 @@ class Client(object):
             a contact email address
         :param account_key:                  (optional) [string]
             a string whose contents is an ssl certificate that identifies your account on the acme server.
+            if you do not provide one, this client will issue a new certificate else will renew.
+        :param certificate_key:              (optional) [string]
+            a string whose contents is a private key that will be incorporated into your new certificate.
             if you do not provide one, this client will issue a new certificate else will renew.
         :param bits:                         (optional) [integer]
             number of bits that will be used to create your certificates' private key.
@@ -105,6 +109,10 @@ class Client(object):
             raise ValueError(
                 """account_key should be of type:: None or str. You entered {0}.
                 More specifically, account_key should be the result of reading an ssl account certificate""".format(type(account_key)))
+        elif not isinstance(certificate_key, (type(None), str)):
+            raise ValueError(
+                """certificate_key should be of type:: None or str. You entered {0}.
+                More specifically, certificate_key should be the result of reading an ssl certificate""".format(type(certificate_key)))
         elif LOG_LEVEL.upper() not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
             raise ValueError(
                 """LOG_LEVEL should be one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. not {0}""".format(LOG_LEVEL))
@@ -148,7 +156,7 @@ class Client(object):
             # https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
             self.kid = None
 
-            self.certificate_key = self.create_certificate_key()
+            self.certificate_key = certificate_key or self.create_certificate_key()
             self.csr = self.create_csr()
 
             if not account_key:
