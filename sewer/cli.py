@@ -49,6 +49,12 @@ def main():
         help="The path to your letsencrypt/acme account key. \
         eg: --account_key /home/myaccount.key")
     parser.add_argument(
+        "--certificate_key",
+        type=argparse.FileType('r'),
+        required=False,
+        help="The path to your certificate key. \
+        eg: --certificate_key /home/mycertificate.key")
+    parser.add_argument(
         "--dns",
         type=str,
         required=True,
@@ -116,6 +122,7 @@ def main():
     alt_domains = args.alt_domains
     action = args.action
     account_key = args.account_key
+    certificate_key = args.certificate_key
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
@@ -131,6 +138,8 @@ def main():
 
     if account_key:
         account_key = account_key.read()
+    if certificate_key:
+        certificate_key = certificate_key.read()
     if bundle_name:
         file_name = bundle_name
     else:
@@ -208,6 +217,7 @@ def main():
         domain_alt_names=alt_domains,
         contact_email=email,
         account_key=account_key,
+        certificate_key=certificate_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel)
     certificate_key = client.certificate_key
