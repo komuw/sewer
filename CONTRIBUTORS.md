@@ -14,3 +14,4 @@ Contributors
 
 1. [komu W](https://www.komu.engineer)
 2. [Wilfried Jonker](wjonker.nl)
+3. [András Veres-Szentkirályi, dnet](https://techblog.vsza.hu/)
