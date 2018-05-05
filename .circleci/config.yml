@@ -22,7 +22,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-           sudo pip3 install -e .[dev,test]
+            apt-get -y install pandoc && sudo pip3 install -e .[dev,test]
 
       # run tests!
       - run:
