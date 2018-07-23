@@ -85,7 +85,7 @@ setup(
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
         'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
         'aliyun': ['aliyunsdkcore', 'aliyunsdkalidns'],
-        'alicloud': ['aliyunsdkcore', 'aliyunsdkalidns'],
+        'alicloud': ['aliyunsdkcore', 'aliyun-python-sdk-alidns'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
