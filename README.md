@@ -15,8 +15,9 @@ Sewer currently only supports the DNS mode of validation, I have no plans of sup
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
-3. [acme-dns](https://github.com/joohoi/acme-dns)              
-4. [Bring your own dns provider](#bring-your-own-dns-provider)        
+3. [acme-dns](https://github.com/joohoi/acme-dns)
+4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
+5. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -27,6 +28,9 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 
 ```shell
 pip3 install sewer
+
+# with aliyun/alicloud support
+# pip3 install sewer[aliyun]
 ```           
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;         
 ```shell
