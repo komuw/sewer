@@ -58,7 +58,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora', 'acmedns'],
+        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "alicloud"],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",
@@ -207,6 +207,12 @@ def main():
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
+    elif dns_provider in ["aliyun", "alicloud"]:
+        from . import AliyunDNS
+        aliyun_ak = os.environ["ALIYUN_AK_ID"]
+        aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
+        aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
+        dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
     else:
         raise ValueError(
             'The dns provider {0} is not recognised.'.format(dns_provider))
