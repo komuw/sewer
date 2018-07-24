@@ -162,7 +162,10 @@ class AliyunDNS(common.BaseDns):
         """
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip('*.')
-        zone, middle, last = str(domain_name).rsplit('.', 2)
+        if domain_name.count(".") > 1:
+            zone, middle, last = str(domain_name).rsplit('.', 2)
+        else:
+            zone, middle, last = "", "", domain_name
         root = ".".join([middle, last])
         acme_txt = "_acme-challenge.%s" % zone
         return root, zone, acme_txt
