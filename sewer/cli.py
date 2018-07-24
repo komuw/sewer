@@ -209,10 +209,19 @@ def main():
             raise
     elif dns_provider in ["aliyun", "alicloud"]:
         from . import AliyunDNS
-        aliyun_ak = os.environ["ALIYUN_AK_ID"]
-        aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
-        aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
-        dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
+        try:
+            aliyun_ak = os.environ["ALIYUN_AK_ID"]
+            aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
+            aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
+            dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
+            logger.info(
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
+        except KeyError as e:
+            logger.error(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
+            raise
     else:
         raise ValueError(
             'The dns provider {0} is not recognised.'.format(dns_provider))
