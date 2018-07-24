@@ -1,9 +1,6 @@
 import mock
-import json
 from unittest import TestCase
-
 import sewer
-
 from . import test_utils
 
 
