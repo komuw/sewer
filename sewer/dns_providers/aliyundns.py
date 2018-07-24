@@ -164,10 +164,12 @@ class AliyunDNS(common.BaseDns):
         domain_name = domain_name.lstrip('*.')
         if domain_name.count(".") > 1:
             zone, middle, last = str(domain_name).rsplit('.', 2)
+            root = ".".join([middle, last])
+            acme_txt = "_acme-challenge.%s" % zone
         else:
             zone, middle, last = "", "", domain_name
-        root = ".".join([middle, last])
-        acme_txt = "_acme-challenge.%s" % zone
+            root = domain_name
+            acme_txt = "_acme-challenge.%s" % root
         return root, zone, acme_txt
 
     def create_dns_record(self, domain_name, domain_dns_value):
