@@ -123,6 +123,7 @@ class Client(object):
         if not domain_alt_names:
             domain_alt_names = []
         self.domain_alt_names = domain_alt_names
+        self.domain_alt_names = list(set(self.domain_alt_names))
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
@@ -143,6 +144,7 @@ class Client(object):
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
+            self.domain_alt_names = list(set(self.domain_alt_names))
 
             self.User_Agent = self.get_user_agent()
             acme_endpoints = self.get_acme_endpoints().json()
