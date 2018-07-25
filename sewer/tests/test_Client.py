@@ -7,6 +7,7 @@ import cryptography
 from unittest import TestCase
 
 import sewer
+from sewer.config import ACME_DIRECTORY_URL_STAGING
 
 from . import test_utils
 
@@ -34,7 +35,7 @@ class TestClient(TestCase):
             self.client = sewer.Client(
                 domain_name=self.domain_name, dns_class=self.dns_class,
                 ACME_REQUEST_TIMEOUT=1, ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING)
 
     def tearDown(self):
         pass
@@ -51,7 +52,7 @@ class TestClient(TestCase):
                 sewer.Client(
                     domain_name='example.com',
                     dns_class=test_utils.ExmpleDnsProvider(),
-                    ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
+                    ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING)
 
             self.assertRaises(ValueError, mock_create_acme_client)
             with self.assertRaises(ValueError) as raised_exception:
@@ -257,7 +258,7 @@ class TestClient(TestCase):
                 dns_class=self.dns_class,
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory',
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                 domain_alt_names="domain_alt_names")
         with self.assertRaises(ValueError) as raised_exception:
             mock_instantiate_client()
@@ -289,7 +290,7 @@ class TestClientForSAN(TestClient):
                 domain_alt_names=self.domain_alt_names,
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING)
         super(TestClientForSAN, self).setUp()
 
 
@@ -317,7 +318,7 @@ class TestClientForWildcard(TestClient):
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_AUTH_STATUS_MAX_CHECKS=1,
-                ACME_DIRECTORY_URL='https://acme-staging-v02.api.letsencrypt.org/directory')
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING)
         super(TestClientForWildcard, self).setUp()
 
 # TEST cli

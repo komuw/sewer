@@ -4,6 +4,7 @@ import argparse
 
 from . import Client
 from . import __version__ as sewer_version
+from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
 
 
 def main():
@@ -145,12 +146,9 @@ def main():
     else:
         file_name = '{0}'.format(domain)
     if endpoint == 'staging':
-        # TODO: move this to a config.py file.
-        # the cli and the client would both read this urls from that config
-        # file
-        ACME_DIRECTORY_URL = 'https://acme-staging-v02.api.letsencrypt.org/directory'
+        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_STAGING
     else:
-        ACME_DIRECTORY_URL = 'https://acme-v02.api.letsencrypt.org/directory'
+        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_PRODUCTION
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
