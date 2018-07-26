@@ -138,8 +138,9 @@ def main():
     loglevel = args.loglevel
     out_dir = args.out_dir
 
+    # Make sure the output dir user specified is writable
     if not os.access(out_dir, os.W_OK):
-        raise OSError("The dir '{0}' is not writeable".format(out_dir))
+        raise OSError("The dir '{0}' is not writable".format(out_dir))
 
     logger = logging.getLogger()
     handler = logging.StreamHandler()
