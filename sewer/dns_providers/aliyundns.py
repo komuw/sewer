@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding=utf-8
-# Created by @menduo @ 2018/7/23
 import json
 from aliyunsdkcore import client
 from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
