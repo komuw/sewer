@@ -39,9 +39,14 @@ jobs:
 
       - run:
           name: run static analyzers
-          command: | 
+          command: |
             flake8 .
             pylint --enable=E --disable=W,R,C sewer/
+
+      - run:
+          name: run sewer cli
+          command: |
+            sewer --version && sewer --help
 
       # run make upload
 
