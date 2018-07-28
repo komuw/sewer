@@ -9,6 +9,7 @@ about = {}
 
 try:
     import pypandoc
+
     long_description = pypandoc.convert('README.md', 'rst')
 except ImportError:
     long_description = codecs.open('README.md').read()
@@ -83,6 +84,8 @@ setup(
     extras_require={
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
         'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
+        'aliyun': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
+        'alicloud': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these

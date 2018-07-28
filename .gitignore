@@ -45,3 +45,5 @@ htmlcov/
 *.csr
 *.crt
 *.key
+.idea
+.vscode

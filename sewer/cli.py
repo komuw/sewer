@@ -4,6 +4,7 @@ import argparse
 
 from . import Client
 from . import __version__ as sewer_version
+from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
 
 
 def main():
@@ -26,8 +27,6 @@ def main():
         --domain example.com \
         --action renew
     """
-    # TODO: enable people to specify the location where they want certificate and keys to be stored.
-    # currently, we store them in the directory from which sewer is ran
     parser = argparse.ArgumentParser(prog='sewer',
                                      description="""Sewer is a Let's Encrypt(ACME) client.
             Example usage::
@@ -58,7 +57,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora', 'acmedns'],
+        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "alicloud"],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",
@@ -107,6 +106,16 @@ def main():
         Either run (get a new certificate) or renew (renew a certificate). \
         eg: --action run")
     parser.add_argument(
+        "--out_dir",
+        type=str,
+        required=False,
+        default=os.getcwd(),
+        help="""The dir where the certificate and keys file will be stored.
+            default:  The directory you run sewer command.
+            eg: --out_dir /data/ssl/
+            """
+    )
+    parser.add_argument(
         "--loglevel",
         type=str,
         required=False,
@@ -127,6 +136,11 @@ def main():
     endpoint = args.endpoint
     email = args.email
     loglevel = args.loglevel
+    out_dir = args.out_dir
+
+    # Make sure the output dir user specified is writable
+    if not os.access(out_dir, os.W_OK):
+        raise OSError("The dir '{0}' is not writable".format(out_dir))
 
     logger = logging.getLogger()
     handler = logging.StreamHandler()
@@ -145,12 +159,9 @@ def main():
     else:
         file_name = '{0}'.format(domain)
     if endpoint == 'staging':
-        # TODO: move this to a config.py file.
-        # the cli and the client would both read this urls from that config
-        # file
-        ACME_DIRECTORY_URL = 'https://acme-staging-v02.api.letsencrypt.org/directory'
+        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_STAGING
     else:
-        ACME_DIRECTORY_URL = 'https://acme-v02.api.letsencrypt.org/directory'
+        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_PRODUCTION
 
     if dns_provider == 'cloudflare':
         from . import CloudFlareDns
@@ -207,6 +218,21 @@ def main():
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
+    elif dns_provider in ["aliyun", "alicloud"]:
+        from . import AliyunDNS
+        try:
+            aliyun_ak = os.environ["ALIYUN_AK_ID"]
+            aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
+            aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
+            dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
+            logger.info(
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
+        except KeyError as e:
+            logger.error(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
+            raise
     else:
         raise ValueError(
             'The dns provider {0} is not recognised.'.format(dns_provider))
@@ -223,10 +249,15 @@ def main():
     certificate_key = client.certificate_key
     account_key = client.account_key
 
-    # write out account_key in current directory
-    with open('{0}.account.key'.format(file_name), 'w') as account_file:
+    # prepare file path
+    account_key_file_path = os.path.join(out_dir, '{0}.account.key'.format(file_name))
+    crt_file_path = os.path.join(out_dir, '{0}.crt'.format(file_name))
+    crt_key_file_path = os.path.join(out_dir, '{0}.key'.format(file_name))
+
+    # write out account_key in out_dir directory
+    with open(account_key_file_path, 'w') as account_file:
         account_file.write(account_key)
-    logger.info('account key succesfully written to current directory.')
+    logger.info('account key succesfully written to {0}.'.format(account_key_file_path))
 
     if action == 'renew':
         message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
@@ -235,10 +266,13 @@ def main():
         message = 'Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory'
         certificate = client.cert()
 
-    # write out certificate and certificate key in current directory
-    with open('{0}.crt'.format(file_name), 'w') as certificate_file:
+    # write out certificate and certificate key in out_dir directory
+    with open(crt_file_path, 'w') as certificate_file:
         certificate_file.write(certificate)
-    with open('{0}.key'.format(file_name), 'w') as certificate_key_file:
+    with open(crt_key_file_path, 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
+
+    logger.info('certificate succesfully written to {0}.'.format(crt_file_path))
+    logger.info('certificate key succesfully written to {0}.'.format(crt_key_file_path))
 
     logger.info("the_end. {0}".format(message))

@@ -12,6 +12,7 @@ import OpenSSL
 import cryptography
 
 from . import __version__ as sewer_version
+from .config import ACME_DIRECTORY_URL_PRODUCTION
 
 
 class Client(object):
@@ -64,7 +65,7 @@ class Client(object):
             ACME_REQUEST_TIMEOUT=7,
             ACME_AUTH_STATUS_WAIT_PERIOD=8,
             ACME_AUTH_STATUS_MAX_CHECKS=3,
-            ACME_DIRECTORY_URL='https://acme-v02.api.letsencrypt.org/directory',
+            ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_PRODUCTION,
             LOG_LEVEL='INFO'):
         """
         :param domain_name:                  (required) [string]
@@ -122,6 +123,7 @@ class Client(object):
         if not domain_alt_names:
             domain_alt_names = []
         self.domain_alt_names = domain_alt_names
+        self.domain_alt_names = list(set(self.domain_alt_names))
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
@@ -142,6 +144,7 @@ class Client(object):
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
+            self.domain_alt_names = list(set(self.domain_alt_names))
 
             self.User_Agent = self.get_user_agent()
             acme_endpoints = self.get_acme_endpoints().json()
