@@ -81,6 +81,7 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip3 install -e .[dev,test]
+    # TODO: gate auroraDns like we gate aliyunDns
     extras_require={
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
         'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
