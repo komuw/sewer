@@ -1,11 +1,12 @@
 import json
 try:
+    aliyun_dependencies = True
     from aliyunsdkcore import client
     from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
     from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
     from aliyunsdkalidns.request.v20150109 import DeleteDomainRecordRequest
 except ImportError:
-    aliyun_dependencies = None
+    aliyun_dependencies = False
 
 from . import common
 
