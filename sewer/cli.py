@@ -57,7 +57,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "alicloud"],
+        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "alicloud", "he", "hedns"],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",
@@ -225,6 +225,20 @@ def main():
             aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
             aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
             dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
+            logger.info(
+                'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
+        except KeyError as e:
+            logger.error(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
+            raise
+    elif dns_provider in ["he", "hedns"]:
+        from . import HEDNS
+        try:
+            he_username = os.environ["HEDNS_USERNAME"]
+            he_password = os.environ["HEDNS_PASSWORD"]
+            dns_class = HEDNS(he_username, he_password)
             logger.info(
                 'chosen_dns_provider. Using {0} as dns provider.'.format(
                     dns_provider))

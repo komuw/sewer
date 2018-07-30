@@ -17,7 +17,8 @@ The currently supported DNS providers are:
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
 3. [acme-dns](https://github.com/joohoi/acme-dns)
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
-5. [Bring your own dns provider](#bring-your-own-dns-provider)
+5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
+6. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -29,10 +30,25 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 ```shell
 pip3 install sewer
 
+# with All DNS Provider support, include aliyun, HE, Aurora, ACME ...
+# pip3 install sewer[ALLDNS]
+
 # with aliyun/alicloud support
 # pip3 install sewer[aliyun]
-```           
-sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;         
+
+# with HE DNS(Hurricane Electric DNS) support
+# pip3 install sewer[he] # or
+# pip3 install sewer[hedns]
+
+# with Aurora DNS Support
+# pip3 install sewer[aurora]
+
+# with ACME DNS Support
+# pip3 install sewer[acmedns]
+```
+
+sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
+
 ```shell
 pip install sewer==0.3.0
 ```
@@ -134,7 +150,7 @@ sewer --help
         
 usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
              [--certificate_key CERTIFICATE_KEY] --dns
-             {cloudflare,aurora,acmedns,aliyun,alicloud} --domain DOMAIN
+             {cloudflare,aurora,acmedns,aliyun,alicloud,he,hedns} --domain DOMAIN
              [--alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
              [--email EMAIL] --action {run,renew} [--out_dir OUT_DIR]
