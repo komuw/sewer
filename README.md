@@ -132,11 +132,13 @@ To see help:
 ```shell
 sewer --help                 
         
-usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY] --dns
-             {cloudflare,aurora,acmedns} --domain DOMAIN
+usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
+             [--certificate_key CERTIFICATE_KEY] --dns
+             {cloudflare,aurora,acmedns,aliyun,alicloud} --domain DOMAIN
              [--alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
-             [--email EMAIL] --action {run,renew}
+             [--email EMAIL] --action {run,renew} [--out_dir OUT_DIR]
+             [--loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
 Sewer is a Let's Encrypt(ACME) client.
 
@@ -146,17 +148,21 @@ optional arguments:
   --account_key ACCOUNT_KEY
                         The path to your letsencrypt/acme account key. eg:
                         --account_key /home/myaccount.key
-  --dns {cloudflare,aurora,acmedns}
+  --certificate_key CERTIFICATE_KEY
+                        The path to your certificate key. eg:
+                        --certificate_key /home/mycertificate.key
+  --dns {cloudflare,aurora,acmedns,aliyun,alicloud}
                         The name of the dns provider that you want to use.
   --domain DOMAIN       The domain/subdomain name for which you want to
-                        get/renew certificate for. eg: --domain example.com
+                        get/renew certificate for. wildcards are also
+                        supported eg: --domain example.com
   --alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]
                         A list of alternative domain/subdomain name/s(if any)
                         for which you want to get/renew certificate for. eg:
                         --alt_domains www.example.com blog.example.com
   --bundle_name BUNDLE_NAME
                         The name to use for certificate certificate key and
-                        account key. Default is value of domain.
+                        account key. Default is name of domain.
   --endpoint {production,staging}
                         Whether to use letsencrypt/acme production/live
                         endpoints or staging endpoints. production endpoints
@@ -166,7 +172,12 @@ optional arguments:
   --action {run,renew}  The action that you want to perform. Either run (get a
                         new certificate) or renew (renew a certificate). eg:
                         --action run
-  --loglevel LEVEL      The log level to output log messages at. eg: --loglevel INFO
+  --out_dir OUT_DIR     The dir where the certificate and keys file will be
+                        stored. default: The directory you run sewer command.
+                        eg: --out_dir /data/ssl/
+  --loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        The log level to output log messages at. eg:
+                        --loglevel DEBUG
 ```
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             

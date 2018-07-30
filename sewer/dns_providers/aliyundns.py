@@ -1,11 +1,12 @@
-#!/usr/bin/env python
-# coding=utf-8
-# Created by @menduo @ 2018/7/23
 import json
-from aliyunsdkcore import client
-from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
-from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
-from aliyunsdkalidns.request.v20150109 import DeleteDomainRecordRequest
+try:
+    aliyun_dependencies = True
+    from aliyunsdkcore import client
+    from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
+    from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
+    from aliyunsdkalidns.request.v20150109 import DeleteDomainRecordRequest
+except ImportError:
+    aliyun_dependencies = False
 
 from . import common
 
@@ -36,6 +37,9 @@ class AliyunDNS(common.BaseDns):
         :param bool debug: if debug?
         """
         super(AliyunDNS, self).__init__()
+        if not aliyun_dependencies:
+            raise ImportError(
+                """You need to install aliyunDns dependencies. run; pip3 install sewer[aliyun]""")
         self._key = key
         self._secret = secret
         self._endpoint = endpoint
