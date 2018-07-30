@@ -27,7 +27,8 @@ dns_provider_deps_map = {
 }
 
 all_deps_of_all_dns_provider = []
-for _, vlist in dns_provider_deps_map.items(): all_deps_of_all_dns_provider += vlist
+for _, vlist in dns_provider_deps_map.items():
+    all_deps_of_all_dns_provider += vlist
 all_deps_of_all_dns_provider = list(set(all_deps_of_all_dns_provider))
 
 setup(
