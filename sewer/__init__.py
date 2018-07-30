@@ -4,5 +4,5 @@ from .dns_providers import BaseDns  # noqa: F401
 from .dns_providers import AuroraDns  # noqa: F401
 from .dns_providers import CloudFlareDns  # noqa: F401
 from .dns_providers import AcmeDnsDns  # noqa: F401
-from .dns_providers import AliyunDNS  # noqa:F401
-from .dns_providers import HEDNS  # noqa:F401
+from .dns_providers import AliyunDns  # noqa:F401
+from .dns_providers import HurricaneDns  # noqa:F401

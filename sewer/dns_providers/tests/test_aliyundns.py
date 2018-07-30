@@ -18,7 +18,7 @@ class TestAliyunDNS(TestCase):
                 'requests.get') as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.AliyunDNS(
+            self.dns_class = sewer.AliyunDns(
                 key=self.API_KEY,
                 secret=self.API_SECRET)
 
@@ -27,7 +27,7 @@ class TestAliyunDNS(TestCase):
 
     def test_acmedns_is_called_by_create_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, \
-                mock.patch('sewer.AliyunDNS.delete_dns_record') as mock_delete_dns_record, \
+                mock.patch('sewer.AliyunDns.delete_dns_record') as mock_delete_dns_record, \
                 mock.patch('dns.resolver.Resolver.query') as mock_dns_resolver:
             mock_requests_post.return_value = \
                 mock_delete_dns_record.return_value = test_utils.MockResponse()

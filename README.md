@@ -30,15 +30,14 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 ```shell
 pip3 install sewer
 
-# with All DNS Provider support, include aliyun, HE, Aurora, ACME ...
+# with All DNS Provider support, include aliyun, Hurricane Electric, Aurora, ACME ...
 # pip3 install sewer[ALLDNS]
 
-# with aliyun/alicloud support
+# with Aliyun support
 # pip3 install sewer[aliyun]
 
 # with HE DNS(Hurricane Electric DNS) support
-# pip3 install sewer[he] # or
-# pip3 install sewer[hedns]
+# pip3 install sewer[hurricane]
 
 # with Aurora DNS Support
 # pip3 install sewer[aurora]
@@ -150,7 +149,7 @@ sewer --help
         
 usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
              [--certificate_key CERTIFICATE_KEY] --dns
-             {cloudflare,aurora,acmedns,aliyun,alicloud,he,hedns} --domain DOMAIN
+             {cloudflare,aurora,acmedns,aliyun,hurricane} --domain DOMAIN
              [--alt_domains [ALT_DOMAINS [ALT_DOMAINS ...]]]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
              [--email EMAIL] --action {run,renew} [--out_dir OUT_DIR]
@@ -167,7 +166,7 @@ optional arguments:
   --certificate_key CERTIFICATE_KEY
                         The path to your certificate key. eg:
                         --certificate_key /home/mycertificate.key
-  --dns {cloudflare,aurora,acmedns,aliyun,alicloud}
+  --dns {cloudflare,aurora,acmedns,aliyun,hurricane}
                         The name of the dns provider that you want to use.
   --domain DOMAIN       The domain/subdomain name for which you want to
                         get/renew certificate for. wildcards are also

@@ -19,9 +19,7 @@ with open(os.path.join(here, 'sewer', '__version__.py'), 'r') as f:
 
 dns_provider_deps_map = {
     'aliyun': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
-    'alicloud': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
-    'he': ["hurricanedns"],
-    'hedns': ["hurricanedns"],
+    'hurricane': ["hurricanedns"],
     'aurora': ["tldextract", "apache-libcloud"],
     'acmedns': ["dnspython", ],
 }
@@ -99,9 +97,7 @@ setup(
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
         'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
         'aliyun': dns_provider_deps_map["aliyun"],
-        'alicloud': dns_provider_deps_map["alicloud"],
-        'he': dns_provider_deps_map["hedns"],
-        'hedns': dns_provider_deps_map["hedns"],
+        'hurricane': dns_provider_deps_map["hurricane"],
         'aurora': dns_provider_deps_map["aurora"],
         'acmedns': dns_provider_deps_map["acmedns"],
         'ALLDNS': all_deps_of_all_dns_provider,

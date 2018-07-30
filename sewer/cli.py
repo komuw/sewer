@@ -57,7 +57,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "alicloud", "he", "hedns"],
+        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "hurricane", ],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",
@@ -218,13 +218,13 @@ def main():
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
-    elif dns_provider in ["aliyun", "alicloud"]:
-        from . import AliyunDNS
+    elif dns_provider == "aliyun":
+        from . import AliyunDns
         try:
             aliyun_ak = os.environ["ALIYUN_AK_ID"]
             aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
             aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
-            dns_class = AliyunDNS(aliyun_ak, aliyun_secret, aliyun_endpoint)
+            dns_class = AliyunDns(aliyun_ak, aliyun_secret, aliyun_endpoint)
             logger.info(
                 'chosen_dns_provider. Using {0} as dns provider.'.format(
                     dns_provider))
@@ -233,12 +233,12 @@ def main():
                 "ERROR:: Please supply {0} as an environment variable.".format(
                     str(e)))
             raise
-    elif dns_provider in ["he", "hedns"]:
-        from . import HEDNS
+    elif dns_provider == "hurricane":
+        from . import HurricaneDns
         try:
-            he_username = os.environ["HEDNS_USERNAME"]
-            he_password = os.environ["HEDNS_PASSWORD"]
-            dns_class = HEDNS(he_username, he_password)
+            he_username = os.environ["HURRICANE_USERNAME"]
+            he_password = os.environ["HURRICANE_PASSWORD"]
+            dns_class = HurricaneDns(he_username, he_password)
             logger.info(
                 'chosen_dns_provider. Using {0} as dns provider.'.format(
                     dns_provider))

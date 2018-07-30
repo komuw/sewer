@@ -19,7 +19,7 @@ class TestHEDNS(TestCase):
                 mock.patch('requests.get') as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.HEDNS(
+            self.dns_class = sewer.HurricaneDns(
                 username=self.he_uesrname,
                 password=self.he_password)
 
@@ -28,7 +28,7 @@ class TestHEDNS(TestCase):
 
     def test_hedns_is_called_by_create_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, \
-                mock.patch('sewer.HEDNS.delete_dns_record') as mock_delete_dns_record, \
+                mock.patch('sewer.HurricaneDns.delete_dns_record') as mock_delete_dns_record, \
                 mock.patch('dns.resolver.Resolver.query') as mock_dns_resolver:
             mock_requests_post.return_value = \
                 mock_delete_dns_record.return_value = test_utils.MockResponse()

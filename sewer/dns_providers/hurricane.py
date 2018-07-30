@@ -28,12 +28,12 @@ class _Response(object):
         return json.loads(self.content)
 
 
-class HEDNS(common.BaseDns):
+class HurricaneDns(common.BaseDns):
     def __init__(self, username, password):
-        super(HEDNS, self).__init__()
+        super(HurricaneDns, self).__init__()
         if not hedns_dependencies:
             raise ImportError(
-                """You need to install HEDNS dependencies. run: pip3 install sewer[hedns]""")
+                """You need to install HurricaneDns dependencies. run: pip3 install sewer[hurricane]""")
 
         self.clt = _hurricanedns.HurricaneDNS(username, password)
 
