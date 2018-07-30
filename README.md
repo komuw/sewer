@@ -30,12 +30,21 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 ```shell
 pip3 install sewer
 
+# with All DNS Provider support, include aliyun, HE, Aurora, ACME ...
+# pip3 install sewer[ALLDNS]
+
 # with aliyun/alicloud support
 # pip3 install sewer[aliyun]
 
 # with HE DNS(Hurricane Electric DNS) support
 # pip3 install sewer[he] # or
 # pip3 install sewer[hedns]
+
+# with Aurora DNS Support
+# pip3 install sewer[aurora]
+
+# with ACME DNS Support
+# pip3 install sewer[acmedns]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
