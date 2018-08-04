@@ -100,7 +100,7 @@ setup(
         'hurricane': dns_provider_deps_map["hurricane"],
         'aurora': dns_provider_deps_map["aurora"],
         'acmedns': dns_provider_deps_map["acmedns"],
-        'ALLDNS': all_deps_of_all_dns_provider,
+        'alldns': all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
