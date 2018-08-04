@@ -27,8 +27,9 @@ def main():
         --domain example.com \
         --action renew
     """
-    parser = argparse.ArgumentParser(prog='sewer',
-                                     description="""Sewer is a Let's Encrypt(ACME) client.
+    parser = argparse.ArgumentParser(
+        prog='sewer',
+        description="""Sewer is a Let's Encrypt(ACME) client.
             Example usage::
             CLOUDFLARE_EMAIL=example@example.com \
             CLOUDFLARE_API_KEY=api-key \
@@ -264,14 +265,16 @@ def main():
     account_key = client.account_key
 
     # prepare file path
-    account_key_file_path = os.path.join(out_dir, '{0}.account.key'.format(file_name))
+    account_key_file_path = os.path.join(
+        out_dir, '{0}.account.key'.format(file_name))
     crt_file_path = os.path.join(out_dir, '{0}.crt'.format(file_name))
     crt_key_file_path = os.path.join(out_dir, '{0}.key'.format(file_name))
 
     # write out account_key in out_dir directory
     with open(account_key_file_path, 'w') as account_file:
         account_file.write(account_key)
-    logger.info('account key succesfully written to {0}.'.format(account_key_file_path))
+    logger.info('account key succesfully written to {0}.'.format(
+        account_key_file_path))
 
     if action == 'renew':
         message = 'Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory'
@@ -286,7 +289,9 @@ def main():
     with open(crt_key_file_path, 'w') as certificate_key_file:
         certificate_key_file.write(certificate_key)
 
-    logger.info('certificate succesfully written to {0}.'.format(crt_file_path))
-    logger.info('certificate key succesfully written to {0}.'.format(crt_key_file_path))
+    logger.info(
+        'certificate succesfully written to {0}.'.format(crt_file_path))
+    logger.info('certificate key succesfully written to {0}.'.format(
+        crt_key_file_path))
 
     logger.info("the_end. {0}".format(message))

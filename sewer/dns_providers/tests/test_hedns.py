@@ -34,13 +34,15 @@ class TestHEDNS(TestCase):
                 mock_delete_dns_record.return_value = test_utils.MockResponse()
             mock_dns_resolver.return_value = test_utils.MockDnsResolver()
 
-            # cause we use mock username & passworkd, the client will raise a Auth Error
+            # cause we use mock username & passworkd, the client will raise a
+            # Auth Error
             try:
                 self.dns_class.create_dns_record(
                     domain_name=self.domain_name,
                     domain_dns_value=self.domain_dns_value)
             except Exception as e:
-                logging.warning("error at test_hedns_is_called_by_create_dns_record: %s", str(e))
+                logging.warning(
+                    "error at test_hedns_is_called_by_create_dns_record: %s", str(e))
 
             self.assertFalse(mock_requests_post.called)
 
@@ -48,11 +50,13 @@ class TestHEDNS(TestCase):
         with mock.patch('requests.post') as mock_requests_post:
             mock_requests_post.return_value = test_utils.MockResponse()
 
-            # cause we use mock username & passworkd, the client will raise a Auth Error
+            # cause we use mock username & passworkd, the client will raise a
+            # Auth Error
             try:
                 self.dns_class.delete_dns_record(
                     domain_name=self.domain_name,
                     domain_dns_value=self.domain_dns_value)
             except Exception as e:
-                logging.warning("error at test_hedns_is_not_called_by_delete_dns_record: %s", str(e))
+                logging.warning(
+                    "error at test_hedns_is_not_called_by_delete_dns_record: %s", str(e))
             self.assertFalse(mock_requests_post.called)
