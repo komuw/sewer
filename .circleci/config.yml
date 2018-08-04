@@ -22,7 +22,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            sudo apt-get -y install pandoc && sudo pip3 install -e .[dev,test,aliyun]
+            sudo apt-get -y install pandoc && sudo pip3 install -e .[dev,test,ALLDNS]
 
       # run tests!
       - run:

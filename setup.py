@@ -17,6 +17,18 @@ except ImportError:
 with open(os.path.join(here, 'sewer', '__version__.py'), 'r') as f:
     exec(f.read(), about)
 
+dns_provider_deps_map = {
+    'aliyun': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
+    'hurricane': ["hurricanedns"],
+    'aurora': ["tldextract", "apache-libcloud"],
+    'acmedns': ["dnspython", ],
+}
+
+all_deps_of_all_dns_provider = []
+for _, vlist in dns_provider_deps_map.items():
+    all_deps_of_all_dns_provider += vlist
+all_deps_of_all_dns_provider = list(set(all_deps_of_all_dns_provider))
+
 setup(
     name=about['__title__'],
     # Versions should comply with PEP440.  For a discussion on single-sourcing
@@ -75,18 +87,20 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'requests', 'pyopenssl', 'cryptography', 'tldextract', 'apache-libcloud', 'dnspython'
+        'requests', 'pyopenssl', 'cryptography',
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip3 install -e .[dev,test]
-    # TODO: gate auroraDns like we gate aliyunDns
     extras_require={
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
         'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
-        'aliyun': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
-        'alicloud': ['aliyun-python-sdk-core-v3', 'aliyun-python-sdk-alidns'],
+        'aliyun': dns_provider_deps_map["aliyun"],
+        'hurricane': dns_provider_deps_map["hurricane"],
+        'aurora': dns_provider_deps_map["aurora"],
+        'acmedns': dns_provider_deps_map["acmedns"],
+        'ALLDNS': all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
