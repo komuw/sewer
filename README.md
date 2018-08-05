@@ -31,7 +31,7 @@ Sewer also comes with a command-line(cli) interface(app) that you can use from y
 pip3 install sewer
 
 # with All DNS Provider support, include aliyun, Hurricane Electric, Aurora, ACME ...
-# pip3 install sewer[ALLDNS]
+# pip3 install sewer[alldns]
 
 # with Aliyun support
 # pip3 install sewer[aliyun]
