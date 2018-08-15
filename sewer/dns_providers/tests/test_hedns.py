@@ -26,6 +26,39 @@ class TestHEDNS(TestCase):
     def tearDown(self):
         pass
 
+    def test_extract_zone_sub_domain(self):
+        logging.info("test_extract_zone_sub_domain - start")
+        _zone = "sub-domain"
+        domain = "%s.%s" % (_zone, self.domain_name)
+        root, zone, acme_txt = self.dns_class.extract_zone(domain)
+
+        self.assertEqual(root, self.domain_name)
+        self.assertEqual(zone, _zone)
+        self.assertEqual(acme_txt, "_acme-challenge.%s" % zone)
+
+        domain = "*.%s.%s" % (_zone, self.domain_name)
+        root, zone, acme_txt = self.dns_class.extract_zone(domain)
+
+        self.assertEqual(root, self.domain_name)
+        self.assertEqual(zone, _zone)
+        self.assertEqual(acme_txt, "_acme-challenge.%s" % zone)
+        logging.info("test_extract_zone_sub_domain - end")
+
+    def test_extract_zone_root(self):
+        logging.info("test_extract_zone_root - start")
+        domain = self.domain_name
+        root, zone, acme_txt = self.dns_class.extract_zone(domain)
+        self.assertEqual(root, self.domain_name)
+        self.assertEqual(zone, "")
+        self.assertEqual(acme_txt, "_acme-challenge")
+
+        domain = "*." + self.domain_name
+        root, zone, acme_txt = self.dns_class.extract_zone(domain)
+        self.assertEqual(root, self.domain_name)
+        self.assertEqual(zone, "")
+        self.assertEqual(acme_txt, "_acme-challenge")
+        logging.info("test_extract_zone_root - end")
+
     def test_hedns_is_called_by_create_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, \
                 mock.patch('sewer.HurricaneDns.delete_dns_record') as mock_delete_dns_record, \
