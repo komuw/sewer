@@ -171,9 +171,9 @@ class AliyunDns(common.BaseDns):
             root = ".".join([middle, last])
             acme_txt = "_acme-challenge.%s" % zone
         else:
-            zone, middle, last = "", "", domain_name
+            zone = ""
             root = domain_name
-            acme_txt = "_acme-challenge.%s" % root
+            acme_txt = "_acme-challenge"
         return root, zone, acme_txt
 
     def create_dns_record(self, domain_name, domain_dns_value):
