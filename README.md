@@ -308,7 +308,7 @@ see the how to contribute [documentation](https://github.com/komuw/sewer/blob/ma
 
 ## TODO
 - support more DNS providers
-- https://github.com/komuW/sewer/milestone/1
+- https://github.com/komuw/sewer/milestone/1
 
 ## FAQ
 - Why another ACME client?          
