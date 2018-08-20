@@ -1,4 +1,3 @@
-import logging
 import mock
 from unittest import TestCase
 import sewer
@@ -27,7 +26,6 @@ class TestHEDNS(TestCase):
         pass
 
     def test_extract_zone_sub_domain(self):
-        logging.info("test_extract_zone_sub_domain - start")
         _zone = "sub-domain"
         domain = "%s.%s" % (_zone, self.domain_name)
         root, zone, acme_txt = self.dns_class.extract_zone(domain)
@@ -42,10 +40,8 @@ class TestHEDNS(TestCase):
         self.assertEqual(root, self.domain_name)
         self.assertEqual(zone, _zone)
         self.assertEqual(acme_txt, "_acme-challenge.%s" % zone)
-        logging.info("test_extract_zone_sub_domain - end")
 
     def test_extract_zone_root(self):
-        logging.info("test_extract_zone_root - start")
         domain = self.domain_name
         root, zone, acme_txt = self.dns_class.extract_zone(domain)
         self.assertEqual(root, self.domain_name)
@@ -57,7 +53,6 @@ class TestHEDNS(TestCase):
         self.assertEqual(root, self.domain_name)
         self.assertEqual(zone, "")
         self.assertEqual(acme_txt, "_acme-challenge")
-        logging.info("test_extract_zone_root - end")
 
     def test_hedns_is_called_by_create_dns_record(self):
         with mock.patch('requests.post') as mock_requests_post, \
@@ -74,8 +69,7 @@ class TestHEDNS(TestCase):
                     domain_name=self.domain_name,
                     domain_dns_value=self.domain_dns_value)
             except Exception as e:
-                logging.warning(
-                    "error at test_hedns_is_called_by_create_dns_record: %s", str(e))
+                pass
 
             self.assertFalse(mock_requests_post.called)
 
@@ -90,6 +84,5 @@ class TestHEDNS(TestCase):
                     domain_name=self.domain_name,
                     domain_dns_value=self.domain_dns_value)
             except Exception as e:
-                logging.warning(
-                    "error at test_hedns_is_not_called_by_delete_dns_record: %s", str(e))
+                pass
             self.assertFalse(mock_requests_post.called)

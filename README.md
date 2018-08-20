@@ -302,43 +302,13 @@ print("certificate's key::", certificate_key)
 ```
 
 ## Development setup
-- fork this repo.
-- you need to have python3 installed, this project is python3 only since sewer version 0.5.0.
-- cd sewer
-- sudo apt-get install pandoc
-- open an issue on this repo. In your issue, outline what it is you want to add and why.
-- install pre-requiste software:             
-```shell
-apt-get -y install pandoc && pip3 install -e .[dev,test]
-```                   
-- make the changes you want on your fork.
-- your changes should have backward compatibility in mind unless it is impossible to do so.
-- add your name and contact(optional) to CONTRIBUTORS.md
-- add tests
-- format your code using [autopep8](https://pypi.python.org/pypi/autopep8):                      
-```shell
-autopep8 --experimental --in-place -r -aaaaaaaaaaa .
-```                      
-- run [flake8](https://pypi.python.org/pypi/flake8) on the code and fix any issues:                      
-```shell
-flake8 .
-```                      
-- run [pylint](https://pypi.python.org/pypi/pylint) on the code and fix any issues:                      
-```shell
-pylint --enable=E --disable=W,R,C sewer/
-```    
-- run tests and make sure everything is passing:
-```shell
-make test
-```
-- open a pull request on this repo.               
-NB: I make no commitment of accepting your pull requests.                 
+see the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)                
 
 
 
 ## TODO
 - support more DNS providers
-- https://github.com/komuW/sewer/milestone/1
+- https://github.com/komuw/sewer/milestone/1
 
 ## FAQ
 - Why another ACME client?          
