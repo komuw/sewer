@@ -58,7 +58,13 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=['cloudflare', 'aurora', 'acmedns', "aliyun", "hurricane", ],
+        choices=[
+            'cloudflare',
+            'aurora',
+            'acmedns',
+            "aliyun",
+            "hurricane",
+            "rackspace"],
         help="The name of the dns provider that you want to use.")
     parser.add_argument(
         "--domain",
@@ -242,6 +248,20 @@ def main():
             dns_class = HurricaneDns(he_username, he_password)
             logger.info(
                 'chosen_dns_provider. Using {0} as dns provider.'.format(
+                    dns_provider))
+        except KeyError as e:
+            logger.error(
+                "ERROR:: Please supply {0} as an environment variable.".format(
+                    str(e)))
+            raise
+    elif dns_provider == "rackspace":
+        from . import RackspaceDns
+        try:
+            RACKSPACE_USERNAME = os.environ['RACKSPACE_USERNAME']
+            RACKSPACE_API_KEY = os.environ['RACKSPACE_API_KEY']
+            dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY)
+            logger.info(
+                'chosen_dns_prover. Using {0} as dns provider. '.format(
                     dns_provider))
         except KeyError as e:
             logger.error(

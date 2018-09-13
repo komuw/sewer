@@ -22,6 +22,7 @@ dns_provider_deps_map = {
     'hurricane': ["hurricanedns"],
     'aurora': ["tldextract", "apache-libcloud"],
     'acmedns': ["dnspython", ],
+    'rackspace': ["tldextract", ],
 }
 
 all_deps_of_all_dns_provider = []
@@ -100,6 +101,7 @@ setup(
         'hurricane': dns_provider_deps_map["hurricane"],
         'aurora': dns_provider_deps_map["aurora"],
         'acmedns': dns_provider_deps_map["acmedns"],
+        'rackspace': dns_provider_deps_map["rackspace"],
         'alldns': all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
