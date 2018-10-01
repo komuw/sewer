@@ -31,10 +31,10 @@ class RackspaceDns(common.BaseDns):
         data = find_rackspace_api_details_response.json()
         api_token = data['access']['token']['id']
         url_data = next((item
-                                        for item in data['access']
-                                        ['serviceCatalog']
-                                        if item['type'] == 'rax:dns'),
-                                       None)
+                         for item in data['access']
+                         ['serviceCatalog']
+                         if item['type'] == 'rax:dns'),
+                        None)
         if url_data is None:
             raise ValueError(
                 "Error finding url data for the rackspace dns api in the response from the identity server")
@@ -179,14 +179,17 @@ class RackspaceDns(common.BaseDns):
         callback_url = create_rackspace_dns_record_response.json()[
             'callbackUrl']
         self.poll_callback_url(callback_url)
-        self.logger.info('create_dns_record_success. Name: {record_name} Data: {data}'.format(
-            record_name=record_name, data=domain_dns_value))
+        self.logger.info(
+            'create_dns_record_success. Name: {record_name} Data: {data}'.format(
+                record_name=record_name,
+                data=domain_dns_value))
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('delete_dns_record')
         record_name = '_acme-challenge.' + domain_name
         self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
-        self.RACKSPACE_RECORD_ID = self.find_dns_record_id(domain_name, domain_dns_value)
+        self.RACKSPACE_RECORD_ID = self.find_dns_record_id(
+            domain_name, domain_dns_value)
         url = self.RACKSPACE_API_BASE_URL + "domains/{domain_id}/records/?id={record_id}".format(
             domain_id=self.RACKSPACE_DNS_ZONE_ID, record_id=self.RACKSPACE_RECORD_ID)
         delete_dns_record_response = requests.delete(
@@ -203,5 +206,7 @@ class RackspaceDns(common.BaseDns):
                     response=self.log_response(delete_dns_record_response)))
         callback_url = delete_dns_record_response.json()['callbackUrl']
         self.poll_callback_url(callback_url)
-        self.logger.info('delete_dns_record_success. Name: {record_name} Data: {data}'.format(
-            record_name=record_name, data=domain_dns_value))
+        self.logger.info(
+            'delete_dns_record_success. Name: {record_name} Data: {data}'.format(
+                record_name=record_name,
+                data=domain_dns_value))
