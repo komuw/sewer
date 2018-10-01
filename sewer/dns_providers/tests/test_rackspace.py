@@ -5,9 +5,6 @@ import sewer
 
 from . import test_utils
 
-import pprint
-
-
 class TestRackspace(TestCase):
     """
     """
@@ -113,9 +110,6 @@ class TestRackspace(TestCase):
                 domain_name=self.domain_name,
                 domain_dns_value=self.
                 domain_dns_value)
-            print('Karl')
-            pprint.pprint(mock_requests_delete.call_args)
-            print('Ended')
             expected = {
                 'headers': {
                     'X-Auth-Token': 'mock-api-token',
