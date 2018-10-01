@@ -29,17 +29,18 @@ class RackspaceDns(common.BaseDns):
                     status_code=find_rackspace_api_details_response.status_code,
                     response=self.log_response(find_rackspace_api_details_response)))
         data = find_rackspace_api_details_response.json()
-        self.RACKSPACE_API_TOKEN = data['access']['token']['id']
-        self.RACKSPACE_URL_DATA = next((item
+        api_token = data['access']['token']['id']
+        url_data = next((item
                                         for item in data['access']
                                         ['serviceCatalog']
                                         if item['type'] == 'rax:dns'),
                                        None)
-        if self.RACKSPACE_URL_DATA is None:
+        if url_data is None:
             raise ValueError(
                 "Error finding url data for the rackspace dns api in the response from the identity server")
         else:
-            self.RACKSPACE_API_BASE_URL = self.RACKSPACE_URL_DATA['endpoints'][0]['publicURL'] + '/'
+            api_base_url = url_data['endpoints'][0]['publicURL'] + '/'
+        return(api_token, api_base_url)
 
     def __init__(
             self,
@@ -50,7 +51,7 @@ class RackspaceDns(common.BaseDns):
         self.RACKSPACE_API_KEY = RACKSPACE_API_KEY
         self.HTTP_TIMEOUT = 65  # seconds
         super(RackspaceDns, self).__init__()
-        self.get_rackspace_credentials()
+        self.RACKSPACE_API_TOKEN, self.RACKSPACE_API_BASE_URL = self.get_rackspace_credentials()
         self.RACKSPACE_HEADERS = {
             'X-Auth-Token': self.RACKSPACE_API_TOKEN,
             'Content-Type': 'application/json'
@@ -77,21 +78,22 @@ class RackspaceDns(common.BaseDns):
                     status_code=find_dns_zone_id_response.status_code,
                     response=self.log_response(find_dns_zone_id_response)))
         result = find_dns_zone_id_response.json()
-        RACKSPACE_DOMAIN_DATA = next(
+        domain_data = next(
             (item for item in result['domains']
              if item['name'] == self.RACKSPACE_DNS_ZONE),
             None)
-        if RACKSPACE_DOMAIN_DATA is None:
+        if domain_data is None:
             raise ValueError(
                 "Error finding information for {dns_zone} in dns response data:\n{response_data})".format(
                     dns_zone=self.RACKSPACE_DNS_ZONE,
                     response_data=self.log_response(find_dns_zone_id_response)))
-        self.RACKSPACE_DNS_ZONE_ID = RACKSPACE_DOMAIN_DATA['id']
+        dns_zone_id = domain_data['id']
         self.logger.debug('find_dns_zone_id_success')
+        return dns_zone_id
 
     def find_dns_record_id(self, domain_name, domain_dns_value):
         self.logger.debug('find_dns_record_id')
-        self.find_dns_zone_id(domain_name)
+        self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
         url = self.RACKSPACE_API_BASE_URL + "domains/{0}/records".format(
             self.RACKSPACE_DNS_ZONE_ID)
         find_dns_record_id_response = requests.get(
@@ -115,14 +117,38 @@ class RackspaceDns(common.BaseDns):
                     domain_name=domain_name,
                     domain_dns_value=domain_dns_value,
                     response_data=self.log_response(find_dns_record_id_response)))
-        self.RACKSPACE_RECORD_ID = RACKSPACE_RECORD_DATA['id']
+        record_id = RACKSPACE_RECORD_DATA['id']
         self.logger.debug('find_dns_record_id success')
+        return record_id
+
+    def poll_callback_url(self, callback_url):
+        start_time = time.time()
+        while True:
+            callback_url_response = requests.get(
+                callback_url, headers=self.RACKSPACE_HEADERS)
+            if time.time() > start_time + self.HTTP_TIMEOUT:
+                raise ValueError(
+                    "Timed out polling callbackurl for dns record status.  Last status_code={status_code} last response={response}".format(
+                        status_code=callback_url_response.status_code,
+                        response=self.log_response(callback_url_response)))
+            if callback_url_response.status_code != 200:
+                raise Exception(
+                    "Could not get dns record status from callback url.  Status code ={status_code}. response={response}".format(
+                        status_code=callback_url_response.status_code,
+                        response=self.log_response(callback_url_response)))
+            if callback_url_response.json()['status'] == 'ERROR':
+                raise Exception(
+                    "Error in creating/deleting dns record: status_Code={status_code}. response={response}".format(
+                        status_code=callback_url_response.status_code,
+                        response=self.log_response(callback_url_response)))
+            if callback_url_response.json()['status'] == 'COMPLETED':
+                break
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('create_dns_record')
         # strip wildcard if present
         domain_name = domain_name.lstrip('*.')
-        self.find_dns_zone_id(domain_name)
+        self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
         record_name = '_acme-challenge.' + domain_name
         url = urllib.parse.urljoin(self.RACKSPACE_API_BASE_URL,
                                    'domains/{0}/records'.format(
@@ -152,38 +178,15 @@ class RackspaceDns(common.BaseDns):
         # update when the job is done
         callback_url = create_rackspace_dns_record_response.json()[
             'callbackUrl']
-        start_time = time.time()
-        while True:
-            callback_url_response = requests.get(
-                callback_url,
-                headers=self.RACKSPACE_HEADERS)
-            if time.time() > start_time + self.HTTP_TIMEOUT:
-                raise ValueError(
-                    "Timed out polling callback url for dns record creation status.  " +
-                    "Last status_code={status_code} last response={response}: ".format(
-                        status_code=callback_url_response.status,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.status_code != 200:
-                raise Exception(
-                    "Could not get dns record creation info from callback url status code={status_code}. resonse={response}".format(
-                        status_code=callback_url_response.status_code,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.json()['status'] == 'ERROR':
-                raise Exception(
-                    "Error in creating dns record: status_code={status_code}. response={response}".format(
-                        status_code=callback_url_response.status_code,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.json()['status'] == 'COMPLETED':
-                self.logger.info(
-                    'create_dns_record_success. Name: {record_name} Data: {data}'.format(
-                        record_name=record_name, data=domain_dns_value))
-                break
-            time.sleep(2)
+        self.poll_callback_url(callback_url)
+        self.logger.info('create_dns_record_success. Name: {record_name} Data: {data}'.format(
+            record_name=record_name, data=domain_dns_value))
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info('delete_dns_record')
-        self.find_dns_zone_id(domain_name)
-        self.find_dns_record_id(domain_name, domain_dns_value)
+        record_name = '_acme-challenge.' + domain_name
+        self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
+        self.RACKSPACE_RECORD_ID = self.find_dns_record_id(domain_name, domain_dns_value)
         url = self.RACKSPACE_API_BASE_URL + "domains/{domain_id}/records/?id={record_id}".format(
             domain_id=self.RACKSPACE_DNS_ZONE_ID, record_id=self.RACKSPACE_RECORD_ID)
         delete_dns_record_response = requests.delete(
@@ -199,26 +202,6 @@ class RackspaceDns(common.BaseDns):
                     status_code=delete_dns_record_response.status_code,
                     response=self.log_response(delete_dns_record_response)))
         callback_url = delete_dns_record_response.json()['callbackUrl']
-        start_time = time.time()
-        while True:
-            callback_url_response = requests.get(
-                callback_url, headers=self.RACKSPACE_HEADERS)
-            if time.time() > start_time + self.HTTP_TIMEOUT:
-                raise ValueError(
-                    "Timed out polling callbackurl for dns record deletion status.  Last status_code={status_code} last response={response}".format(
-                        status_code=callback_url_response.status_code,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.status_code != 200:
-                raise Exception(
-                    "Could not get dns record deletion status from callback url.  Status code ={status_code}. response={response}".format(
-                        status_code=callback_url_response.status_code,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.json()['status'] == 'ERROR':
-                raise Exception(
-                    "Error in deleting dns record: status_Code={status_code}. response={response}".format(
-                        status_code=callback_url_response.status_code,
-                        response=self.log_response(callback_url_response)))
-            if callback_url_response.json()['status'] == 'COMPLETED':
-                self.logger.info('delete_dns_record_success')
-                break
-            time.sleep(2)
+        self.poll_callback_url(callback_url)
+        self.logger.info('delete_dns_record_success. Name: {record_name} Data: {data}'.format(
+            record_name=record_name, data=domain_dns_value))
