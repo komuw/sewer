@@ -24,14 +24,10 @@ apt-get -y install pandoc && pip3 install -e .[dev,test]
 - your changes should have backward compatibility in mind unless it is impossible to do so.
 - add your name and contact(optional) to CONTRIBUTORS.md
 - add tests
-- format your code using [autopep8](https://pypi.python.org/pypi/autopep8):                      
+- format your code using [black](https://github.com/ambv/black):                      
 ```shell
-autopep8 --experimental --in-place -r -aaaaaaaaaaa .
-```                     
-- run [flake8](https://pypi.python.org/pypi/flake8) on the code and fix any issues:                      
-```shell
-flake8 .
-```                      
+black --line-length=100 --py36 .
+```                                         
 - run [pylint](https://pypi.python.org/pypi/pylint) on the code and fix any issues:                      
 ```shell
 pylint --enable=E --disable=W,R,C sewer/

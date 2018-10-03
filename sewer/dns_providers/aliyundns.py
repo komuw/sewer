@@ -1,4 +1,5 @@
 import json
+
 try:
     aliyun_dependencies = True
     from aliyunsdkcore import client
@@ -39,16 +40,13 @@ class AliyunDns(common.BaseDns):
         super(AliyunDns, self).__init__()
         if not aliyun_dependencies:
             raise ImportError(
-                """You need to install aliyunDns dependencies. run; pip3 install sewer[aliyun]""")
+                """You need to install aliyunDns dependencies. run; pip3 install sewer[aliyun]"""
+            )
         self._key = key
         self._secret = secret
         self._endpoint = endpoint
         self._debug = debug
-        self.clt = client.AcsClient(
-            self._key,
-            self._secret,
-            self._endpoint,
-            debug=self._debug)
+        self.clt = client.AcsClient(self._key, self._secret, self._endpoint, debug=self._debug)
 
     def _send_reqeust(self, request):
         """
@@ -56,36 +54,22 @@ class AliyunDns(common.BaseDns):
         """
         request.set_accept_format("json")
         try:
-            status, headers, result = self.clt.implementation_of_do_action(
-                request)
+            status, headers, result = self.clt.implementation_of_do_action(request)
             result = json.loads(result)
             if "Message" in result or "Code" in result:
                 result["Success"] = False
                 self.logger.warning("aliyundns resp error: %s", result)
         except Exception as exc:
-            self.logger.warning(
-                "aliyundns failed to send request: %s, %s",
-                str(exc),
-                request)
+            self.logger.warning("aliyundns failed to send request: %s, %s", str(exc), request)
             status, headers, result = 502, {}, b'{"Success": false}'
             result = json.loads(result)
 
         if self._debug:
-            self.logger.info(
-                "aliyundns request name: %s",
-                request.__class__.__name__)
-            self.logger.info(
-                "aliyundns request query: %s",
-                request.get_query_params())
+            self.logger.info("aliyundns request name: %s", request.__class__.__name__)
+            self.logger.info("aliyundns request query: %s", request.get_query_params())
         return _ResponseForAliyun(status, result, headers)
 
-    def query_recored_items(
-            self,
-            host,
-            zone=None,
-            tipe=None,
-            page=1,
-            psize=200):
+    def query_recored_items(self, host, zone=None, tipe=None, page=1, psize=200):
         """
         query recored items.
         :param str host: like example.com
@@ -165,9 +149,9 @@ class AliyunDns(common.BaseDns):
         :return tuple: root, zone, acme_txt
         """
         # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip('*.')
+        domain_name = domain_name.lstrip("*.")
         if domain_name.count(".") > 1:
-            zone, middle, last = str(domain_name).rsplit('.', 2)
+            zone, middle, last = str(domain_name).rsplit(".", 2)
             root = ".".join([middle, last])
             acme_txt = "_acme-challenge.%s" % zone
         else:
@@ -183,8 +167,7 @@ class AliyunDns(common.BaseDns):
         :param str domain_dns_value: the value sewer client passed in.
         :return _ResponseForAliyun:
         """
-        self.logger.info("create_dns_record start: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("create_dns_record start: %s", (domain_name, domain_dns_value))
         root, _, acme_txt = self.extract_zone(domain_name)
 
         request = AddDomainRecordRequest.AddDomainRecordRequest()
@@ -195,9 +178,7 @@ class AliyunDns(common.BaseDns):
         request.set_Value(domain_dns_value)
         resp = self._send_reqeust(request)
 
-        self.logger.info(
-            "create_dns_record end: %s",
-            (domain_name, domain_dns_value, resp.json()))
+        self.logger.info("create_dns_record end: %s", (domain_name, domain_dns_value, resp.json()))
 
         return resp
 
@@ -209,8 +190,7 @@ class AliyunDns(common.BaseDns):
         :return _ResponseForAliyun:
         :return:
         """
-        self.logger.info("delete_dns_record start: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("delete_dns_record start: %s", (domain_name, domain_dns_value))
 
         root, _, acme_txt = self.extract_zone(domain_name)
 
@@ -226,7 +206,5 @@ class AliyunDns(common.BaseDns):
         request.set_RecordId(record_id)
         resp = self._send_reqeust(request)
 
-        self.logger.info(
-            "delete_dns_record end: %s",
-            (domain_name, domain_dns_value, resp.json()))
+        self.logger.info("delete_dns_record end: %s", (domain_name, domain_dns_value, resp.json()))
         return resp
