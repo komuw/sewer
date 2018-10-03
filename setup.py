@@ -96,7 +96,7 @@ setup(
     # $ pip3 install -e .[dev,test]
     extras_require={
         'dev': ['coverage', 'pypandoc', 'twine', 'wheel'],
-        'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'pycodestyle==2.3.1'],
+        'test': ['flake8==3.5.0', 'mock', 'pylint==1.8.2', 'black', 'pycodestyle==2.3.1'],
         'aliyun': dns_provider_deps_map["aliyun"],
         'hurricane': dns_provider_deps_map["hurricane"],
         'aurora': dns_provider_deps_map["aurora"],
