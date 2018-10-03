@@ -24,5 +24,5 @@ test:
 	@printf "\n coverage erase::\n" && coverage erase
 	@printf "\n coverage run::\n" && coverage run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover
 	@printf "\n coverage report::\n" && coverage report --show-missing --fail-under=85
-	@printf "\n run flake8::\n" && flake8 .
-	@printf "\n run pylint::\n" && pylint --enable=E --disable=W,R,C sewer/
+	@printf "\n run black::\n" && black --line-length=100 --py36 .
+	@printf "\n run pylint::\n" && pylint --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/

@@ -27,11 +27,7 @@ apt-get -y install pandoc && pip3 install -e .[dev,test]
 - format your code using [black](https://github.com/ambv/black):                      
 ```shell
 black --line-length=100 --py36 .
-```                      
-- run [flake8](https://pypi.python.org/pypi/flake8) on the code and fix any issues:                      
-```shell
-flake8 .
-```                      
+```                                         
 - run [pylint](https://pypi.python.org/pypi/pylint) on the code and fix any issues:                      
 ```shell
 pylint --enable=E --disable=W,R,C sewer/
