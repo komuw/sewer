@@ -40,8 +40,8 @@ jobs:
       - run:
           name: run static analyzers
           command: |
-            black --line-length=100 --py36 .
             pylint --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+            black --line-length=100 --py36 .
 
       - run:
           name: run sewer cli
