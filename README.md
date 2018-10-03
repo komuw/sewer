@@ -26,6 +26,7 @@ The currently supported DNS providers are:
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
 
+For a changelog(release notes), see: https://github.com/komuw/sewer/releases
 
 ## Installation
 
