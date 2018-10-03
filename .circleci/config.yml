@@ -40,8 +40,8 @@ jobs:
       - run:
           name: run static analyzers
           command: |
-            flake8 .
-            pylint --enable=E --disable=W,R,C sewer/
+            black --line-length=100 --py36 .
+            pylint --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
 
       - run:
           name: run sewer cli
