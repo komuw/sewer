@@ -17,7 +17,8 @@ uploadprod:
 	@pip3 install -U sewer
 
 # you can run single testcase as;
-# python -m unittest sewer.tests.test_Client.TestClient.test_something
+# 1. python -m unittest sewer.tests.test_Client.TestClient.test_something
+# 2. python -m unittest discover -k test_find_dns_zone_id
 test:
 	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
 	@printf "\n coverage erase::\n" && coverage erase

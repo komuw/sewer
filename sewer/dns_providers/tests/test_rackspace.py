@@ -31,6 +31,26 @@ class TestRackspace(TestCase):
     def tearDown(self):
         pass
 
+    def test_find_dns_zone_id(self):
+        with mock.patch('requests.get') as mock_requests_get:
+            # see: https://developer.rackspace.com/docs/cloud-dns/v1/api-reference/domains/
+            mock_dns_zone_id = 1239932
+            mock_requests_content = {
+                'domains': [ {
+                            "name" : self.domain_name,
+                            "id" : mock_dns_zone_id,
+                            "comment" : "Optional domain comment...",
+                            "updated" : "2011-06-24T01:23:15.000+0000",
+                            "accountId" : 1234,
+                            "emailAddress" : "sample@rackspace.com",
+                            "created" : "2011-06-24T01:12:51.000+0000"
+                        }]
+                    }
+            mock_requests_get.return_value = test_utils.MockResponse(200, mock_requests_content)
+            dns_zone_id = self.dns_class.find_dns_zone_id(self.domain_name)
+            self.assertEqual(dns_zone_id, mock_dns_zone_id)
+            self.assertTrue(mock_requests_get.called)
+
     def test_delete_dns_record_is_not_called_by_create_dns_record(self):
         with mock.patch('sewer.RackspaceDns.find_dns_zone_id') as mock_find_dns_zone_id, mock.patch(
             'requests.post') as mock_requests_post, mock.patch(
