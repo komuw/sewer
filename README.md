@@ -18,6 +18,7 @@ The currently supported DNS providers are:
 3. [acme-dns](https://github.com/joohoi/acme-dns)
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
+6. [Rackspace](https://www.rackspace.com/cloud/dns)
 6. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
@@ -44,6 +45,9 @@ pip3 install sewer
 
 # with ACME DNS Support
 # pip3 install sewer[acmedns]
+
+# with Rackspace DNS Support
+# pip3 install sewer[rackspace]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
