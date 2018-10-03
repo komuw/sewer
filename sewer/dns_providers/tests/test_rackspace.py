@@ -51,6 +51,30 @@ class TestRackspace(TestCase):
             self.assertEqual(dns_zone_id, mock_dns_zone_id)
             self.assertTrue(mock_requests_get.called)
 
+    def test_find_dns_record_id(self):
+        with mock.patch('requests.get') as mock_requests_get, mock.patch('sewer.RackspaceDns.find_dns_zone_id') as mock_find_dns_zone_id:
+            # see: https://developer.rackspace.com/docs/cloud-dns/v1/api-reference/records/
+            mock_dns_record_id = "A-1234"
+            mock_requests_content = {
+                        "totalEntries" : 1,
+                        "records" : [ {
+                            "name" : self.domain_name,
+                            "id" : mock_dns_record_id,
+                            "type" : "A",
+                            "data" : self.domain_dns_value,
+                            "updated" : "2011-05-19T13:07:08.000+0000",
+                            "ttl" : 5771,
+                            "created" : "2011-05-18T19:53:09.000+0000"
+                        }]
+                }
+            mock_requests_get.return_value = test_utils.MockResponse(200, mock_requests_content)
+            mock_find_dns_zone_id.return_value = 1239932
+
+            dns_record_id = self.dns_class.find_dns_record_id(self.domain_name, self.domain_dns_value)
+            self.assertEqual(dns_record_id, mock_dns_record_id )
+            self.assertTrue(mock_requests_get.called)
+            self.assertTrue(mock_find_dns_zone_id.called)
+
     def test_delete_dns_record_is_not_called_by_create_dns_record(self):
         with mock.patch('sewer.RackspaceDns.find_dns_zone_id') as mock_find_dns_zone_id, mock.patch(
             'requests.post') as mock_requests_post, mock.patch(
@@ -99,7 +123,7 @@ class TestRackspace(TestCase):
                 'headers': {
                     'X-Auth-Token': 'mock-api-token',
                     'Content-Type': 'application/json'},
-                'data': 'mock-domain_dns_value'}
+                'data': self.domain_dns_value}
             self.assertDictEqual(
                 expected['headers'],
                 mock_requests_post.call_args[1]['headers'])
