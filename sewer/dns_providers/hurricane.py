@@ -33,7 +33,8 @@ class HurricaneDns(common.BaseDns):
         super(HurricaneDns, self).__init__()
         if not hedns_dependencies:
             raise ImportError(
-                """You need to install HurricaneDns dependencies. run: pip3 install sewer[hurricane]""")
+                """You need to install HurricaneDns dependencies. run: pip3 install sewer[hurricane]"""
+            )
 
         self.clt = _hurricanedns.HurricaneDNS(username, password)
 
@@ -45,9 +46,9 @@ class HurricaneDns(common.BaseDns):
         :return tuple: root, zone, acme_txt
         """
         # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip('*.')
+        domain_name = domain_name.lstrip("*.")
         if domain_name.count(".") > 1:
-            zone, middle, last = str(domain_name).rsplit('.', 2)
+            zone, middle, last = str(domain_name).rsplit(".", 2)
             root = ".".join([middle, last])
             acme_txt = "_acme-challenge.%s" % zone
         else:
@@ -57,18 +58,15 @@ class HurricaneDns(common.BaseDns):
         return root, zone, acme_txt
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record start: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("create_dns_record start: %s", (domain_name, domain_dns_value))
 
         root, _, acme_txt = self.extract_zone(domain_name)
         self.clt.add_record(root, acme_txt, "TXT", domain_dns_value, ttl=300)
 
-        self.logger.info("create_dns_record end: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("create_dns_record end: %s", (domain_name, domain_dns_value))
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record start: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("delete_dns_record start: %s", (domain_name, domain_dns_value))
 
         root, _, acme_txt = self.extract_zone(domain_name)
         host = "%s.%s" % (acme_txt, root)
@@ -78,5 +76,4 @@ class HurricaneDns(common.BaseDns):
         for i in recored_list:
             self.clt.del_record(root, i["id"])
 
-        self.logger.info("delete_dns_record end: %s",
-                         (domain_name, domain_dns_value))
+        self.logger.info("delete_dns_record end: %s", (domain_name, domain_dns_value))

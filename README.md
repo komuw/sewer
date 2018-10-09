@@ -3,6 +3,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
 
 Sewer is a Let's Encrypt(ACME) client.           
@@ -18,12 +19,14 @@ The currently supported DNS providers are:
 3. [acme-dns](https://github.com/joohoi/acme-dns)
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
+6. [Rackspace](https://www.rackspace.com/cloud/dns)
 6. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
 
+For a changelog(release notes), see: https://github.com/komuw/sewer/releases
 
 ## Installation
 
@@ -44,6 +47,9 @@ pip3 install sewer
 
 # with ACME DNS Support
 # pip3 install sewer[acmedns]
+
+# with Rackspace DNS Support
+# pip3 install sewer[rackspace]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;

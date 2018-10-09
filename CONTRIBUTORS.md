@@ -16,3 +16,4 @@ Contributors
 2. [Wilfried Jonker](wjonker.nl)
 3. [András Veres-Szentkirályi, dnet](https://techblog.vsza.hu/)
 4. [menduo](https://menduo.net)
+5. [m4ldonado](https://github.com/m4ldonado)
