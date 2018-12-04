@@ -223,8 +223,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
 ## Bring your own DNS provider          
-Currently, sewer only supports cloudflare and Aurora, out of the box.                   
-However, it is very easy to use another dns provider with sewer.          
+It is very easy to use any dns provider with sewer.          
 All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     
 As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you            
