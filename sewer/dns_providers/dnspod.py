@@ -31,12 +31,19 @@ class DNSPodDns(common.BaseDns):
         else:
             self.DNSPOD_API_BASE_URL = DNSPOD_API_BASE_URL
         super(DNSPodDns, self).__init__()
-    
+
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
+        subd = ""
+        if domain_name.count(".") != 1: # not top level domain
+            pos = domain_name.rfind(".", 0, domain_name.rfind("."))
+            subd = domain_name[:pos]
+            domain_name = domain_name[pos+1:]
+            if (subd != ""):
+                subd = "." + subd
 
         url = urllib.parse.urljoin(
             self.DNSPOD_API_BASE_URL,
@@ -45,7 +52,7 @@ class DNSPodDns(common.BaseDns):
         body = {
             "record_type": "TXT",
             "domain": domain_name,
-            "sub_domain": "_acme-challenge",
+            "sub_domain": "_acme-challenge" + subd,
             "value": domain_dns_value,
 
             "record_line_id": "0",
@@ -74,24 +81,21 @@ class DNSPodDns(common.BaseDns):
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-
-        class MockResponse(object):
-            def __init__(self, status_code=200, content="mock-response"):
-                self.status_code = status_code
-                self.content = content
-                super(MockResponse, self).__init__()
-
-            def json(self):
-                return {}
-
-        delete_dns_record_response = MockResponse()
+        domain_name = domain_name.lstrip("*.")
+        subd = ""
+        if domain_name.count(".") != 1: # not top level domain
+            pos = domain_name.rfind(".", 0, domain_name.rfind("."))
+            subd = domain_name[:pos]
+            domain_name = domain_name[pos+1:]
+            if (subd != ""):
+                subd = "." + subd
 
         url = urllib.parse.urljoin(
             self.DNSPOD_API_BASE_URL,
             "Record.List",
         )
         #pos = domain_name.rfind(".",0, domain_name.rfind("."))
-        subdomain = "_acme-challenge."
+        subdomain = "_acme-challenge." + subd
         rootdomain = domain_name
         body = {
             "login_token": self.DNSPOD_LOGIN,
@@ -111,7 +115,7 @@ class DNSPodDns(common.BaseDns):
                     )
                 )
         for i in range(0, len(list_dns_response["records"])):
-            id = list_dns_response["records"][i]["id"]
+            rid = list_dns_response["records"][i]["id"]
             urlr = urllib.parse.urljoin(
                 self.DNSPOD_API_BASE_URL,
                 "Record.Remove",
@@ -120,7 +124,7 @@ class DNSPodDns(common.BaseDns):
                 "login_token": self.DNSPOD_LOGIN,
                 "format": "json",
                 "domain": rootdomain,
-                "record_id": id,
+                "record_id": rid,
             }
             delete_dns_record_response = requests.post(
                 urlr, data=bodyr, timeout=self.HTTP_TIMEOUT
