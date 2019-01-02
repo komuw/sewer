@@ -36,6 +36,9 @@ pip3 install sewer
 # with All DNS Provider support, include aliyun, Hurricane Electric, Aurora, ACME ...
 # pip3 install sewer[alldns]
 
+# with Cloudflare support
+# pip3 install sewer[cloudflare]
+
 # with Aliyun support
 # pip3 install sewer[aliyun]
 
@@ -50,6 +53,9 @@ pip3 install sewer
 
 # with Rackspace DNS Support
 # pip3 install sewer[rackspace]
+
+# with DNSPod DNS Support
+# pip3 install sewer[dnspod]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;

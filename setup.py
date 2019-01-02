@@ -19,11 +19,13 @@ with open(os.path.join(here, "sewer", "__version__.py"), "r") as f:
     exec(f.read(), about)
 
 dns_provider_deps_map = {
+    "cloudflare": [""],
     "aliyun": ["aliyun-python-sdk-core-v3", "aliyun-python-sdk-alidns"],
     "hurricane": ["hurricanedns"],
     "aurora": ["tldextract", "apache-libcloud"],
     "acmedns": ["dnspython"],
     "rackspace": ["tldextract"],
+    "dnspod": [""],
 }
 
 all_deps_of_all_dns_provider = []
@@ -96,11 +98,13 @@ setup(
     extras_require={
         "dev": ["coverage", "pypandoc", "twine", "wheel"],
         "test": ["mock", "pylint==2.1.1", "black==18.9b0"],
+        "cloudflare": dns_provider_deps_map["cloudflare"],
         "aliyun": dns_provider_deps_map["aliyun"],
         "hurricane": dns_provider_deps_map["hurricane"],
         "aurora": dns_provider_deps_map["aurora"],
         "acmedns": dns_provider_deps_map["acmedns"],
         "rackspace": dns_provider_deps_map["rackspace"],
+        "dnspod": dns_provider_deps_map["dnspod"],
         "alldns": all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
