@@ -20,7 +20,8 @@ The currently supported DNS providers are:
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
 6. [Rackspace](https://www.rackspace.com/cloud/dns)
-6. [Bring your own dns provider](#bring-your-own-dns-provider)
+7. [DNSPod](https://www.dnspod.cn/)
+8. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
 Sewer can be used very easliy programmatically as a library from code.            
