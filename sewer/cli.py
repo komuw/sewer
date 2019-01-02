@@ -62,7 +62,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace"],
+        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace", "dnspod"],
         help="The name of the dns provider that you want to use.",
     )
     parser.add_argument(
@@ -253,6 +253,17 @@ def main():
             RACKSPACE_USERNAME = os.environ["RACKSPACE_USERNAME"]
             RACKSPACE_API_KEY = os.environ["RACKSPACE_API_KEY"]
             dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY)
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "dnspod":
+        from . import DNSPodDns
+
+        try:
+            DNSPOD_ID = os.environ["DNSPOD_ID"]
+            DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
+            dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY)
             logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))

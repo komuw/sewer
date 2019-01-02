@@ -7,3 +7,4 @@ from .dns_providers import AcmeDnsDns  # noqa: F401
 from .dns_providers import AliyunDns  # noqa:F401
 from .dns_providers import HurricaneDns  # noqa:F401
 from .dns_providers import RackspaceDns  # noqa:F401
+from .dns_providers import DNSPodDns
