@@ -446,7 +446,7 @@ class Client(object):
 
         return acme_keyauthorization, base64_of_acme_keyauthorization
 
-    def check_authorization_status(self, authorization_url):
+    def check_authorization_status(self, authorization_url, desired_status=["pending", "valid"]):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To check on the status of an authorization, the client sends a GET(polling)
@@ -462,7 +462,6 @@ class Client(object):
         client via the "errors" field in the challenge and the Retry-After
         """
         self.logger.info("check_authorization_status")
-        time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
         number_of_checks = 0
         while True:
             headers = {"User-Agent": self.User_Agent}
@@ -486,7 +485,7 @@ class Client(object):
                     )
                 )
 
-            if authorization_status in ["pending", "valid"]:
+            if authorization_status in desired_status:
                 break
             else:
                 # for any other status, sleep then retry
@@ -716,12 +715,22 @@ class Client(object):
                     }
                 )
 
-            # for a case where you want certificates for *.exmaple.com and example.com
+            # for a case where you want certificates for *.example.com and example.com
             # you have to create both dns records AND then respond to the challenge.
             # see issues/83
             for i in responders:
-                self.check_authorization_status(i["authorization_url"])
-                self.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
+                # Make sure the authorization is in a status where we can submit a challenge
+                # response. The authorization can be in the "valid" state before submitting
+                # a challenge response if there was a previous authorization for these hosts
+                # that was successfully validated, still cached by the server.
+                auth_status_response = self.check_authorization_status(i["authorization_url"])
+                if auth_status_response.json()["status"] == "pending":
+                    self.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
+
+            for i in responders:
+                # Before sending a CSR, we need to make sure the server has completed the
+                # validation for all the authorizations
+                self.check_authorization_status(i["authorization_url"], ["valid"])
 
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)

@@ -179,13 +179,27 @@ class TestClient(TestCase):
             self.assertTrue(mock_create_dns_record.called)
 
     def test_respond_to_challenge_called(self):
+        pending_status_mock = mock.Mock()
+        pending_status_mock.json.return_value = {"status": "pending"}
+
+        valid_status_mock = mock.Mock()
+        valid_status_mock.json.return_value = {"status": "valid"}
+
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch(
             "sewer.Client.respond_to_challenge"
-        ) as mock_respond_to_challenge:
+        ) as mock_respond_to_challenge, mock.patch(
+            "sewer.Client.check_authorization_status"
+        ) as mock_check_authorization_status:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
+            mock_check_authorization_status.side_effect = [
+                # 1st call returns 'pending', so respond_to_challenge has to be made
+                pending_status_mock,
+                # 2nd call returns 'valid', so loop breaks
+                valid_status_mock,
+            ]
             self.client.cert()
             self.assertTrue(mock_respond_to_challenge.called)
 
