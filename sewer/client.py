@@ -446,7 +446,7 @@ class Client(object):
 
         return acme_keyauthorization, base64_of_acme_keyauthorization
 
-    def check_authorization_status(self, authorization_url, desired_status=["pending", "valid"]):
+    def check_authorization_status(self, authorization_url, desired_status=None):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To check on the status of an authorization, the client sends a GET(polling)
@@ -462,6 +462,7 @@ class Client(object):
         client via the "errors" field in the challenge and the Retry-After
         """
         self.logger.info("check_authorization_status")
+        desired_status = desired_status or ["pending", "valid"]
         number_of_checks = 0
         while True:
             headers = {"User-Agent": self.User_Agent}
