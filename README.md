@@ -273,7 +273,7 @@ class AWSroute53Dns(sewer.BaseDns):
                             'TTL': 123,
                             'ResourceRecords': [
                                 {
-                                    'Value': "{0}".format(domain_dns_value)},
+                                    'Value': '"{0}"'.format(domain_dns_value)},
                             ]}},
                 ]})
 
@@ -294,7 +294,7 @@ class AWSroute53Dns(sewer.BaseDns):
                             'TTL': 123,
                             'ResourceRecords': [
                                 {
-                                    'Value': "{0}".format(domain_dns_value)},
+                                    'Value': '"{0}"'.format(domain_dns_value)},
                             ]}},
                 ]})
 
