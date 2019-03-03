@@ -97,7 +97,7 @@ setup(
     # $ pip3 install -e .[dev,test]
     extras_require={
         "dev": ["coverage", "pypandoc", "twine", "wheel"],
-        "test": ["mock", "pylint==2.1.1", "black==18.9b0"],
+        "test": ["mock", "pylint==2.3.1", "black==18.9b0"],
         "cloudflare": dns_provider_deps_map["cloudflare"],
         "aliyun": dns_provider_deps_map["aliyun"],
         "hurricane": dns_provider_deps_map["hurricane"],
