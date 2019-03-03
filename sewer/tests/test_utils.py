@@ -39,7 +39,7 @@ class MockResponse(object):
                 ],
                 "authorizations": ["http://localhost/authorization-url"],
                 "finalize": "http://localhost/finalize-url",
-                "status": "pending",
+                "status": "valid",
                 "certificate": "http://localhost/certificate-url",
                 "meta": {"termsOfService": "http:localhost/termsOfService"},
                 "dummy-certificate": "-----BEGIN CERTIFICATE----- some-mock-certificate -----END CERTIFICATE-----",
