@@ -62,7 +62,7 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace", "dnspod"],
+        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace", "dnspod", "duckdns"],
         help="The name of the dns provider that you want to use.",
     )
     parser.add_argument(
@@ -265,6 +265,23 @@ def main():
             DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
             dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY)
             logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "duckdns":
+        from . import DuckDNSDns
+
+        try:
+            ACME_DNS_API_USER = os.environ["ACME_DNS_API_USER"]
+            ACME_DNS_API_KEY = os.environ["ACME_DNS_API_KEY"]
+            ACME_DNS_API_BASE_URL = os.environ["ACME_DNS_API_BASE_URL"]
+
+            dns_class = DuckDNSDns(
+                ACME_DNS_API_USER=ACME_DNS_API_USER,
+                ACME_DNS_API_KEY=ACME_DNS_API_KEY,
+                ACME_DNS_API_BASE_URL=ACME_DNS_API_BASE_URL,
+            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
