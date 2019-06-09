@@ -26,6 +26,7 @@ dns_provider_deps_map = {
     "acmedns": ["dnspython"],
     "rackspace": ["tldextract"],
     "dnspod": [""],
+    "duckdns": [""],
 }
 
 all_deps_of_all_dns_provider = []
@@ -105,6 +106,7 @@ setup(
         "acmedns": dns_provider_deps_map["acmedns"],
         "rackspace": dns_provider_deps_map["rackspace"],
         "dnspod": dns_provider_deps_map["dnspod"],
+        "duckdns": dns_provider_deps_map["duckdns"],
         "alldns": all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
