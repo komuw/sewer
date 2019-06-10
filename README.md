@@ -10,7 +10,7 @@ Sewer is a Let's Encrypt(ACME) client.
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.                        
 It allows you to obtain ssl/tls certificates from Let's Encrypt.       
 
- Let's Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
+> Let's Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
 
 Sewer currently only supports the DNS mode of validation, I have no plans of supporting other modes of validation.                 
 The currently supported DNS providers are:         
