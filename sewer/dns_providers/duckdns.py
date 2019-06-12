@@ -21,11 +21,11 @@ class DuckDNSDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        self.logger.info("domain_name: {0} " % (domain_name))
-        self.logger.info("domain_dns_value: {0} " % (domain_dns_value))
-        self.logger.info("ACME_DNS_API_BASE_URL: {0} " % (self.ACME_DNS_API_BASE_URL))
-        self.logger.info("ACME_DNS_API_USER: {0} " % (self.ACME_DNS_API_USER))
-        self.logger.info("ACME_DNS_API_KEY: {0} " % (self.ACME_DNS_API_KEY))
+        self.logger.info("domain_name: {0} ".format(domain_name))
+        self.logger.info("domain_dns_value: {0} ".format(domain_dns_value))
+        self.logger.info("ACME_DNS_API_BASE_URL: {0} ".format(self.ACME_DNS_API_BASE_URL))
+        self.logger.info("ACME_DNS_API_USER: {0} ".format(self.ACME_DNS_API_USER))
+        self.logger.info("ACME_DNS_API_KEY: {0} ".format(self.ACME_DNS_API_KEY))
 
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
