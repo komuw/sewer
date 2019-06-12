@@ -7,7 +7,7 @@ class DuckDNSDns(common.BaseDns):
     
     dns_provider_name = "duckdns"
     
-    def __init__(self, ACME_DNS_API_USER, ACME_DNS_API_KEY, ACME_DNS_API_BASE_URL):
+    def __init__(self, ACME_DNS_API_USER="", ACME_DNS_API_KEY, ACME_DNS_API_BASE_URL):
 
         self.ACME_DNS_API_USER = ACME_DNS_API_USER
         self.ACME_DNS_API_KEY = ACME_DNS_API_KEY
