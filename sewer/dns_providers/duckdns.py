@@ -21,11 +21,11 @@ class DuckDNSDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        self.logger.info("domain_name: {0} ", domain_name)
-        self.logger.info("domain_dns_value: {0} ", domain_dns_value)
-        self.logger.info("ACME_DNS_API_BASE_URL: {0} ", self.ACME_DNS_API_BASE_URL)
-        self.logger.info("ACME_DNS_API_USER: {0} ", self.ACME_DNS_API_USER)
-        self.logger.info("ACME_DNS_API_KEY: {0} ", self.ACME_DNS_API_KEY)
+        self.logger.info("domain_name: {0} ", domain_name[0])
+        self.logger.info("domain_dns_value: {0} ", domain_dns_value[0])
+        self.logger.info("ACME_DNS_API_BASE_URL: {0} ", self.ACME_DNS_API_BASE_URL[0])
+        self.logger.info("ACME_DNS_API_USER: {0} ", self.ACME_DNS_API_USER[0])
+        self.logger.info("ACME_DNS_API_KEY: {0} ", self.ACME_DNS_API_KEY[0])
 
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
@@ -33,7 +33,7 @@ class DuckDNSDns(common.BaseDns):
         url = urllib.parse.urljoin(self.ACME_DNS_API_BASE_URL, "update")
 
         payload = { "domains": domain_name, "token": self.ACME_DNS_API_KEY , "txt": domain_dns_value}
-        update_acmedns_dns_record_response = requests.post(url, params=payload, timeout=self.HTTP_TIMEOUT)
+        update_acmedns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
         self.logger.debug("update_acmedns_dns_record_response. status_code={0}. response={1}".format(update_acmedns_dns_record_response.status_code,
                 self.log_response(update_acmedns_dns_record_response),))
         if update_acmedns_dns_record_response.status_code != 200:
