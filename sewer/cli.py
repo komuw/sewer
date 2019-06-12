@@ -272,14 +272,10 @@ def main():
         from . import DuckDNSDns
 
         try:
-            ACME_DNS_API_USER = os.environ["ACME_DNS_API_USER"]
-            ACME_DNS_API_KEY = os.environ["ACME_DNS_API_KEY"]
-            ACME_DNS_API_BASE_URL = os.environ["ACME_DNS_API_BASE_URL"]
+            duckdns_token = os.environ["DUCKDNS_TOKEN"]
 
             dns_class = DuckDNSDns(
-                ACME_DNS_API_USER=ACME_DNS_API_USER,
-                ACME_DNS_API_KEY=ACME_DNS_API_KEY,
-                ACME_DNS_API_BASE_URL=ACME_DNS_API_BASE_URL,
+                duckdns_token=duckdns_token,
             )
             logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
