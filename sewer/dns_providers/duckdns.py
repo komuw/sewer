@@ -1,8 +1,6 @@
 import urllib.parse
 import requests
 
-import sewer
-
 from . import common
 
 class DuckDNSDns(common.BaseDns):
