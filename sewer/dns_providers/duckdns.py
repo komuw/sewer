@@ -3,8 +3,9 @@ import requests
 
 import sewer
 
+from . import common
 
-class DuckDNSDns(sewer.BaseDns):
+class DuckDNSDns(common.BaseDns):
     
     dns_provider_name = "duckdns"
     
