@@ -17,7 +17,7 @@ class DuckDNSDns(common.BaseDns):
             self.ACME_DNS_API_BASE_URL = ACME_DNS_API_BASE_URL + "/"
         else:
             self.ACME_DNS_API_BASE_URL = ACME_DNS_API_BASE_URL
-        super(DuckDnsDns, self).__init__()     
+        super(DuckDNSDns, self).__init__()     
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
