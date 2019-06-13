@@ -43,7 +43,7 @@ class DuckDNSDns(common.BaseDns):
 
         url = urllib.parse.urljoin(self.DUCKDNS_API_BASE_URL, "update")
 
-        payload = { "domains": domain_name, "token": self.duckdns_token , "txt": "removed"}
+        payload = { "domains": domain_name, "token": self.duckdns_token , "txt": "removed", "clear": "true"}
         update_duckdns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
         self.logger.debug("update_duckdns_dns_record_response. status_code={0}. response={1}".format(update_duckdns_dns_record_response.status_code,
                 self.log_response(update_duckdns_dns_record_response),))
