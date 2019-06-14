@@ -16,7 +16,7 @@ class DuckDNSDns(common.BaseDns):
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL + "/"
         else:
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL
-        super(DuckDNSDns, self).__init__(LOG_LEVEL="DEBUG")     
+        super(DuckDNSDns, self).__init__("DEBUG")     
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
