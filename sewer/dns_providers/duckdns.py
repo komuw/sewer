@@ -30,7 +30,7 @@ class DuckDNSDns(common.BaseDns):
         update_duckdns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
         self.logger.info("update_duckdns_dns_record_response. status_code={0}. response={1}".format(
                 update_duckdns_dns_record_response.status_code,
-                update_duckdns_dns_record_response,))
+                update_duckdns_dns_record_response.content,))
         if update_duckdns_dns_record_response.status_code != 200:
             # raise error so that we do not continue to make calls to DuckDNS
             # server
