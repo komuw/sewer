@@ -28,10 +28,10 @@ class DuckDNSDns(common.BaseDns):
 
         payload = { "domains": domain_name, "token": self.duckdns_token , "txt": domain_dns_value}
         update_duckdns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
+        normalized_response = log_response(update_duckdns_dns_record_response)
         self.logger.info("update_duckdns_dns_record_response. status_code={0}. response={1}".format(
-                update_duckdns_dns_record_response.status_code,
-                update_duckdns_dns_record_response.content,))
-        if update_duckdns_dns_record_response.status_code != 200:
+                update_duckdns_dns_record_response.status_code, normalized_response,))
+        if update_duckdns_dns_record_response.status_code != 200 or normalized_response != b'OK':
             # raise error so that we do not continue to make calls to DuckDNS
             # server
             raise ValueError("Error creating DuckDNS dns record: status_code={status_code} response={response}".format(
