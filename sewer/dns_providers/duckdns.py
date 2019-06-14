@@ -12,7 +12,7 @@ class DuckDNSDns(common.BaseDns):
         self.duckdns_token = duckdns_token
         self.HTTP_TIMEOUT = 65  # seconds
 
-        if ACME_DNS_API_BASE_URL[-1] != "/":
+        if DUCKDNS_API_BASE_URL[-1] != "/":
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL + "/"
         else:
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL
