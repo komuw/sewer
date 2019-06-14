@@ -58,6 +58,6 @@ class DuckDNSDns(common.BaseDns):
             # raise error so that we do not continue to make calls to DuckDNS
             # server
             raise ValueError("Error removing DuckDNS dns record: status_code={status_code} response={response}".format(
-                    status_code=update_acmedns_dns_record_response.status_code, normalized_response,))
+                    status_code=update_acmedns_dns_record_response.status_code, response=normalized_response,))
         self.logger.info(normalized_response)
         self.logger.info("delete_dns_record_success")
