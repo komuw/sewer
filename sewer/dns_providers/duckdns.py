@@ -39,10 +39,10 @@ class DuckDNSDns(common.BaseDns):
             
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")       
-        self._common_dns_record(self, domain_name, ("txt": domain_dns_value))
+        self._common_dns_record(self, domain_name, ("txt", domain_dns_value))
         self.logger.info("create_dns_record_success")   
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        self._common_dns_record(self, domain_name, ("clear": "true"))
+        self._common_dns_record(self, domain_name, ("clear", "true"))
         self.logger.info("delete_dns_record_success")
