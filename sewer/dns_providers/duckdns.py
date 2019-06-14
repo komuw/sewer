@@ -37,8 +37,7 @@ class DuckDNSDns(common.BaseDns):
             # raise error so that we do not continue to make calls to DuckDNS
             # server
             raise ValueError("Error creating DuckDNS dns record: status_code={status_code} response={response}".format(
-                    status_code=update_acmedns_dns_record_response.status_code,
-                    response=self.log_response(update_duckdns_dns_record_response),))
+                    status_code=update_duckdns_dns_record_response.status_code, response=normalized_response,))
         self.logger.info("create_dns_record_end")   
 
     def delete_dns_record(self, domain_name, domain_dns_value):
