@@ -1,7 +1,13 @@
 import urllib.parse
 import requests
 from . import common
-import tldextract
+
+try:
+    rackspace_dependencies = True
+    import tldextract
+except ImportError:
+    rackspace_dependencies = True
+
 import time
 
 
@@ -49,6 +55,11 @@ class RackspaceDns(common.BaseDns):
         return (api_token, api_base_url)
 
     def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY):
+        
+        if not rackspace_dependencies:
+            raise ImportError(
+                """You need to install RackspaceDns dependencies. run; pip3 install sewer[rackspace]"""
+            )
         self.RACKSPACE_DNS_ZONE_ID = None
         self.RACKSPACE_USERNAME = RACKSPACE_USERNAME
         self.RACKSPACE_API_KEY = RACKSPACE_API_KEY
