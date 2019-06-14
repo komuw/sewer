@@ -18,13 +18,13 @@ class DuckDNSDns(common.BaseDns):
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL
         super(DuckDNSDns, self).__init__()   
         
-    def _common_dns_record(self, domain_name, payload_end_args):
+    def _common_dns_record(self, domain_name, payload_end_arg):
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
         
         url = urllib.parse.urljoin(self.DUCKDNS_API_BASE_URL, "update")
 
-        payload = dict([("domains", domain_name), ("token", self.duckdns_token), payload_end_args])
+        payload = dict([("domains", domain_name), ("token", self.duckdns_token), payload_end_arg])
         update_duckdns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
         
         normalized_response = self.log_response(update_duckdns_dns_record_response).decode("utf8")
