@@ -24,7 +24,7 @@ class DuckDNSDns(common.BaseDns):
         
         url = urllib.parse.urljoin(self.DUCKDNS_API_BASE_URL, "update")
 
-        payload = dict(("domains", domain_name), ("token", self.duckdns_token), ("txt", domain_dns_value), req_last)
+        payload = dict([("domains", domain_name), ("token", self.duckdns_token), ("txt", domain_dns_value), req_last])
         update_duckdns_dns_record_response = requests.get(url, params=payload, timeout=self.HTTP_TIMEOUT)
         
         normalized_response = self.log_response(update_duckdns_dns_record_response).decode("utf8")
@@ -39,10 +39,10 @@ class DuckDNSDns(common.BaseDns):
             
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")       
-        self._common_dns_record(self, domain_name, ("txt", domain_dns_value))
+        self._common_dns_record(domain_name, ("txt", domain_dns_value))
         self.logger.info("create_dns_record_success")   
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        self._common_dns_record(self, domain_name, ("clear", "true"))
+        self._common_dns_record(domain_name, ("clear", "true"))
         self.logger.info("delete_dns_record_success")
