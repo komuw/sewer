@@ -6,7 +6,7 @@ try:
     rackspace_dependencies = True
     import tldextract
 except ImportError:
-    rackspace_dependencies = True
+    rackspace_dependencies = False
 
 import time
 
