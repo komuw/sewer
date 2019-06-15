@@ -31,7 +31,7 @@ class TestDuckDNS(TestCase):
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
             "sewer.DuckDNSDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch("dns.resolver.Resolver.query") as mock_dns_resolver:
-            mock_requests_post.return_value = (
+            mock_requests_get.return_value = (
                 mock_delete_dns_record.return_value
             ) = test_utils.MockResponse()
             mock_dns_resolver.return_value = test_utils.MockDnsResolver()
@@ -44,7 +44,7 @@ class TestDuckDNS(TestCase):
             }
 
             self.assertDictEqual(
-                json.loads(expected["data"]), mock_requests_post.call_args[1]["json"]
+                json.loads(expected["data"]), mock_requests_get.call_args[1]["params"]
             )
 
     def test_duckdns_is_not_called_by_delete_dns_record(self):
