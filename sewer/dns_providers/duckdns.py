@@ -18,7 +18,8 @@ class DuckDNSDns(common.BaseDns):
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL
         super(DuckDNSDns, self).__init__()   
         
-    def _common_dns_record(self, domain_name, payload_end_arg):
+    def _common_dns_record(self, logger_info, domain_name, payload_end_arg, ):
+        self.logger.info("{0}".format(logger_info))
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
         
@@ -36,13 +37,10 @@ class DuckDNSDns(common.BaseDns):
             # server
             raise ValueError("Error creating DuckDNS dns record: status_code={status_code} response={response}".format(
                     status_code=update_duckdns_dns_record_response.status_code, response=normalized_response,))
+        self.logger.info("{0}_success".format(logger_info))
             
-    def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record")       
-        self._common_dns_record(domain_name, ("txt", domain_dns_value))
-        self.logger.info("create_dns_record_success")   
+    def create_dns_record(self, domain_name, domain_dns_value):   
+        self._common_dns_record( "create_dns_record", domain_name, ("txt", domain_dns_value))
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record")
-        self._common_dns_record(domain_name, ("clear", "true"))
-        self.logger.info("delete_dns_record_success")
+        self._common_dns_record("delete_dns_record", domain_name, ("clear", "true"))
