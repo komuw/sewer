@@ -54,8 +54,7 @@ class RackspaceDns(common.BaseDns):
             api_base_url = url_data["endpoints"][0]["publicURL"] + "/"
         return (api_token, api_base_url)
 
-    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY):
-        
+    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY):     
         if not rackspace_dependencies:
             raise ImportError(
                 """You need to install RackspaceDns dependencies. run; pip3 install sewer[rackspace]"""
