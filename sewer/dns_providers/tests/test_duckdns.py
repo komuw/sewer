@@ -6,7 +6,7 @@ import sewer
 
 from . import test_utils
 
-#TO BE TESTED
+# TO BE TESTED
 class TestDuckDNS(TestCase):
     """
     """
