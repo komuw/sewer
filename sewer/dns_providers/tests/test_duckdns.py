@@ -53,7 +53,7 @@ class TestDuckDNS(TestCase):
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
             )
-            self.assertFalse(mock_requests_post.called)
+            self.assertFalse(mock_requests_get.called)
 
     def test_duckdns_is_called_by_delete_dns_record(self):
         with mock.patch("requests.get") as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete:
