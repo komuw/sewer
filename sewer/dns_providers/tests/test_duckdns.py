@@ -29,11 +29,10 @@ class TestDuckDNS(TestCase):
     def test_duckdns_is_called_by_create_dns_record(self):
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
             "sewer.DuckDNSDns.delete_dns_record"
-        ) as mock_delete_dns_record, mock.patch("dns.resolver.Resolver.query") as mock_dns_resolver:
+        ) as mock_delete_dns_record:
             mock_requests_get.return_value = (
                 mock_delete_dns_record.return_value
             ) = test_utils.MockResponse()
-            mock_dns_resolver.return_value = test_utils.MockDnsResolver()
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
             )
