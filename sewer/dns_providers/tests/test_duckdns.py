@@ -32,7 +32,7 @@ class TestDuckDNS(TestCase):
         ) as mock_delete_dns_record:
             mock_requests_get.return_value = (
                 mock_delete_dns_record.return_value
-            ) = test_utils.MockResponse()
+            ) = test_utils.MockResponse(content="OK")
             self.dns_class.create_dns_record(
                 domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
             )
@@ -47,7 +47,7 @@ class TestDuckDNS(TestCase):
 
     def test_duckdns_is_not_called_by_delete_dns_record(self):
         with mock.patch("requests.get") as mock_requests_get:
-            mock_requests_get.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse(content="OK")
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
             )
@@ -57,7 +57,7 @@ class TestDuckDNS(TestCase):
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
             "requests.delete"
         ) as mock_requests_delete:
-            mock_requests_get.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse(content="OK")
             self.dns_class.delete_dns_record(
                 domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
             )
