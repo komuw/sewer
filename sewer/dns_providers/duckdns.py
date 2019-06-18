@@ -38,7 +38,7 @@ class DuckDNSDns(common.BaseDns):
             )
         )
 
-        if update_duckdns_dns_record_response.status_code != 200 or normalized_response != "OK":
+        if update_duckdns_dns_record_response.status_code != 200 or normalized_response != "".join(('"','OK','"')):
             # raise error so that we do not continue to make calls to DuckDNS
             # server
             raise ValueError(
