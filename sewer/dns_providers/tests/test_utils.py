@@ -14,7 +14,7 @@ class MockResponse(object):
             content.update(
                 {"something": "ok", "result": [{"name": "example.com", "id": "some-mock-dns-zone-id"}]}
             )
-        except(AttributeError) as _:
+        except AttributeError:
             pass
 
         self.content = json.dumps(content).encode()
