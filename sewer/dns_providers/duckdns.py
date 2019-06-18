@@ -31,7 +31,7 @@ class DuckDNSDns(common.BaseDns):
             url, params=payload, timeout=self.HTTP_TIMEOUT
         )
 
-        normalized_response = update_duckdns_dns_record_response.content.decode("utf8")
+        normalized_response = update_duckdns_dns_record_response.text
         self.logger.debug(
             "update_duckdns_dns_record_response. status_code={0}. response={1}".format(
                 update_duckdns_dns_record_response.status_code, normalized_response
