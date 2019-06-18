@@ -17,8 +17,7 @@ class TestDuckDNS(TestCase):
         self.duckdns_API_KEY = "mock-api-key"
         self.duckdns_API_BASE_URL = "https://some-mock-url.com"
 
-        self.duck_mresponse = test_utils.MockResponse()
-        self.duck_mresponse.content = "OK"
+        self.duck_mresponse = test_utils.MockResponse(content="OK")
         with mock.patch("requests.get") as mock_requests_get:
             mock_requests_get.return_value = self.duck_mresponse
             self.dns_class = sewer.DuckDNSDns(
