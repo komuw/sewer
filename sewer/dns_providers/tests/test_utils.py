@@ -16,9 +16,11 @@ class MockResponse(object):
             )
         except AttributeError:
             pass
+        else:
+            json.loads = lambda a: a
 
         self.content = json.dumps(content).encode()
-        self.text = self.content.decode()
+        self.text = json.loads(self.content.decode())
 
         self.headers = {}
         self.status_code = status_code
