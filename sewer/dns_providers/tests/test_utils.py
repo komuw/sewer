@@ -12,15 +12,18 @@ class MockResponse(object):
 
         try:
             content.update(
-                {"something": "ok", "result": [{"name": "example.com", "id": "some-mock-dns-zone-id"}]}
+                {
+                    "something": "ok",
+                    "result": [{"name": "example.com", "id": "some-mock-dns-zone-id"}],
+                }
             )
         except AttributeError:
-            pass
+            json_loads = json.loads
         else:
-            json.loads = lambda a: a
+            json_loads = lambda a: a
 
         self.content = json.dumps(content).encode()
-        self.text = json.loads(self.content.decode())
+        self.text = json_loads(self.content.decode())
 
         self.headers = {}
         self.status_code = status_code
