@@ -18,7 +18,7 @@ class MockResponse(object):
             pass
 
         self.content = json.dumps(content).encode()
-        self.text = str(self.content, errors='replace')
+        self.text = str(self.content, encoding='utf8')
 
         self.headers = {}
         self.status_code = status_code
