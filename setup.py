@@ -13,7 +13,7 @@ try:
 
     long_description = pypandoc.convert("README.md", "rst")
 except ImportError:
-    long_description = codecs.open("README.md").read()
+    long_description = codecs.open("README.md", encoding="utf8").read()
 
 with open(os.path.join(here, "sewer", "__version__.py"), "r") as f:
     exec(f.read(), about)
@@ -26,6 +26,7 @@ dns_provider_deps_map = {
     "acmedns": ["dnspython"],
     "rackspace": ["tldextract"],
     "dnspod": [""],
+    "duckdns": [""],
 }
 
 all_deps_of_all_dns_provider = []
@@ -105,6 +106,7 @@ setup(
         "acmedns": dns_provider_deps_map["acmedns"],
         "rackspace": dns_provider_deps_map["rackspace"],
         "dnspod": dns_provider_deps_map["dnspod"],
+        "duckdns": dns_provider_deps_map["duckdns"],
         "alldns": all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be

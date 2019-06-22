@@ -21,7 +21,8 @@ The currently supported DNS providers are:
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
 6. [Rackspace](https://www.rackspace.com/cloud/dns)
 7. [DNSPod](https://www.dnspod.cn/)
-8. [Bring your own dns provider](#bring-your-own-dns-provider)
+8. [DuckDNS](https://www.duckdns.org/)
+9. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...                                      
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -57,6 +58,9 @@ pip3 install sewer
 
 # with DNSPod DNS Support
 # pip3 install sewer[dnspod]
+
+# with DuckDNS DNS Support
+# pip3 install sewer[duckdns]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;

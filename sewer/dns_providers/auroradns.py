@@ -8,7 +8,7 @@ try:
     from libcloud.dns.types import Provider, RecordType
     import tldextract
 except ImportError:
-    aurora_dependencies = True
+    aurora_dependencies = False
 from . import common
 
 

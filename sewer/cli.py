@@ -62,7 +62,16 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace", "dnspod"],
+        choices=[
+            "cloudflare",
+            "aurora",
+            "acmedns",
+            "aliyun",
+            "hurricane",
+            "rackspace",
+            "dnspod",
+            "duckdns",
+        ],
         help="The name of the dns provider that you want to use.",
     )
     parser.add_argument(
@@ -265,6 +274,17 @@ def main():
             DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
             dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY)
             logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "duckdns":
+        from . import DuckDNSDns
+
+        try:
+            duckdns_token = os.environ["DUCKDNS_TOKEN"]
+
+            dns_class = DuckDNSDns(duckdns_token=duckdns_token)
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
