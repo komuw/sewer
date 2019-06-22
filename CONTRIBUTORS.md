@@ -18,3 +18,4 @@ Contributors
 4. [menduo](https://menduo.net)
 5. [m4ldonado](https://github.com/m4ldonado)
 6. [luisbarrueco](https://github.com/luisbarrueco)
+7. [Tungsteno74](https://github.com/Tungsteno74)
