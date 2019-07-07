@@ -23,6 +23,10 @@ class DuckDNSDns(common.BaseDns):
         self.logger.info("{0}".format(logger_info))
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
+        # add provider domain to the domain name if not present
+        provider_domain = ".duckdns.org"
+        if domain_name.rfind(provider_domain) == -1:
+            "".join((domain_name, provider_domain))
 
         url = urllib.parse.urljoin(self.DUCKDNS_API_BASE_URL, "update")
 
