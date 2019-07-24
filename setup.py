@@ -27,6 +27,7 @@ dns_provider_deps_map = {
     "rackspace": ["tldextract"],
     "dnspod": [""],
     "duckdns": [""],
+    "cloudns": ["cloudns-api"],
 }
 
 all_deps_of_all_dns_provider = []
@@ -107,6 +108,7 @@ setup(
         "rackspace": dns_provider_deps_map["rackspace"],
         "dnspod": dns_provider_deps_map["dnspod"],
         "duckdns": dns_provider_deps_map["duckdns"],
+        "clouddns": dns_provider_deps_map["clouddns"],
         "alldns": all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be

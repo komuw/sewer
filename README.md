@@ -22,8 +22,9 @@ The currently supported DNS providers are:
 6. [Rackspace](https://www.rackspace.com/cloud/dns)
 7. [DNSPod](https://www.dnspod.cn/)
 8. [DuckDNS](https://www.duckdns.org/)
-9. [Bring your own dns provider](#bring-your-own-dns-provider)
-...                                      
+9. [ClouDNS](https://www.cloudns.net)
+10. [Bring your own dns provider](#bring-your-own-dns-provider)
+...
 
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
@@ -61,6 +62,9 @@ pip3 install sewer
 
 # with DuckDNS DNS Support
 # pip3 install sewer[duckdns]
+
+# with ClouDNS DNS Support
+# pip3 install sewer[cloudns]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
