@@ -71,7 +71,7 @@ def main():
             "rackspace",
             "dnspod",
             "duckdns",
-            "clouddns",
+            "cloudns",
         ],
         help="The name of the dns provider that you want to use.",
     )
