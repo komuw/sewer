@@ -20,32 +20,30 @@ class ClouDNSDns(common.BaseDns):
 
         super(ClouDNSDns, self).__init__(*args, **kwargs)
 
-    def _split_domain_name(self, full_domain_name):
+    def _split_domain_name(self, domain_name):
         """ClouDNS requires the domain name and host to be split."""
-        domain_parts = full_domain_name.split('.')
+        full_domain_name = '_acme-challenge.{}'.format(domain_name)
+        domain_parts = full_domain_name.split(".")
 
-        if (len(domain_parts) < 3):
-            domain_name = full_domain_name
-            host = ''
-        else:
-            domain_name = '.'.join(domain_parts[-2:])
-            host = '.'.join(domain_parts[:-2])
+        domain_name = ".".join(domain_parts[-2:])
+        host = ".".join(domain_parts[:-2])
+
+        if host == "_acme-challenge.*":
+            host = "_acme-challenge"
 
         return domain_name, host
 
     def create_dns_record(self, domain_name, domain_dns_value):
         domain_name, host = self._split_domain_name(domain_name)
-        response = record.create(domain_name=domain_name, host=host,
-                                 record_type='TXT', record=domain_dns_value,
-                                 ttl=60)
+        response = record.create(
+            domain_name=domain_name, host=host, record_type="TXT", record=domain_dns_value, ttl=60
+        )
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         domain_name, host = self._split_domain_name(domain_name)
-        response = record.list(domain_name=domain_name, host=host,
-                               record_type='TXT')
+        response = record.list(domain_name=domain_name, host=host, record_type="TXT")
 
         for record_id, item in response.payload.items():
-            if item['record'] == domain_dns_value:
-                response = record.delete(domain_name=domain_name,
-                                         record_id=record_id)
+            if item["record"] == domain_dns_value:
+                response = record.delete(domain_name=domain_name, record_id=record_id)
                 break
