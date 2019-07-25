@@ -465,6 +465,7 @@ class Client(object):
         desired_status = desired_status or ["pending", "valid"]
         number_of_checks = 0
         while True:
+            time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
             headers = {"User-Agent": self.User_Agent}
             check_authorization_status_response = requests.get(
                 authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
@@ -488,9 +489,6 @@ class Client(object):
 
             if authorization_status in desired_status:
                 break
-            else:
-                # for any other status, sleep then retry
-                time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
 
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
