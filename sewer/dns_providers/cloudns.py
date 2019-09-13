@@ -22,7 +22,7 @@ class ClouDNSDns(common.BaseDns):
 
     def _split_domain_name(self, domain_name):
         """ClouDNS requires the domain name and host to be split."""
-        full_domain_name = '_acme-challenge.{}'.format(domain_name)
+        full_domain_name = "_acme-challenge.{}".format(domain_name)
         domain_parts = full_domain_name.split(".")
 
         domain_name = ".".join(domain_parts[-2:])
@@ -67,4 +67,3 @@ class ClouDNSDns(common.BaseDns):
 
         self.logger.info("ClouDNS could not find DNS record to delete.")
         raise Exception("ClouDNS responded with an error.")
-
