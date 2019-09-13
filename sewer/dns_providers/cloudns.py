@@ -34,16 +34,37 @@ class ClouDNSDns(common.BaseDns):
         return domain_name, host
 
     def create_dns_record(self, domain_name, domain_dns_value):
+        self.logger.info("create_dns_record")
         domain_name, host = self._split_domain_name(domain_name)
         response = record.create(
             domain_name=domain_name, host=host, record_type="TXT", record=domain_dns_value, ttl=60
         )
 
+        if not response.success:
+            self.logger.info("ClouDNS could not create DNS record.")
+            raise Exception("ClouDNS responded with an error.")
+
+        self.logger.info("create_dns_record_success")
+        return
+
     def delete_dns_record(self, domain_name, domain_dns_value):
+        self.logger.info("delete_dns_record")
         domain_name, host = self._split_domain_name(domain_name)
         response = record.list(domain_name=domain_name, host=host, record_type="TXT")
+
+        if not response.success:
+            self.logger.info("ClouDNS could not find DNS record to delete.")
+            raise Exception("ClouDNS responded with an error.")
 
         for record_id, item in response.payload.items():
             if item["record"] == domain_dns_value:
                 response = record.delete(domain_name=domain_name, record_id=record_id)
-                break
+                if not response.success:
+                    self.logger.info("ClouDNS could not delete DNS record.")
+                    raise Exception("ClouDNS responded with an error.")
+                self.logger.info("delete_dns_record_success")
+                return
+
+        self.logger.info("ClouDNS could not find DNS record to delete.")
+        raise Exception("ClouDNS responded with an error.")
+
