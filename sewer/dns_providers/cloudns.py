@@ -36,7 +36,7 @@ class ClouDNSDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        domain_name, host = self._split_domain_name(domain_name)
+        domain_name, host = _split_domain_name(domain_name)
         response = record.create(
             domain_name=domain_name, host=host, record_type="TXT", record=domain_dns_value, ttl=60
         )
@@ -50,7 +50,7 @@ class ClouDNSDns(common.BaseDns):
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        domain_name, host = self._split_domain_name(domain_name)
+        domain_name, host = _split_domain_name(domain_name)
         response = record.list(domain_name=domain_name, host=host, record_type="TXT")
 
         if not response.success:
