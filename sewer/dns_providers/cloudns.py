@@ -7,6 +7,20 @@ except ImportError:
 from . import common
 
 
+def _split_domain_name(domain_name):
+    """ClouDNS requires the domain name and host to be split."""
+    full_domain_name = "_acme-challenge.{}".format(domain_name)
+    domain_parts = full_domain_name.split(".")
+
+    domain_name = ".".join(domain_parts[-2:])
+    host = ".".join(domain_parts[:-2])
+
+    if host == "_acme-challenge.*":
+        host = "_acme-challenge"
+
+    return domain_name, host
+
+
 class ClouDNSDns(common.BaseDns):
 
     dns_provider_name = "cloudns"
@@ -19,19 +33,6 @@ class ClouDNSDns(common.BaseDns):
             )
 
         super(ClouDNSDns, self).__init__(*args, **kwargs)
-
-    def _split_domain_name(self, domain_name):
-        """ClouDNS requires the domain name and host to be split."""
-        full_domain_name = "_acme-challenge.{}".format(domain_name)
-        domain_parts = full_domain_name.split(".")
-
-        domain_name = ".".join(domain_parts[-2:])
-        host = ".".join(domain_parts[:-2])
-
-        if host == "_acme-challenge.*":
-            host = "_acme-challenge"
-
-        return domain_name, host
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
