@@ -1,5 +1,10 @@
 ## `sewer` changelog:
-most recent version is listed first.
+most recent version is listed first.   
+
+
+
+## **version:** 0.7.5
+- Fix pypi upload script
 
 
 ## **version:** 0.7.4
