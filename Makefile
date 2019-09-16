@@ -8,7 +8,7 @@ upload:
 	@pip3 install -U -i https://testpypi.python.org/pypi sewer
 
 
-VERSION_STRING=$$(cat sewer/__version__.py | grep "__version__" | sed -e 's/"__version__"://' | sed -e 's/,//g' | sed -e 's/"//g' | sed -e 's/ //g')
+VERSION_STRING=$$(cat sewer/__version__.py | grep "__version__" | sed -e 's/__version__//g' | sed -e 's/=//' | sed -e 's/,//g' | sed -e 's/"//g' | sed -e 's/ //g')
 uploadprod:
 	@rm -rf build
 	@rm -rf dist
