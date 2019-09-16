@@ -71,6 +71,7 @@ def main():
             "rackspace",
             "dnspod",
             "duckdns",
+            "cloudns",
         ],
         help="The name of the dns provider that you want to use.",
     )
@@ -284,6 +285,15 @@ def main():
             duckdns_token = os.environ["DUCKDNS_TOKEN"]
 
             dns_class = DuckDNSDns(duckdns_token=duckdns_token)
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "cloudns":
+        from . import ClouDNSDns
+
+        try:
+            dns_class = ClouDNSDns()
             logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
