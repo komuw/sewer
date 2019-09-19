@@ -1,18 +1,18 @@
-import time
-import copy
-import json
 import base64
-import hashlib
-import logging
 import binascii
+import copy
+import hashlib
+import json
 import platform
+import time
 
-import requests
-import OpenSSL
 import cryptography
+import OpenSSL
+import requests
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
+from .log import get_logger
 
 
 class Client(object):
@@ -147,12 +147,7 @@ class Client(object):
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
-        self.logger = logging.getLogger("sewer")
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
+        self.logger = get_logger()
         self.logger.setLevel(self.LOG_LEVEL)
 
         try:

@@ -1,4 +1,4 @@
-import logging
+from ..log import get_logger
 
 
 class BaseDns(object):
@@ -9,12 +9,7 @@ class BaseDns(object):
         self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
 
-        self.logger = logging.getLogger("sewer")
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
+        self.logger = get_logger()
         self.logger.setLevel(self.LOG_LEVEL)
 
     def log_response(self, response):
