@@ -5,6 +5,15 @@ import requests
 from . import common
 
 
+def _check_cloudflare_error(response, code):
+    if response.status_code == 400:
+        res_json = response.json()
+        for error in res_json["errors"]:
+            if error["code"] == code:
+                return True
+    return False
+
+
 class CloudFlareDns(common.BaseDns):
     """
     """
@@ -27,13 +36,17 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL + "/"
         else:
             self.CLOUDFLARE_API_BASE_URL = CLOUDFLARE_API_BASE_URL
+
+        self.headers = {
+            "X-Auth-Email": self.CLOUDFLARE_EMAIL,
+            "X-Auth-Key": self.CLOUDFLARE_API_KEY,
+        }
         super(CloudFlareDns, self).__init__()
 
     def find_dns_zone(self, domain_name):
         self.logger.debug("find_dns_zone")
         url = urllib.parse.urljoin(self.CLOUDFLARE_API_BASE_URL, "zones?status=active")
-        headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
-        find_dns_zone_response = requests.get(url, headers=headers, timeout=self.HTTP_TIMEOUT)
+        find_dns_zone_response = requests.get(url, headers=self.headers, timeout=self.HTTP_TIMEOUT)
         self.logger.debug(
             "find_dns_zone_response. status_code={0}".format(find_dns_zone_response.status_code)
         )
@@ -60,6 +73,60 @@ class CloudFlareDns(common.BaseDns):
 
         self.logger.debug("find_dns_zone_success")
 
+    def _domain_id(self, domain_name, record_type):
+        url = urllib.parse.urljoin(
+            self.CLOUDFLARE_API_BASE_URL,
+            "zones/{0}/dns_records?type={2}&name={1}".format(
+                self.CLOUDFLARE_DNS_ZONE_ID, domain_name, record_type
+            ),
+        )
+
+        domain_ids = requests.get(url, headers=self.headers, timeout=self.HTTP_TIMEOUT)
+        if domain_ids.status_code != 200:
+            raise ValueError(
+                "Error getting ID for domain: domain_name={domain_name} status_code={status_code} response={response}".format(
+                    domain_name=domain_name,
+                    status_code=domain_ids.status_code,
+                    response=self.log_response(domain_ids),
+                )
+            )
+
+        for res in domain_ids.json()["result"]:
+            return res["id"]
+
+        raise ValueError(
+            "Error getting ID for domain none returned: domain_name={domain_name} status_code={status_code} response={response}".format(
+                domain_name=domain_name,
+                status_code=domain_ids.status_code,
+                response=self.log_response(domain_ids),
+            )
+        )
+
+    def _update_dns_record(self, domain_name, url, body):
+        self.logger.info("update_dns_record")
+        domain_id = self._domain_id(domain_name, "TXT")
+        url = urllib.parse.urljoin(url + "/", domain_id)
+        update_cloudflare_dns_record_response = requests.put(
+            url, headers=self.headers, json=body, timeout=self.HTTP_TIMEOUT
+        )
+        self.logger.debug(
+            "update_cloudflare_dns_record_response. status_code={0}. response={1}".format(
+                update_cloudflare_dns_record_response.status_code,
+                self.log_response(update_cloudflare_dns_record_response),
+            )
+        )
+        if update_cloudflare_dns_record_response.status_code != 200:
+            if _check_cloudflare_error(update_cloudflare_dns_record_response, 81058):
+                self.logger.info("A record with those settings already exists. Ignoring")
+            else:
+                raise ValueError(
+                    "Error updating cloudflare dns record: status_code={status_code} response={response}".format(
+                        status_code=update_cloudflare_dns_record_response.status_code,
+                        response=self.log_response(update_cloudflare_dns_record_response),
+                    )
+                )
+        self.logger.info("create_dns_record_end")
+
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
         # if we have been given a wildcard name, strip wildcard
@@ -70,14 +137,13 @@ class CloudFlareDns(common.BaseDns):
             self.CLOUDFLARE_API_BASE_URL,
             "zones/{0}/dns_records".format(self.CLOUDFLARE_DNS_ZONE_ID),
         )
-        headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
         body = {
             "type": "TXT",
-            "name": "_acme-challenge" + "." + domain_name + ".",
+            "name": "_acme-challenge.{0}".format(domain_name),
             "content": "{0}".format(domain_dns_value),
         }
         create_cloudflare_dns_record_response = requests.post(
-            url, headers=headers, json=body, timeout=self.HTTP_TIMEOUT
+            url, headers=self.headers, json=body, timeout=self.HTTP_TIMEOUT
         )
         self.logger.debug(
             "create_cloudflare_dns_record_response. status_code={0}. response={1}".format(
@@ -88,12 +154,18 @@ class CloudFlareDns(common.BaseDns):
         if create_cloudflare_dns_record_response.status_code != 200:
             # raise error so that we do not continue to make calls to ACME
             # server
-            raise ValueError(
-                "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
-                    status_code=create_cloudflare_dns_record_response.status_code,
-                    response=self.log_response(create_cloudflare_dns_record_response),
+
+            # Check for "The record already exists" error. Code 81057
+            if _check_cloudflare_error(create_cloudflare_dns_record_response, 81057):
+                self.logger.info("Record exists, attempting to update record")
+                self._update_dns_record(body["name"], url, body)
+            else:
+                raise ValueError(
+                    "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
+                        status_code=create_cloudflare_dns_record_response.status_code,
+                        response=self.log_response(create_cloudflare_dns_record_response),
+                    )
                 )
-            )
         self.logger.info("create_dns_record_end")
 
     def delete_dns_record(self, domain_name, domain_dns_value):
@@ -109,7 +181,6 @@ class CloudFlareDns(common.BaseDns):
                 return {}
 
         delete_dns_record_response = MockResponse()
-        headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
 
         dns_name = "_acme-challenge" + "." + domain_name
         list_dns_payload = {"type": "TXT", "name": dns_name}
@@ -119,7 +190,7 @@ class CloudFlareDns(common.BaseDns):
         )
 
         list_dns_response = requests.get(
-            list_dns_url, params=list_dns_payload, headers=headers, timeout=self.HTTP_TIMEOUT
+            list_dns_url, params=list_dns_payload, headers=self.headers, timeout=self.HTTP_TIMEOUT
         )
 
         for i in range(0, len(list_dns_response.json()["result"])):
@@ -128,9 +199,8 @@ class CloudFlareDns(common.BaseDns):
                 self.CLOUDFLARE_API_BASE_URL,
                 "zones/{0}/dns_records/{1}".format(self.CLOUDFLARE_DNS_ZONE_ID, dns_record_id),
             )
-            headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
             delete_dns_record_response = requests.delete(
-                url, headers=headers, timeout=self.HTTP_TIMEOUT
+                url, headers=self.headers, timeout=self.HTTP_TIMEOUT
             )
             self.logger.debug(
                 "delete_dns_record_response. status_code={0}. response={1}".format(
