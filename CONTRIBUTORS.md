@@ -20,3 +20,4 @@ Contributors
 6. [luisbarrueco](https://github.com/luisbarrueco)
 7. [Tungsteno74](https://github.com/Tungsteno74)
 8. [Harold Bradley III](https://haroldbradleyiii.com/)
+9. [Angus Dippenaar](https://github.com/SN9NV)
