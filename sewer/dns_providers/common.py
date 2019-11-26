@@ -9,7 +9,7 @@ class BaseDns(object):
         self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
 
-        self.logger = logging.getLogger("sewer")
+        self.logger = logging.getLogger(__name__)
         handler = logging.StreamHandler()
         formatter = logging.Formatter("%(message)s")
         handler.setFormatter(formatter)
