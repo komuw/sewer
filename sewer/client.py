@@ -147,7 +147,7 @@ class Client(object):
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         handler = logging.StreamHandler()
         formatter = logging.Formatter("%(message)s")
         handler.setFormatter(formatter)
