@@ -3,7 +3,8 @@ most recent version is listed first.
 
 
 ## **version:** 0.7.6
-- Fix logging, sewer was redefining root logger: https://github.com/komuw/sewer/pull/125
+- Fix logging, sewer was redefining root logger: https://github.com/komuw/sewer/pull/125  
+  Thanks to [@etienne-napoleone](https://github.com/etienne-napoleone) for this
 
 ## **version:** 0.7.5
 - Fix pypi upload script
