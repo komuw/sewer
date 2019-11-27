@@ -2,10 +2,11 @@
 most recent version is listed first.   
 
 
+## **version:** 0.7.6
+- Fix logging, sewer was redefining root logger: https://github.com/komuw/sewer/pull/125
 
 ## **version:** 0.7.5
 - Fix pypi upload script
-
 
 ## **version:** 0.7.4
 - Adds support for [ClouDNS](https://www.cloudns.net/): https://github.com/komuw/sewer/pull/122   
