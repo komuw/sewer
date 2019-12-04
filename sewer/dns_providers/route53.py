@@ -11,22 +11,26 @@ class Route53Dns(common.BaseDns):
     def __init__(self, access_key_id=None, secret_access_key=None):
         if access_key_id and secret_access_key:
             # use user given credential
-            self.r53 = boto3.client('route53', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
+            self.r53 = boto3.client(
+                "route53",
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+            )
         else:
             # let boto3 find credential
             # https://boto3.readthedocs.io/en/latest/guide/configuration.html#best-practices-for-configuring-credentials
-            self.r53 = boto3.client('route53')
+            self.r53 = boto3.client("route53")
 
         self._resource_records = collections.defaultdict(list)
 
         super(Route53Dns).__init__()
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        challenge_domain = '_acme-challenge' + '.' + domain_name + '.'
+        challenge_domain = "_acme-challenge" + "." + domain_name + "."
         return self._change_txt_record("UPSERT", challenge_domain, domain_dns_value)
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        challenge_domain = '_acme-challenge' + '.' + domain_name + '.'
+        challenge_domain = "_acme-challenge" + "." + domain_name + "."
         return self._change_txt_record("DELETE", challenge_domain, domain_dns_value)
 
     def _find_zone_id_for_domain(self, domain):
@@ -43,7 +47,7 @@ class Route53Dns(common.BaseDns):
                     continue
 
                 candidate_labels = zone["Name"].rstrip(".").split(".")
-                if candidate_labels == target_labels[-len(candidate_labels):]:
+                if candidate_labels == target_labels[-len(candidate_labels) :]:
                     zones.append((zone["Name"], zone["Id"]))
 
         if not zones:
@@ -87,9 +91,9 @@ class Route53Dns(common.BaseDns):
                             "Type": "TXT",
                             "TTL": self.ttl,
                             "ResourceRecords": rrecords,
-                        }
+                        },
                     }
-                ]
-            }
+                ],
+            },
         )
         return response["ChangeInfo"]["Id"]
