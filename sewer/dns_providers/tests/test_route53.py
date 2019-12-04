@@ -1,7 +1,5 @@
 import mock
-import json
 from unittest import TestCase
-from botocore.stub import Stubber
 
 import sewer
 
@@ -97,9 +95,7 @@ class TestRoute53(TestCase):
 
         mock_client.mock_calls[3].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=self.make_change_batch(
-                "UPSERT", self.domain_name, self.domain_dns_value
-            ),
+            ChangeBatch=self.make_change_batch("UPSERT", self.domain_name, self.domain_dns_value),
         )
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
@@ -118,7 +114,5 @@ class TestRoute53(TestCase):
 
         mock_client.mock_calls[4].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=self.make_change_batch(
-                "DELETE", self.domain_name, self.domain_dns_value
-            ),
+            ChangeBatch=self.make_change_batch("DELETE", self.domain_name, self.domain_dns_value),
         )

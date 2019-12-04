@@ -12,9 +12,7 @@ class Route53Dns(common.BaseDns):
         if access_key_id and secret_access_key:
             # use user given credential
             self.r53 = boto3.client(
-                "route53",
-                aws_access_key_id=access_key_id,
-                aws_secret_access_key=secret_access_key,
+                "route53", aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key,
             )
         else:
             # let boto3 find credential
@@ -51,9 +49,7 @@ class Route53Dns(common.BaseDns):
                     zones.append((zone["Name"], zone["Id"]))
 
         if not zones:
-            raise RuntimeError(
-                "Unable to find a Route53 hosted zone for {0}".format(domain)
-            )
+            raise RuntimeError("Unable to find a Route53 hosted zone for {0}".format(domain))
 
         # Order the zones that are suffixes for our desired to domain by
         # length, this puts them in an order like:
