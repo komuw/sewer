@@ -22,3 +22,4 @@ Contributors
 8. [Harold Bradley III](https://haroldbradleyiii.com/)
 9. [@etienne-napoleone](https://github.com/etienne-napoleone)
 10. [@soloradish](https://github.com/soloradish)
+11. [Moritz Ulmer](https://www.protohaus.org)
