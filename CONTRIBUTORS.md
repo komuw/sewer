@@ -20,3 +20,5 @@ Contributors
 6. [luisbarrueco](https://github.com/luisbarrueco)
 7. [Tungsteno74](https://github.com/Tungsteno74)
 8. [Harold Bradley III](https://haroldbradleyiii.com/)
+9. [@etienne-napoleone](https://github.com/etienne-napoleone)
+10. [@soloradish](https://github.com/soloradish)
