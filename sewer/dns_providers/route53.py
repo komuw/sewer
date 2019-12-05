@@ -1,6 +1,11 @@
 import collections
-import boto3
-from botocore.client import Config
+
+try:
+    route53_dependencies = True
+    import boto3
+    from botocore.client import Config
+except ImportError:
+    route53_dependencies = False
 
 from . import common
 
@@ -12,6 +17,11 @@ class Route53Dns(common.BaseDns):
     read_timeout = 30
 
     def __init__(self, access_key_id=None, secret_access_key=None):
+        if not route53_dependencies:
+            raise ImportError(
+                """You need to install Route53Dns dependencies. run; pip3 install sewer[route53]"""
+            )
+
         self.aws_config = Config(
             connect_timeout=self.connect_timeout, read_timeout=self.read_timeout
         )
