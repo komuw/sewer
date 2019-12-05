@@ -4,7 +4,7 @@ most recent version is listed first.
 
 
 ## **version:** 0.7.7
-- Add support for Support AWS Route53: https://github.com/komuw/sewer/pull/126
+- Add support for Support AWS Route53: https://github.com/komuw/sewer/pull/126      
   Thanks to [@soloradish](https://github.com/soloradish) for this
 
 ## **version:** 0.7.6
