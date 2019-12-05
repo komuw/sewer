@@ -164,7 +164,6 @@ class CloudFlareDns(common.BaseDns):
 
     def _get_auth_header(self):
         if self.CLOUDFLARE_TOKEN:
-            print(self.CLOUDFLARE_TOKEN)
             return {"Authorization": "Bearer " + self.CLOUDFLARE_TOKEN}
         else:
             return {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
