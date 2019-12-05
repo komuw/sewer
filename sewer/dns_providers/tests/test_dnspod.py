@@ -52,7 +52,7 @@ class TestDNSPod(TestCase):
         pass
 
     def test_delete_dns_record_is_not_called_by_create_dns_record(
-        self
+        self,
     ):  # actually I don't know the purpose of this.
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
