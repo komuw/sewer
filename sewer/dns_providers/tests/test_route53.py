@@ -41,16 +41,16 @@ class TestRoute53(TestCase):
     def mocked_find_zone_response(self):
         return [
             {
-                u"HostedZones": [
+                "HostedZones": [
                     {
-                        u"ResourceRecordSetCount": 3,
-                        u"CallerReference": "32621E71-EA83-B2E0-9C59-51126A25A3C3",
-                        u"Config": {u"PrivateZone": False},
-                        u"Id": "/hostedzone/Z2EH0L5RFW3ACH",
-                        u"Name": "{}".format(self.domain_name),
+                        "ResourceRecordSetCount": 3,
+                        "CallerReference": "32621E71-EA83-B2E0-9C59-51126A25A3C3",
+                        "Config": {"PrivateZone": False},
+                        "Id": "/hostedzone/Z2EH0L5RFW3ACH",
+                        "Name": "{}".format(self.domain_name),
                     }
                 ],
-                u"IsTruncated": False,
+                "IsTruncated": False,
                 "ResponseMetadata": {
                     "RetryAttempts": 0,
                     "HTTPStatusCode": 200,
@@ -63,7 +63,7 @@ class TestRoute53(TestCase):
                         "date": "Wed, 04 Dec 2019 02:52:56 GMT",
                     },
                 },
-                u"MaxItems": "100",
+                "MaxItems": "100",
             }
         ]
 
