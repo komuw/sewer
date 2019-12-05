@@ -1,5 +1,6 @@
 import collections
 import boto3
+from botocore.client import Config
 
 from . import common
 
@@ -7,17 +8,25 @@ from . import common
 # most code of this class is copy from certbot's route53 dns plugin.
 class Route53Dns(common.BaseDns):
     ttl = 10
+    connect_timeout = 30
+    read_timeout = 30
 
     def __init__(self, access_key_id=None, secret_access_key=None):
+        self.aws_config = Config(
+            connect_timeout=self.connect_timeout, read_timeout=self.read_timeout
+        )
         if access_key_id and secret_access_key:
             # use user given credential
             self.r53 = boto3.client(
-                "route53", aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key,
+                "route53",
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+                config=self.aws_config,
             )
         else:
             # let boto3 find credential
             # https://boto3.readthedocs.io/en/latest/guide/configuration.html#best-practices-for-configuring-credentials
-            self.r53 = boto3.client("route53")
+            self.r53 = boto3.client("route53", config=self.aws_config)
 
         self._resource_records = collections.defaultdict(list)
 

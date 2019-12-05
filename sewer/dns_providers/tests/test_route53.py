@@ -69,15 +69,18 @@ class TestRoute53(TestCase):
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_user_given_credential(self, mock_client):
-        sewer.Route53Dns("mock-key", "mock-secret")
+        dns_class = sewer.Route53Dns("mock-key", "mock-secret")
         mock_client.assert_called_once_with(
-            "route53", aws_access_key_id="mock-key", aws_secret_access_key="mock-secret"
+            "route53",
+            aws_access_key_id="mock-key",
+            aws_secret_access_key="mock-secret",
+            config=dns_class.aws_config,
         )
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_user_not_given_credential(self, mock_client):
-        sewer.Route53Dns()
-        mock_client.assert_called_once_with("route53")
+        dns_class = sewer.Route53Dns()
+        mock_client.assert_called_once_with("route53", config=dns_class.aws_config)
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_route53_create_record(self, mock_client):
