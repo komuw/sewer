@@ -1,6 +1,6 @@
 ## Which version of python are you using?
 
-## What operating system and version of operating system are you uing?
+## What operating system and version of operating system are you using?
 
 ## What version of sewer are you using?
 

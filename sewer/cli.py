@@ -189,17 +189,25 @@ def main():
     if dns_provider == "cloudflare":
         from . import CloudFlareDns
 
-        try:
-            CLOUDFLARE_EMAIL = os.environ["CLOUDFLARE_EMAIL"]
-            CLOUDFLARE_API_KEY = os.environ["CLOUDFLARE_API_KEY"]
+        CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL", None)
+        CLOUDFLARE_API_KEY = os.environ.get("CLOUDFLARE_API_KEY", None)
+        CLOUDFLARE_TOKEN = os.environ.get("CLOUDFLARE_TOKEN", None)
 
+        if CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY and not CLOUDFLARE_TOKEN:
             dns_class = CloudFlareDns(
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY
             )
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
-        except KeyError as e:
-            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
-            raise
+        elif CLOUDFLARE_TOKEN and not CLOUDFLARE_EMAIL and not CLOUDFLARE_API_KEY:
+            dns_class = CloudFlareDns(CLOUDFLARE_TOKEN=CLOUDFLARE_TOKEN)
+        else:
+            err = (
+                "ERROR:: Please supply either CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY"
+                "or CLOUDFLARE_TOKEN as environment variables."
+            )
+            logger.error(err)
+            raise KeyError(err)
+
+        logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
 
     elif dns_provider == "aurora":
         from . import AuroraDns
