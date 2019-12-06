@@ -2,6 +2,9 @@
 most recent version is listed first.   
 
 
+## **version:** 0.7.8
+- Add support for Cloudflare token auth: https://github.com/komuw/sewer/pull/130       
+  Thanks to [@moritz89](https://github.com/moritz89) for this   
 
 ## **version:** 0.7.7
 - Add support for Support AWS Route53: https://github.com/komuw/sewer/pull/126      
@@ -11,10 +14,8 @@ most recent version is listed first.
 - Fix logging, sewer was redefining root logger: https://github.com/komuw/sewer/pull/125  
   Thanks to [@etienne-napoleone](https://github.com/etienne-napoleone) for this
 
-
 ## **version:** 0.7.5
 - Fix pypi upload script
-
 
 ## **version:** 0.7.4
 - Adds support for [ClouDNS](https://www.cloudns.net/): https://github.com/komuw/sewer/pull/122   
