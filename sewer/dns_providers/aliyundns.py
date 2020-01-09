@@ -55,6 +55,8 @@ class AliyunDns(common.BaseDns):
         request.set_accept_format("json")
         try:
             status, headers, result = self.clt.implementation_of_do_action(request)
+            if isinstance(result, bytes):
+                result = result.decode()
             result = json.loads(result)
             if "Message" in result or "Code" in result:
                 result["Success"] = False
