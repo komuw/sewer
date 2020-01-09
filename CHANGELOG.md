@@ -2,6 +2,10 @@
 most recent version is listed first.   
 
 
+## **version:** 0.7.9
+- Fix bug where Aliyun response is in bytes: https://github.com/komuw/sewer/pull/133     
+  Thanks to [@ButterflyTech](https://github.com/ButterflyTech) for this   
+
 ## **version:** 0.7.8
 - Add support for Cloudflare token auth: https://github.com/komuw/sewer/pull/130       
   Thanks to [@moritz89](https://github.com/moritz89) for this   
