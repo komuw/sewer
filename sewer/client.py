@@ -389,10 +389,7 @@ class Client(object):
         This is also where we get the challenges/tokens.
         """
         self.logger.info("get_identifier_authorization")
-        headers = {"User-Agent": self.User_Agent}
-        get_identifier_authorization_response = requests.get(
-            url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-        )
+        get_identifier_authorization_response = self.post_as_get(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
                 get_identifier_authorization_response.status_code,
@@ -466,10 +463,7 @@ class Client(object):
         number_of_checks = 0
         while True:
             time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
-            headers = {"User-Agent": self.User_Agent}
-            check_authorization_status_response = requests.get(
-                authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-            )
+            check_authorization_status_response = self.post_as_get(authorization_url)
             authorization_status = check_authorization_status_response.json()["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
@@ -558,10 +552,7 @@ class Client(object):
 
     def download_certificate(self, certificate_url):
         self.logger.info("download_certificate")
-
-        download_certificate_response = self.make_signed_acme_request(
-            certificate_url, payload="DOWNLOAD_Z_CERTIFICATE"
-        )
+        download_certificate_response = self.post_as_get(certificate_url)
         self.logger.debug(
             "download_certificate_response. status_code={0}. response={1}".format(
                 download_certificate_response.status_code,
@@ -630,7 +621,7 @@ class Client(object):
         r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
         return r.decode("utf8")
 
-    def get_acme_header(self, url):
+    def get_acme_header(self, url, force_jws=False):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
         The JWS Protected Header MUST include the following fields:
@@ -642,7 +633,7 @@ class Client(object):
         """
         self.logger.debug("get_acme_header")
         header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
-        if url in [self.ACME_NEW_ACCOUNT_URL, self.ACME_REVOKE_CERT_URL, "GET_THUMBPRINT"]:
+        if force_jws or url in [self.ACME_NEW_ACCOUNT_URL, self.ACME_REVOKE_CERT_URL, "GET_THUMBPRINT"]:
             private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
                 self.account_key.encode(),
                 password=None,
@@ -664,26 +655,54 @@ class Client(object):
             header["kid"] = self.kid
         return header
 
+    def post_as_get(self, url):
+        self.logger.debug("post_as_get")
+        headers = {"User-Agent": self.User_Agent, "Content-Type": "application/jose+json"}
+
+        # payload is just an empty string, NOT encoded until the final jsonification
+        payload = ""
+
+### FIX ME ### refactor get_acme_header to get rid of force_jws?  Or replace the hacky
+###            url comparisons with a flag used by all callers?  There seem to be three
+###            callers only, two of which use jws_force or the url hack...
+
+        protected = self.get_acme_header(url, force_jws=True)
+        del protected['jwk']
+        protected['kid'] = self.kid
+
+        protected64 = self.calculate_safe_base64(json.dumps(protected))
+        signature = self.sign_message(message="{0}.{1}".format(protected64, payload))  # bytes
+        signature64 = self.calculate_safe_base64(signature)  # str
+        data = json.dumps(
+            {"protected": protected64, "payload": payload, "signature": signature64}
+        )
+
+        self.logger.debug("...JWS = %s", (data,))
+
+        headers.update({"Content-Type": "application/jose+json"})
+        response = requests.post(
+            url, data=data.encode("utf8"), timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
+        )
+        return response
+
+
     def make_signed_acme_request(self, url, payload):
         self.logger.debug("make_signed_acme_request")
         headers = {"User-Agent": self.User_Agent}
         payload = self.stringfy_items(payload)
 
-        if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
-            response = requests.get(url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
-        else:
-            payload64 = self.calculate_safe_base64(json.dumps(payload))
-            protected = self.get_acme_header(url)
-            protected64 = self.calculate_safe_base64(json.dumps(protected))
-            signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
-            signature64 = self.calculate_safe_base64(signature)  # str
-            data = json.dumps(
-                {"protected": protected64, "payload": payload64, "signature": signature64}
-            )
-            headers.update({"Content-Type": "application/jose+json"})
-            response = requests.post(
-                url, data=data.encode("utf8"), timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-            )
+        payload64 = self.calculate_safe_base64(json.dumps(payload))
+        protected = self.get_acme_header(url)
+        protected64 = self.calculate_safe_base64(json.dumps(protected))
+        signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
+        signature64 = self.calculate_safe_base64(signature)  # str
+        data = json.dumps(
+            {"protected": protected64, "payload": payload64, "signature": signature64}
+        )
+        headers.update({"Content-Type": "application/jose+json"})
+        response = requests.post(
+            url, data=data.encode("utf8"), timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
+        )
         return response
 
     def get_certificate(self):
