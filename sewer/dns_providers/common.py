@@ -10,12 +10,12 @@ class BaseDns(object):
         self.dns_provider_name = self.__class__.__name__
 
         self.logger = logging.getLogger(__name__)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
         self.logger.setLevel(self.LOG_LEVEL)
+        if not self.logger.hasHandlers():
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter("%(message)s")
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
 
     def log_response(self, response):
         """
