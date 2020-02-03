@@ -148,12 +148,12 @@ class Client(object):
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
         self.logger = logging.getLogger(__name__)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
         self.logger.setLevel(self.LOG_LEVEL)
+        if not self.logger.hasHandlers():
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter("%(message)s")
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
 
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
