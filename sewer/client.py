@@ -141,6 +141,7 @@ class Client(object):
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
+        self.nonce = None
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
@@ -225,6 +226,10 @@ class Client(object):
             kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
 
         response = requests.request(method, url, **kwargs)
+
+        # if this request had a fresh nonce, cherish it for later use
+        self.nonce = response.headers.get("Replay-Nonce", None)
+
         return response
 
     @staticmethod
@@ -612,14 +617,31 @@ class Client(object):
 
     def get_nonce(self):
         """
-        https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.4
-        Each request to an ACME server must include a fresh unused nonce
-        in order to protect against replay attacks.
+        https://tools.ietf.org/html/rfc8555#page-14
+        §6.5 - In order to protect ACME resources from any possible replay attacks,
+        ACME POST requests have a mandatory anti-replay mechanism.  This mechanism
+        is based on the server maintaining a list of nonces that it has issued, and
+        requiring any signed request from the client to carry such a nonce.
+
+        The server MUST include a Replay-Nonce header field in every successful
+        response to a POST request and SHOULD provide it in error responses as well.
+
+        tl;dr: cherish those nonces, each one saves you a whole request-response!
         """
         self.logger.debug("get_nonce")
-        response = self.HEAD(self.ACME_GET_NONCE_URL)
-        nonce = response.headers["Replay-Nonce"]
-        return nonce
+
+        # if we don't have a cherished nonce, we have to fetch one
+        if not self.nonce:
+            response = self.HEAD(self.ACME_GET_NONCE_URL)
+            # tricky: fresh nonces are cherished in the _requests handler, so we
+            # don't have to extract it from the headers here.
+
+            ### FIX ME ### Handle error in request?  Never have, so it must be rare?
+
+        # return the cherished nonce and clear self.nonce since it's no longer unused
+        new_nonce = self.nonce
+        self.nonce = None
+        return new_nonce
 
     @staticmethod
     def stringfy_items(payload):
