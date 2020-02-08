@@ -196,7 +196,7 @@ class Client(object):
 
     def GET(self, url, **kwargs):
         """
-        wrap requests.get to allow:
+        wrap requests.get (also post and head, below) to allow:
           * injection of e.g. UserAgent header in one place rather than all over
           * hides requests itself to allow for change (unlikely) or use of Session
           # paves the way to inject the verify option, required to use pebble
@@ -205,15 +205,14 @@ class Client(object):
         return self._request("GET", url, **kwargs)
 
     def POST(self, url, **kwargs):
-        """
-        wrap requests.post for all the reasons listed for GET
-        """
-
         return self._request("POST", url, **kwargs)
+
+    def HEAD(self, url, **kwargs):
+        return self._request("HEAD", url, **kwargs)
 
     def _request(self, method, url, **kwargs):
         """
-        shared implementation for GET and POST
+        shared implementation for GET, HEAD and POST
         """
 
         # if there's no UserAgent header in args, inject it
@@ -225,7 +224,8 @@ class Client(object):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
 
-        return requests.request(method, url, **kwargs)
+        response = requests.request(method, url, **kwargs)
+        return response
 
     @staticmethod
     def log_response(response):
@@ -618,7 +618,7 @@ class Client(object):
         in order to protect against replay attacks.
         """
         self.logger.debug("get_nonce")
-        response = self.GET(self.ACME_GET_NONCE_URL)
+        response = self.HEAD(self.ACME_GET_NONCE_URL)
         nonce = response.headers["Replay-Nonce"]
         return nonce
 
