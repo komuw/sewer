@@ -141,7 +141,7 @@ class Client(object):
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
-        self.nonce = None
+        self.cached_nonce = None
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
@@ -227,8 +227,8 @@ class Client(object):
 
         response = requests.request(method, url, **kwargs)
 
-        # if this request had a fresh nonce, cherish it for later use
-        self.nonce = response.headers.get("Replay-Nonce", None)
+        # if this request had a fresh nonce, cache it for later use
+        self.cached_nonce = response.headers.get("Replay-Nonce", None)
 
         return response
 
@@ -627,21 +627,19 @@ class Client(object):
         The server MUST include a Replay-Nonce header field in every successful
         response to a POST request and SHOULD provide it in error responses as well.
 
-        tl;dr: cherish those nonces, each one saves you a whole request-response!
+        tl;dr: a nonce cached is a request-response roundtrip saved
         """
         self.logger.debug("get_nonce")
 
-        # if we don't have a cherished nonce, we have to fetch one
-        if not self.nonce:
-            response = self.HEAD(self.ACME_GET_NONCE_URL)
-            # tricky: fresh nonces are cherished in the _requests handler, so we
-            # don't have to extract it from the headers here.
+        if not self.cached_nonce:
+            self.HEAD(self.ACME_GET_NONCE_URL)
+            # tricky: the nonce will have been cached before HEAD returns
 
             ### FIX ME ### Handle error in request?  Never have, so it must be rare?
 
-        # return the cherished nonce and clear self.nonce since it's no longer unused
-        new_nonce = self.nonce
-        self.nonce = None
+        # return self.cached_nonce and clear the cache since it's expended
+        new_nonce = self.cached_nonce
+        self.cached_nonce = None
         return new_nonce
 
     @staticmethod
