@@ -1,5 +1,6 @@
 import logging
 
+
 class BaseAuthProvider(object):
     def __init__(self, auth_type, LOG_LEVEL="INFO"):
         self.LOG_LEVEL = LOG_LEVEL
@@ -51,19 +52,19 @@ class BaseAuthProvider(object):
     def delete_auth_record(self, name, value):
         raise NotImplementedError("delete_auth_record method must be implemented.")
 
-    def fulfill_authorization(self, identifier_auth, value,  acme_keyauthorization):
+    def fulfill_authorization(self, identifier_auth, value, acme_keyauthorization):
         """
         TODO: docs here
         """
         name = identifier_auth["domain"]
         self.create_auth_record(name, value)
-        
+
         responder = {
-            "challenge_url":  identifier_auth["challenge_url"],
-            "acme_keyauthorization":  acme_keyauthorization,
-            "authorization_url": identifier_auth["url"]
+            "challenge_url": identifier_auth["challenge_url"],
+            "acme_keyauthorization": acme_keyauthorization,
+            "authorization_url": identifier_auth["url"],
         }
-        cleanup = {"name": name, "value": value}   
+        cleanup = {"name": name, "value": value}
         return (responder, cleanup)
 
     def cleanup(self, record):
@@ -132,18 +133,13 @@ class BaseHttp(BaseAuthProvider):
     def __init__(self):
         super(BaseHttp, self).__init__("http-01")
 
+
 class CertbotishProvider(BaseHttp):
-    def create_auth_record(self, *args):
-        with open('/path/to/www/html/{domain_name}/.well-known/{token_name}', 'w') as fp:
-            fp.write(token_val)
-    
-    def delete_auth_record(self, *args):
-        os.unlink('/path/to/www/html/{domain_name}/.well-known/{token_name}')
+    def create_auth_record(self, name, value):
+        with open("/path/to/www/html/.well-known/{name}", "w") as fp:
+            fp.write(value)
 
+    def delete_auth_record(self, name, value):
+        import os
 
-class RoadrunnerProvider(BaseHttp):
-    def create_auth_record(self, *args):
-        Authorization.objects.create(token=token_val)
-    
-    def delete_auth_record(self, *args):
-        Authorization.objects.delete(token=token_val)
+        os.unlink("/path/to/www/html/.well-known/{name}")

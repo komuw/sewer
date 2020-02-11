@@ -677,7 +677,7 @@ class Client(object):
     def get_certificate(self):
         self.logger.debug("get_certificate")
         to_delete = []
-        
+
         try:
             self.acme_register()
             authorizations, finalize_url = self.apply_for_cert_issuance()
@@ -690,7 +690,7 @@ class Client(object):
                     identifier_auth, domain_value, acme_keyauthorization
                 )
                 to_delete.append(cleanup)
-                responders.append(responder)                
+                responders.append(responder)
 
             # for a case where you want certificates for *.example.com and example.com
             # you have to create both auth records AND then respond to the challenge.
@@ -717,7 +717,7 @@ class Client(object):
         finally:
             for i in to_delete:
                 self.auth_provider.cleanup(i)
-                
+
         return certificate
 
     def cert(self):
