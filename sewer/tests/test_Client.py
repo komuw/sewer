@@ -143,8 +143,8 @@ class TestClient(TestCase):
                 "domain": "example.com",
                 "url": "http://localhost",
                 "wildcard": None,
-                "dns_token": "dns_token",
-                "dns_challenge_url": "dns_challenge_url",
+                "token": "dns_token",
+                "challenge_url": "dns_challenge_url",
             }
             self.client.cert()
             self.assertTrue(mock_get_identifier_authorization.called)
@@ -257,8 +257,8 @@ class TestClient(TestCase):
                 "domain": "example.com",
                 "url": "http://localhost",
                 "wildcard": None,
-                "dns_token": "dns_token",
-                "dns_challenge_url": "dns_challenge_url",
+                "token": "dns_token",
+                "challenge_url": "dns_challenge_url",
             }
             mock_acme_register.return_value = test_utils.MockResponse(status_code=409)
 
