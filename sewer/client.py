@@ -55,7 +55,7 @@ class Client(object):
     def __init__(
         self,
         domain_name,
-        dns_class,
+        dns_class=None,
         domain_alt_names=None,
         contact_email=None,
         account_key=None,
