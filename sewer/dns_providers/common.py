@@ -1,15 +1,11 @@
-from sewer.auth import BaseAuthProvider
+from hashlib import sha256
+
+from sewer.auth import BaseAuthProvider, calculate_safe_base64
 
 
 class BaseDns(BaseAuthProvider):
     def __init__(self):
         super(BaseDns, self).__init__("dns-01")
-
-    def create_auth_record(self, name, value):
-        return self.create_dns_record(name, value)
-
-    def delete_auth_record(self, name, value):
-        return self.delete_dns_record(name, value)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         """
@@ -57,3 +53,14 @@ class BaseDns(BaseAuthProvider):
         This method should return None
         """
         raise NotImplementedError("delete_dns_record method must be implemented.")
+
+    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
+        domain_name = identifier_auth["domain"]
+        base64_of_acme_keyauthorization = calculate_safe_base64(
+            sha256(acme_keyauthorization.encode("utf8")).digest()
+        )
+        self.create_dns_record(domain_name, base64_of_acme_keyauthorization)
+        return {"domain_name": domain_name, "value": base64_of_acme_keyauthorization}
+
+    def cleanup_authorization(self, domain_name, value):
+        self.delete_dns_record(domain_name, value)

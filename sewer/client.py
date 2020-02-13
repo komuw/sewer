@@ -1,7 +1,6 @@
 import time
 import copy
 import json
-import base64
 import hashlib
 import logging
 import binascii
@@ -13,6 +12,7 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
+from .auth import calculate_safe_base64
 
 
 class Client(object):
@@ -424,15 +424,12 @@ class Client(object):
         acme_header_jwk_json = json.dumps(
             self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
         )
-        acme_thumbprint = self.calculate_safe_base64(
+        acme_thumbprint = calculate_safe_base64(
             hashlib.sha256(acme_header_jwk_json.encode("utf8")).digest()
         )
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
-        base64_of_acme_keyauthorization = self.calculate_safe_base64(
-            hashlib.sha256(acme_keyauthorization.encode("utf8")).digest()
-        )
 
-        return acme_keyauthorization, base64_of_acme_keyauthorization
+        return acme_keyauthorization
 
     def check_authorization_status(self, authorization_url, desired_status=None):
         """
@@ -523,7 +520,7 @@ class Client(object):
         GET request to the order resource to obtain its current state.
         """
         self.logger.info("send_csr")
-        payload = {"csr": self.calculate_safe_base64(self.csr)}
+        payload = {"csr": calculate_safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
         self.logger.debug(
             "send_csr_response. status_code={0}. response={1}".format(
@@ -607,17 +604,6 @@ class Client(object):
             payload[k] = v
         return payload
 
-    @staticmethod
-    def calculate_safe_base64(un_encoded_data):
-        """
-        takes in a string or bytes
-        returns a string
-        """
-        if isinstance(un_encoded_data, str):
-            un_encoded_data = un_encoded_data.encode("utf8")
-        r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
-        return r.decode("utf8")
-
     def get_acme_header(self, url):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
@@ -644,8 +630,8 @@ class Client(object):
             modulus = "{0:x}".format(public_key_public_numbers.n)
             jwk = {
                 "kty": "RSA",
-                "e": self.calculate_safe_base64(binascii.unhexlify(exponent)),
-                "n": self.calculate_safe_base64(binascii.unhexlify(modulus)),
+                "e": calculate_safe_base64(binascii.unhexlify(exponent)),
+                "n": calculate_safe_base64(binascii.unhexlify(modulus)),
             }
             header["jwk"] = jwk
         else:
@@ -660,11 +646,11 @@ class Client(object):
         if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
             response = requests.get(url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
         else:
-            payload64 = self.calculate_safe_base64(json.dumps(payload))
+            payload64 = calculate_safe_base64(json.dumps(payload))
             protected = self.get_acme_header(url)
-            protected64 = self.calculate_safe_base64(json.dumps(protected))
+            protected64 = calculate_safe_base64(json.dumps(protected))
             signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
-            signature64 = self.calculate_safe_base64(signature)  # str
+            signature64 = calculate_safe_base64(signature)  # str
             data = json.dumps(
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )
@@ -676,7 +662,7 @@ class Client(object):
 
     def get_certificate(self):
         self.logger.debug("get_certificate")
-        to_delete = []
+        cleanup_kwargs_list = []
 
         try:
             self.acme_register()
@@ -685,11 +671,17 @@ class Client(object):
             for url in authorizations:
                 identifier_auth = self.get_identifier_authorization(url)
                 token = identifier_auth["token"]
-                acme_keyauthorization, domain_value = self.get_keyauthorization(token)
-                responder, cleanup = self.auth_provider.fulfill_authorization(
-                    identifier_auth, domain_value, acme_keyauthorization
+                acme_keyauthorization = self.get_keyauthorization(token)
+                cleanup_kwargs = self.auth_provider.fulfill_authorization(
+                    identifier_auth, token, acme_keyauthorization
                 )
-                to_delete.append(cleanup)
+                cleanup_kwargs_list.append(cleanup_kwargs)
+
+                responder = {
+                    "challenge_url": identifier_auth["challenge_url"],
+                    "acme_keyauthorization": acme_keyauthorization,
+                    "authorization_url": identifier_auth["url"],
+                }
                 responders.append(responder)
 
             # for a case where you want certificates for *.example.com and example.com
@@ -715,8 +707,8 @@ class Client(object):
             self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)))
             raise e
         finally:
-            for i in to_delete:
-                self.auth_provider.cleanup(i)
+            for cleanup_kwargs in cleanup_kwargs_list:
+                self.auth_provider.cleanup_authorization(**cleanup_kwargs)
 
         return certificate
 

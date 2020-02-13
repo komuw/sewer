@@ -1,4 +1,16 @@
 import logging
+import base64
+
+
+def calculate_safe_base64(un_encoded_data):
+    """
+    takes in a string or bytes
+    returns a string
+    """
+    if isinstance(un_encoded_data, str):
+        un_encoded_data = un_encoded_data.encode("utf8")
+    r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
+    return r.decode("utf8")
 
 
 class BaseAuthProvider(object):
@@ -46,26 +58,8 @@ class BaseAuthProvider(object):
                     "challenge_url": challenge_url,
                 }
 
-    def create_auth_record(self, name, value):
-        raise NotImplementedError("create_auth_record method must be implemented.")
-
-    def delete_auth_record(self, name, value):
+    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
         raise NotImplementedError("delete_auth_record method must be implemented.")
 
-    def fulfill_authorization(self, identifier_auth, value, acme_keyauthorization):
-        """
-        TODO: docs here
-        """
-        name = identifier_auth["domain"]
-        self.create_auth_record(name, value)
-
-        responder = {
-            "challenge_url": identifier_auth["challenge_url"],
-            "acme_keyauthorization": acme_keyauthorization,
-            "authorization_url": identifier_auth["url"],
-        }
-        cleanup = {"name": name, "value": value}
-        return (responder, cleanup)
-
-    def cleanup(self, record):
-        self.delete_auth_record(record["name"], record["value"])
+    def cleanup_authorization(self, **kwargs):
+        raise NotImplementedError("delete_auth_record method must be implemented.")
