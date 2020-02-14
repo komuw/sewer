@@ -55,6 +55,21 @@ class BaseDns(BaseAuthProvider):
         raise NotImplementedError("delete_dns_record method must be implemented.")
 
     def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
+        """
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.4
+        A client fulfills this challenge by constructing a key authorization
+        from the "token" value provided in the challenge and the client's
+        account key.  The client then computes the SHA-256 digest [FIPS180-4]
+        of the key authorization.
+
+        The record provisioned to the DNS contains the base64url encoding of
+        this digest.  The client constructs the validation domain name by
+        prepending the label "_acme-challenge" to the domain name being
+        validated, then provisions a TXT record with the digest value under
+        that name.  For example, if the domain name being validated is
+        "example.org", then the client would provision the following DNS
+        record:
+        """
         domain_name = identifier_auth["domain"]
         base64_of_acme_keyauthorization = calculate_safe_base64(
             sha256(acme_keyauthorization.encode("utf8")).digest()

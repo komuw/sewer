@@ -1,4 +1,4 @@
-## Sewer          
+## Sewer
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
@@ -6,16 +6,16 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
 
-Sewer is a Let's Encrypt(ACME) client.           
-It's name is derived from Kenyan hip hop artiste, Kitu Sewer.                        
-It allows you to obtain ssl/tls certificates from Let's Encrypt.       
+Sewer is a Let's Encrypt(ACME) client.
+It's name is derived from Kenyan hip hop artiste, Kitu Sewer.
+It allows you to obtain ssl/tls certificates from Let's Encrypt.
 
 > Let’s Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
 
-Sewer currently only supports the DNS mode of validation, I have no plans of supporting other modes of validation.                 
-The currently supported DNS providers are:         
-1. [Cloudflare](https://www.cloudflare.com/dns)               
-2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
+Sewer currently supports the DNS and HTTP modes of validation.
+The currently supported DNS providers are:
+1. [Cloudflare](https://www.cloudflare.com/dns)
+2. [Aurora](https://www.pcextreme.com/aurora/dns)
 3. [acme-dns](https://github.com/joohoi/acme-dns)
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
@@ -25,10 +25,12 @@ The currently supported DNS providers are:
 9. [ClouDNS](https://www.cloudns.net)
 10. [AWS rout353](https://aws.amazon.com/route53/)
 11. [Bring your own dns provider](#bring-your-own-dns-provider)
+
+Currently no HTTP providers are included out of the box, but you can define your own.
 ...
 
-Sewer can be used very easliy programmatically as a library from code.            
-Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
+Sewer can be used very easliy programmatically as a library from code.
+Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal
 
 For a changelog(release notes), see: https://github.com/komuw/sewer/releases
 
@@ -76,7 +78,7 @@ sewer(since version 0.5.0) is now python3 only. To install the (now unsupported)
 ```shell
 pip install sewer==0.3.0
 ```
-Sewer is in active development and it's API may change in backward incompatible ways.               
+Sewer is in active development and it's API may change in backward incompatible ways.
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
 
@@ -144,10 +146,10 @@ account_key = client.account_key
 
 
 ## CLI
-Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.            
+Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.
 Your dns providers credentials need to be supplied as environment variables.
- 
-To get certificate, run:                
+
+To get certificate, run:
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_API_KEY=api-key \
@@ -155,9 +157,9 @@ sewer \
 --dns cloudflare \
 --domain example.com \
 --action run
-```              
+```
 
-To renew a certificate, run:                
+To renew a certificate, run:
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_API_KEY=api-key \
@@ -166,12 +168,12 @@ sewer \
 --dns cloudflare \
 --domain example.com \
 --action renew
-```              
+```
 
 To see help:
 ```shell
-sewer --help                 
-        
+sewer --help
+
 usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
              [--certificate_key CERTIFICATE_KEY] --dns
              {cloudflare,aurora,acmedns,aliyun,hurricane} --domain DOMAIN
@@ -220,9 +222,9 @@ optional arguments:
                         --loglevel DEBUG
 ```
 
-The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
+The certificate, certificate key and account key will be saved in the directory that you run sewer from.
 
-The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
+The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.
 
 
 
@@ -230,9 +232,10 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 - Obtain certificates.
 - Renew certificates.
 - Supports multiple DNS providers.
-- Supports wildcard certificates
+- Supports wildcard certificates.
 - Supports acme version 2 only.
-- [Bring your own dns provider](#bring-your-own-dns-provider) 
+- [Bring your own dns provider](#bring-your-own-dns-provider)
+- [Bring your own http provider](#bring-your-own-http-provider)
 - Support for SAN certificates.
 - Can be used as a python library as well as a command line(CLI) application.
 - Bundling certificates.
@@ -241,11 +244,11 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
-## Bring your own DNS provider          
-It is very easy to use any dns provider with sewer.          
-All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
-`create_dns_record` and `delete_dns_record` methods.                     
-As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you            
+## Bring your own DNS provider
+It is very easy to use any dns provider with sewer.
+All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the
+`create_dns_record` and `delete_dns_record` methods.
+As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you
 would do something like;
 ```python
 import sewer
@@ -325,8 +328,31 @@ print("certificate::", certificate)
 print("certificate's key::", certificate_key)
 ```
 
+## Bring your own HTTP provider
+Creating a custom http provider is just like dns, except create your http class as a child class of [`sewer.BaseHttp`](https://github.com/komuw/sewer/blob/master/sewer/http_providers/common.py) and then implement the
+`create_challenge_file` and `delete_challenge_file` methods.
+
+Here's what a certbot+nginx implementation could look like
+```python
+import os
+import sewer
+
+class CertbotishProvider(sewer.BaseHttp):
+    def __init__(self, nginx_root="/path/to/www/html/"):
+        super(CertbotishProvider, self).__init__("http-01")
+        self.nginx_root = nginx_root
+
+    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
+        with open(f"{self.nginx_root}/{domain_name}/.well-known/{token}", "w") as fp:
+            fp.write(acme_keyauthorization)
+
+    def delete_challenge_file(self, domain_name, token):
+        os.unlink(f"{self.nginx_root}/{domain_name}/.well-known/{token}")
+```
+
+
 ## Development setup
-see the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)                
+see the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)
 
 
 
@@ -335,14 +361,14 @@ see the how to contribute [documentation](https://github.com/komuw/sewer/blob/ma
 - https://github.com/komuw/sewer/milestone/1
 
 ## FAQ
-- Why another ACME client?          
-  I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not 
+- Why another ACME client?
+  I wanted an ACME client that I could use to programmatically(as a library) acquire/get certificates. However I could not
   find anything satisfactory for use in Python code.
 - Why is it called Sewer?
-  I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.                            
+  I really like the Kenyan hip hop artiste going by the name of Kitu Sewer.
 
 
-Here's the ouput of running sewer using the cli app:                
+Here's the ouput of running sewer using the cli app:
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_API_KEY=nsa-grade-api-key \
@@ -350,7 +376,7 @@ sewer \
 --endpoint staging \
 --dns cloudflare \
 --domain subdomain.example.com \
---action run            
+--action run
 
 2018-03-06 18:08.41 chosen_dns_provider            message=Using cloudflare as dns provider.
 
@@ -371,4 +397,3 @@ sewer \
 
 2018-03-06 18:09.54 the_end                        message=Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory
 ```
-

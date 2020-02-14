@@ -39,6 +39,9 @@ class BaseAuthProvider(object):
         return log_body
 
     def get_identifier_auth(self, authorization_response, url):
+        """
+        grab the identifier authorization info for the implimented auth challenge type
+        """
         domain = authorization_response["identifier"]["value"]
         wildcard = authorization_response.get("wildcard")
         if wildcard:
@@ -59,7 +62,16 @@ class BaseAuthProvider(object):
                 }
 
     def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        raise NotImplementedError("delete_auth_record method must be implemented.")
+        """
+        Called by the client to create the required authorization resource. This Could be a dns record (for dns-01)
+        or a challange file hosted on the filesystem.
 
-    def cleanup_authorization(self, **kwargs):
-        raise NotImplementedError("delete_auth_record method must be implemented.")
+        This method must return a dictionary which are the cleanup_kwargs used in the cleanup_authorization method below
+        """
+        raise NotImplementedError("fulfill_authorization method must be implemented.")
+
+    def cleanup_authorization(self, **cleanup_kwargs):
+        """
+        called after the cert is aquired to cleanup any authorization resources created in the fulfill_authorization method above.
+        """
+        raise NotImplementedError("cleanup_authorization method must be implemented.")
