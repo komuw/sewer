@@ -26,6 +26,17 @@ class ExmpleAuthProvider(sewer.auth.BaseAuthProvider):
         pass
 
 
+class ExmpleHttpProvider(sewer.http_providers.common.BaseHttp):
+    def __init__(self):
+        super(ExmpleHttpProvider, self).__init__()
+
+    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
+        pass
+
+    def delete_challenge_file(self, domain_name, token):
+        pass
+
+
 class MockResponse(object):
     """
     mock python-requests Response object

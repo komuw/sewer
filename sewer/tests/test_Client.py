@@ -412,6 +412,51 @@ class TestClientDnsApiCompatibility(TestCase):
             )
 
 
+class TestClientHttpAuthProvider(TestCase):
+    """
+    Test Acme client with an http auth provider
+    """
+
+    def setUp(self):
+        self.domain_name = "example.com"
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+
+            self.auth_provider = test_utils.ExmpleHttpProvider()
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                auth_provider=self.auth_provider,
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+            )
+
+    def test_create_challenge_file_is_called(self):
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get, mock.patch(
+            "sewer.tests.test_utils.ExmpleHttpProvider.create_challenge_file"
+        ) as mock_create_challenge_file:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+            self.client.cert()
+            self.assertTrue(mock_create_challenge_file.called)
+
+    def test_delete_challenge_file_is_called(self):
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get, mock.patch(
+            "sewer.tests.test_utils.ExmpleHttpProvider.delete_challenge_file"
+        ) as mock_delete_challenge_file:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+            self.client.cert()
+            self.assertTrue(mock_delete_challenge_file.called)
+
+
 # TEST cli
 # from unittest import TestCase
 # from funniest.command_line import main
