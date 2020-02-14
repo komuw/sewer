@@ -337,7 +337,7 @@ class TestClientForWildcard(TestClient):
         super(TestClientForWildcard, self).setUp()
 
 
-class TestClientDnsApicompatibility(TestCase):
+class TestClientDnsApiCompatibility(TestCase):
     """
     Test Acme client for the existing dns provider api.
     """
