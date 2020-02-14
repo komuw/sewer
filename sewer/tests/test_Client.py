@@ -32,10 +32,10 @@ class TestClient(TestCase):
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
 
-            self.dns_class = test_utils.ExmpleDnsProvider()
+            self.auth_provider = test_utils.ExmpleAuthProvider()
             self.client = sewer.Client(
                 domain_name=self.domain_name,
-                dns_class=self.dns_class,
+                auth_provider=self.auth_provider,
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
@@ -54,7 +54,7 @@ class TestClient(TestCase):
             def mock_create_acme_client():
                 sewer.Client(
                     domain_name="example.com",
-                    dns_class=test_utils.ExmpleDnsProvider(),
+                    auth_provider=test_utils.ExmpleAuthProvider(),
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                 )
 
@@ -143,8 +143,8 @@ class TestClient(TestCase):
                 "domain": "example.com",
                 "url": "http://localhost",
                 "wildcard": None,
-                "token": "dns_token",
-                "challenge_url": "dns_challenge_url",
+                "token": "token",
+                "challenge_url": "challenge_url",
             }
             self.client.cert()
             self.assertTrue(mock_get_identifier_authorization.called)
@@ -166,17 +166,6 @@ class TestClient(TestCase):
             self.assertIn(
                 "Error applying for certificate issuance", str(raised_exception.exception)
             )
-
-    def test_create_dns_record_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleDnsProvider.create_dns_record"
-        ) as mock_create_dns_record:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
-            self.client.cert()
-            self.assertTrue(mock_create_dns_record.called)
 
     def test_respond_to_challenge_called(self):
         pending_status_mock = mock.Mock()
@@ -214,17 +203,6 @@ class TestClient(TestCase):
             self.client.cert()
             self.assertTrue(mock_check_authorization_status.called)
 
-    def test_delete_dns_record_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record"
-        ) as mock_delete_dns_record:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
-            self.client.cert()
-            self.assertTrue(mock_delete_dns_record.called)
-
     def test_get_certificate_is_called(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
@@ -257,8 +235,8 @@ class TestClient(TestCase):
                 "domain": "example.com",
                 "url": "http://localhost",
                 "wildcard": None,
-                "token": "dns_token",
-                "challenge_url": "dns_challenge_url",
+                "token": "token",
+                "challenge_url": "challenge_url",
             }
             mock_acme_register.return_value = test_utils.MockResponse(status_code=409)
 
@@ -284,7 +262,7 @@ class TestClient(TestCase):
         def mock_instantiate_client():
             self.client = sewer.Client(
                 domain_name=self.domain_name,
-                dns_class=self.dns_class,
+                auth_provider=self.auth_provider,
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
@@ -357,6 +335,81 @@ class TestClientForWildcard(TestClient):
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
             )
         super(TestClientForWildcard, self).setUp()
+
+
+class TestClientDnsApicompatibility(TestCase):
+    """
+    Test Acme client for the existing dns provider api.
+    """
+
+    def setUp(self):
+        self.domain_name = "example.com"
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+
+            self.dns_class = test_utils.ExmpleDnsProvider()
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+            )
+
+    def test_get_get_acme_endpoints_failure_results_in_exception_with(self):
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get:
+            mock_requests_post.return_value = test_utils.MockResponse(status_code=409)
+            mock_requests_get.return_value = test_utils.MockResponse(status_code=409)
+
+            def mock_create_acme_client():
+                sewer.Client(
+                    domain_name="example.com",
+                    dns_class=test_utils.ExmpleDnsProvider(),  # NOTE: dns_class used here
+                    ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                )
+
+            self.assertRaises(ValueError, mock_create_acme_client)
+            with self.assertRaises(ValueError) as raised_exception:
+                mock_create_acme_client()
+            self.assertIn("Error while getting Acme endpoints", str(raised_exception.exception))
+
+    def test_create_dns_record_is_called(self):
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get, mock.patch(
+            "sewer.tests.test_utils.ExmpleDnsProvider.create_dns_record"
+        ) as mock_create_dns_record:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+            self.client.cert()
+            self.assertTrue(mock_create_dns_record.called)
+
+    def test_delete_dns_record_is_called(self):
+        with mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get, mock.patch(
+            "sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record"
+        ) as mock_delete_dns_record:
+            mock_requests_post.return_value = test_utils.MockResponse()
+            mock_requests_get.return_value = test_utils.MockResponse()
+            self.client.cert()
+            self.assertTrue(mock_delete_dns_record.called)
+
+    def test_right_args_to_client(self):
+        def mock_instantiate_client():
+            self.client = sewer.Client(
+                domain_name=self.domain_name,
+                dns_class=self.dns_class,  # NOTE: dns_class used here
+                ACME_REQUEST_TIMEOUT=1,
+                ACME_AUTH_STATUS_WAIT_PERIOD=0,
+                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                domain_alt_names="domain_alt_names",
+            )
 
 
 # TEST cli

@@ -15,6 +15,17 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
         pass
 
 
+class ExmpleAuthProvider(sewer.auth.BaseAuthProvider):
+    def __init__(self):
+        super(ExmpleAuthProvider, self).__init__("http-01")
+
+    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
+        return {}
+
+    def cleanup_authorization(self, **cleanup_kwargs):
+        pass
+
+
 class MockResponse(object):
     """
     mock python-requests Response object
@@ -36,7 +47,12 @@ class MockResponse(object):
                         "type": "dns-01",
                         "token": "example-token",
                         "url": "http://localhost/challenge-url",
-                    }
+                    },
+                    {
+                        "type": "http-01",
+                        "token": "example-token",
+                        "url": "http://localhost/challenge-url",
+                    },
                 ],
                 "authorizations": ["http://localhost/authorization-url"],
                 "finalize": "http://localhost/finalize-url",
