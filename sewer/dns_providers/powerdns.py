@@ -34,7 +34,7 @@ class PowerDNSDns(common.BaseDns):
             ]
         }
 
-        powerdns_response = requests.patch(
+        requests.patch(
             self.powerdns_api_url + '/' + domain_name,
             data=json.dumps(payload),
             headers={'X-API-Key': self.powerdns_api_key}
