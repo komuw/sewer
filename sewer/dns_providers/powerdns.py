@@ -45,6 +45,5 @@ class PowerDNSDns(common.BaseDns):
         self._common_dns_record(domain_name, domain_dns_value, "REPLACE")
 
 
-
     def delete_dns_record(self, domain_name, domain_dns_value):
         self._common_dns_record(domain_name, domain_dns_value, "DELETE")
