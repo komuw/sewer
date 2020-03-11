@@ -489,7 +489,6 @@ class Client(object):
                     )
                 )
 
-
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
 
