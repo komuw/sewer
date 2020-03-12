@@ -42,7 +42,9 @@ class PowerDNSDns(common.BaseDns):
             if response.status_code == 200:
                 return domain_name
             elif count <= 0:
-                raise ValueError("Something went wrong...")
+                raise ValueError(
+                    f"Could not determine apex domain: (count: {count}, domain_name: {domain_name})"
+                )
             else:
                 split = domain_name.split(d)
                 split.pop(0)
