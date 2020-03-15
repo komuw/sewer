@@ -2,6 +2,10 @@
 most recent version is listed first.   
 
 
+## **version:** 0.8.1
+- Fix bug where `sewer` was unable to delete wildcard names from clouflare: https://github.com/komuw/sewer/pull/139    
+- Fix a StopIteration bug: https://github.com/komuw/sewer/pull/148
+
 ## **version:** 0.8.0
 - Fix bug where `sewer` would log twice: https://github.com/komuw/sewer/pull/137  
   Thanks to [@mmaney](https://github.com/mmaney) for this
