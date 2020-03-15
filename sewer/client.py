@@ -478,6 +478,8 @@ class Client(object):
                     self.log_response(check_authorization_status_response),
                 )
             )
+            if authorization_status in desired_status:
+                break
             if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
                 raise StopIteration(
                     "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds.".format(
@@ -486,9 +488,6 @@ class Client(object):
                         self.ACME_AUTH_STATUS_WAIT_PERIOD,
                     )
                 )
-
-            if authorization_status in desired_status:
-                break
 
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
