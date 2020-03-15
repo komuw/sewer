@@ -110,6 +110,8 @@ class CloudFlareDns(common.BaseDns):
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
+        # if we have been given a wildcard name, strip wildcard
+        domain_name = domain_name.lstrip("*.")
 
         class MockResponse(object):
             def __init__(self, status_code=200, content="mock-response"):

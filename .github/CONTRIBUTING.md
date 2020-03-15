@@ -38,4 +38,25 @@ make test
 ```
 - open a pull request on this repo.          
           
-NB: I make no commitment of accepting your pull requests.                 
+NB: I make no commitment of accepting your pull requests.   
+
+
+## Creating a new release:   
+To create a new release on [https://pypi.org/project/sewer](https://pypi.org/project/sewer);     
+- Create a new branch
+- Update `sewer/__version__.py` with the new version number.  
+  The version numbers should follow semver.    
+- Update `CHANGELOG.md` with information about what is changing in the new release.   
+- Open a pull request and have it go through the normal review process.
+- Upon approval of the pull request, squash and merge it.   
+  Remember that the squash & merge commit message should ideally be the message that was in the pull request template.   
+- Once succesfully merged, run;  
+```bash
+git checkout master
+git pull --tags
+make uploadprod
+```
+   That should upload the new release on pypi.   
+   You do need to have permissions to upload to pypi.  
+   Currently only  [@komuw](https://github.com/komuw) has those permissions, so if you need to create a new release, do talk to him to do that.   
+   In the future, more contributors may be availed permissions to pypi.   
