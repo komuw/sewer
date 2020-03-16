@@ -26,8 +26,8 @@ class TestClient(TestCase):
 
     def setUp(self):
         self.domain_name = "example.com"
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -45,8 +45,8 @@ class TestClient(TestCase):
         pass
 
     def test_get_get_acme_endpoints_failure_results_in_exception(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse(status_code=409)
             mock_requests_get.return_value = test_utils.MockResponse(status_code=409)
@@ -64,8 +64,8 @@ class TestClient(TestCase):
             self.assertIn("Error while getting Acme endpoints", str(raised_exception.exception))
 
     def test_user_agent_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -74,8 +74,8 @@ class TestClient(TestCase):
                 self.assertIn(i, self.client.User_Agent)
 
     def test_certificate_key_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -91,8 +91,8 @@ class TestClient(TestCase):
             )
 
     def test_account_key_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -108,8 +108,8 @@ class TestClient(TestCase):
             )
 
     def test_acme_registration_is_done(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch("sewer.Client.acme_register") as mock_acme_registration:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -117,8 +117,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_acme_registration.called)
 
     def test_acme_registration_failure_doesnt_result_in_certificate(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse(status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(status_code=400)
@@ -132,8 +132,8 @@ class TestClient(TestCase):
             self.assertIn("Error while registering", str(raised_exception.exception))
 
     def test_get_identifier_authorization_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.Client.get_identifier_authorization"
         ) as mock_get_identifier_authorization:
@@ -150,8 +150,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_get_identifier_authorization.called)
 
     def test_get_identifier_authorization_is_not_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch("sewer.Client.acme_register") as mock_acme_register:
             mock_requests_post.return_value = test_utils.MockResponse(status_code=400)
             mock_requests_get.return_value = test_utils.MockResponse(status_code=400)
@@ -168,8 +168,8 @@ class TestClient(TestCase):
             )
 
     def test_create_dns_record_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.tests.test_utils.ExmpleDnsProvider.create_dns_record"
         ) as mock_create_dns_record:
@@ -185,8 +185,8 @@ class TestClient(TestCase):
         valid_status_mock = mock.Mock()
         valid_status_mock.json.return_value = {"status": "valid"}
 
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.Client.respond_to_challenge"
         ) as mock_respond_to_challenge, mock.patch(
@@ -204,8 +204,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_respond_to_challenge.called)
 
     def test_check_authorization_status_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.Client.check_authorization_status"
         ) as mock_check_authorization_status:
@@ -215,8 +215,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_check_authorization_status.called)
 
     def test_delete_dns_record_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.tests.test_utils.ExmpleDnsProvider.delete_dns_record"
         ) as mock_delete_dns_record:
@@ -226,8 +226,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_delete_dns_record.called)
 
     def test_get_certificate_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch("sewer.Client.get_certificate") as mock_get_certificate:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -235,8 +235,8 @@ class TestClient(TestCase):
             self.assertTrue(mock_get_certificate.called)
 
     def test_certificate_is_issued(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -244,8 +244,8 @@ class TestClient(TestCase):
                 self.assertIn(i, self.client.cert())
 
     def test_certificate_is_not_issued(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get, mock.patch(
             "sewer.Client.get_identifier_authorization"
         ) as mock_get_identifier_authorization, mock.patch(
@@ -272,8 +272,8 @@ class TestClient(TestCase):
             self.assertIn("Error applying for certificate", str(raised_exception.exception))
 
     def test_certificate_is_issued_for_renewal(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -310,8 +310,8 @@ class TestClientForSAN(TestClient):
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
@@ -340,8 +340,8 @@ class TestClientForWildcard(TestClient):
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
+        with mock.patch("sewer.Client.POST") as mock_requests_post, mock.patch(
+            "sewer.Client.GET"
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
