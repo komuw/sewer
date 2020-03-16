@@ -136,6 +136,10 @@ class Client(object):
                     LOG_LEVEL
                 )
             )
+        elif dns_class is not None and auth_provider is not None:
+            raise ValueError(
+                "should not specify both `dns_class` and `auth_provider`. `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+            )
 
         self.domain_name = domain_name
         self.auth_provider = auth_provider if auth_provider is not None else dns_class
@@ -187,6 +191,11 @@ class Client(object):
             else:
                 self.account_key = account_key
                 self.PRIOR_REGISTERED = True
+
+             if dns_class is not None:
+                 self.logger.warning(
+                     "intialise_warning. parameter `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+                 )
 
             self.logger.info(
                 "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
