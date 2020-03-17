@@ -632,7 +632,11 @@ class Client(object):
         self.logger.debug("get_nonce")
 
         if not self.cached_nonce:
-            self.HEAD(self.ACME_GET_NONCE_URL)
+
+            ### FIX ME ### RFC says this should be HEAD, but GET has always worked
+            ### KLUGE  ### switch back to HEAD after testing mocks aren't a problem
+
+            self.GET(self.ACME_GET_NONCE_URL)
             # tricky: the nonce will have been cached before HEAD returns
 
             ### FIX ME ### Handle error in request?  Never have, so it must be rare?
