@@ -192,10 +192,10 @@ class Client(object):
                 self.account_key = account_key
                 self.PRIOR_REGISTERED = True
 
-             if dns_class is not None:
-                 self.logger.warning(
-                     "intialise_warning. parameter `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
-                 )
+            if dns_class is not None:
+                self.logger.warning(
+                    "intialise_warning. parameter `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+                )
 
             self.logger.info(
                 "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
