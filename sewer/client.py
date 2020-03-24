@@ -226,7 +226,7 @@ class Client(object):
             kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
 
         ### HACK ### to make mocked tests work again
-        #response = requests.request(method, url, **kwargs)
+        # response = requests.request(method, url, **kwargs)
         if method == "GET":
             response = requests.get(url, **kwargs)
         elif method == "POST":
@@ -733,9 +733,7 @@ class Client(object):
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )
             headers.update({"Content-Type": "application/jose+json"})
-            response = self.POST(
-                url, data=data.encode("utf8"), headers=headers
-            )
+            response = self.POST(url, data=data.encode("utf8"), headers=headers)
         return response
 
     def get_certificate(self):
