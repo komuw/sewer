@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 from os import environ
 from unittest import TestCase
 
