@@ -411,6 +411,12 @@ class TestClientDnsApiCompatibility(TestCase):
                 domain_alt_names="domain_alt_names",
             )
 
+        with self.assertRaises(ValueError) as raised_exception:
+            mock_instantiate_client()
+        self.assertIn(
+            "domain_alt_names should be of type:: None or list", str(raised_exception.exception)
+        )
+
 
 class TestClientHttpAuthProvider(TestCase):
     """
