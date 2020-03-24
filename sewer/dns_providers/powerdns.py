@@ -79,9 +79,9 @@ class PowerDNSDns(common.BaseDns):
                 url, data=json.dumps(payload), headers={"X-API-Key": self.powerdns_api_key}
             )
             self.logger.debug(f"PowerDNS response: {response.status_code}, {response.text}")
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             self.logger.error(f"Unable to communicate with PowerDNS API: {e}")
-            raise e
+            raise
 
         # Per https://doc.powerdns.com/authoritative/http-api/zone.html:
         # PATCH /servers/{server_id}/zones/{zone_id}
