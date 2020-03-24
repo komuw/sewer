@@ -147,6 +147,15 @@ def main():
         eg: --loglevel DEBUG",
     )
 
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        required=False,
+        default=7,
+        help="the max time(in seconds) that the client will wait for a network call to complete, default is 7 seconds. \
+        eg: --timeout 30",
+    )
+
     args = parser.parse_args()
 
     dns_provider = args.dns
@@ -160,6 +169,7 @@ def main():
     email = args.email
     loglevel = args.loglevel
     out_dir = args.out_dir
+    timeout = args.timeout
 
     # Make sure the output dir user specified is writable
     if not os.access(out_dir, os.W_OK):
@@ -318,6 +328,7 @@ def main():
         certificate_key=certificate_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
+        ACME_REQUEST_TIMEOUT=timeout
     )
     certificate_key = client.certificate_key
     account_key = client.account_key

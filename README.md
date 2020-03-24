@@ -179,6 +179,7 @@ usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
              [--email EMAIL] --action {run,renew} [--out_dir OUT_DIR]
              [--loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+             [--timeout timeout]
 
 Sewer is a Let's Encrypt(ACME) client.
 
@@ -218,6 +219,9 @@ optional arguments:
   --loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         The log level to output log messages at. eg:
                         --loglevel DEBUG
+  --timeout TIMEOUT
+                        the max time(in seconds) that the client will wait for
+                        a network call to complete, default is 7 seconds. eg: --timeout 30
 ```
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
