@@ -23,8 +23,9 @@ The currently supported DNS providers are:
 7. [DNSPod](https://www.dnspod.cn/)
 8. [DuckDNS](https://www.duckdns.org/)
 9. [ClouDNS](https://www.cloudns.net)
-10. [AWS rout353](https://aws.amazon.com/route53/)
-11. [Bring your own dns provider](#bring-your-own-dns-provider)
+10. [AWS route53](https://aws.amazon.com/route53/)
+11. [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
+12. [Bring your own dns provider](#bring-your-own-dns-provider)
 ...
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -69,6 +70,9 @@ pip3 install sewer
 
 # with AWS route53 DNS Support
 # pip3 install sewer[route53]
+
+# with PowerDNS DNS Support
+# pip3 install sewer[powerdns]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;

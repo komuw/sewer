@@ -29,6 +29,7 @@ dns_provider_deps_map = {
     "duckdns": [""],
     "cloudns": ["cloudns-api"],
     "route53": ["boto3"],
+    "powerdns": [""],
 }
 
 all_deps_of_all_dns_provider = []
@@ -111,6 +112,7 @@ setup(
         "duckdns": dns_provider_deps_map["duckdns"],
         "cloudns": dns_provider_deps_map["cloudns"],
         "route53": dns_provider_deps_map["route53"],
+        "powerdns": dns_provider_deps_map["powerdns"],
         "alldns": all_deps_of_all_dns_provider,
     },
     # If there are data files included in your packages that need to be
