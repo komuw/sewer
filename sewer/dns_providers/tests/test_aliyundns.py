@@ -54,7 +54,7 @@ class TestAliyunDNS(TestCase):
         self.assertEqual(zone, "")
         self.assertEqual(acme_txt, "_acme-challenge")
 
-    def test_acmedns_is_called_by_create_dns_record(self):
+    def test_aliyun_is_called_by_create_dns_record(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "sewer.AliyunDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch("dns.resolver.Resolver.query") as mock_dns_resolver:
@@ -68,7 +68,7 @@ class TestAliyunDNS(TestCase):
 
             self.assertFalse(mock_requests_post.called)
 
-    def test_acmedns_is_not_called_by_delete_dns_record(self):
+    def test_aliyun_is_not_called_by_delete_dns_record(self):
         with mock.patch("requests.post") as mock_requests_post:
             mock_requests_post.return_value = test_utils.MockResponse()
             self.dns_class.delete_dns_record(

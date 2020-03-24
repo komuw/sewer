@@ -20,8 +20,12 @@ The currently supported DNS providers are:
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
 5. [He DNS, Hurricane Electric DNS](https://dns.he.net/)
 6. [Rackspace](https://www.rackspace.com/cloud/dns)
-6. [Bring your own dns provider](#bring-your-own-dns-provider)
-...                                      
+7. [DNSPod](https://www.dnspod.cn/)
+8. [DuckDNS](https://www.duckdns.org/)
+9. [ClouDNS](https://www.cloudns.net)
+10. [AWS rout353](https://aws.amazon.com/route53/)
+11. [Bring your own dns provider](#bring-your-own-dns-provider)
+...
 
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
@@ -35,6 +39,9 @@ pip3 install sewer
 
 # with All DNS Provider support, include aliyun, Hurricane Electric, Aurora, ACME ...
 # pip3 install sewer[alldns]
+
+# with Cloudflare support
+# pip3 install sewer[cloudflare]
 
 # with Aliyun support
 # pip3 install sewer[aliyun]
@@ -50,6 +57,18 @@ pip3 install sewer
 
 # with Rackspace DNS Support
 # pip3 install sewer[rackspace]
+
+# with DNSPod DNS Support
+# pip3 install sewer[dnspod]
+
+# with DuckDNS DNS Support
+# pip3 install sewer[duckdns]
+
+# with ClouDNS DNS Support
+# pip3 install sewer[cloudns]
+
+# with AWS route53 DNS Support
+# pip3 install sewer[route53]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
@@ -223,8 +242,7 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
 ## Bring your own DNS provider          
-Currently, sewer only supports cloudflare and Aurora, out of the box.                   
-However, it is very easy to use another dns provider with sewer.          
+It is very easy to use any dns provider with sewer.          
 All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     
 As an example, if you wanted to use [AWS route53](https://aws.amazon.com/route53/) as your dns provider with sewer, you            

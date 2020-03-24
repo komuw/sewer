@@ -38,7 +38,7 @@ class TestRackspace(TestCase):
     def test_find_dns_zone_id(self):
         with mock.patch("requests.get") as mock_requests_get:
             # see: https://developer.rackspace.com/docs/cloud-dns/v1/api-reference/domains/
-            mock_dns_zone_id = 1239932
+            mock_dns_zone_id = 1_239_932
             mock_requests_content = {
                 "domains": [
                     {
@@ -78,7 +78,7 @@ class TestRackspace(TestCase):
                 ],
             }
             mock_requests_get.return_value = test_utils.MockResponse(200, mock_requests_content)
-            mock_find_dns_zone_id.return_value = 1239932
+            mock_find_dns_zone_id.return_value = 1_239_932
 
             dns_record_id = self.dns_class.find_dns_record_id(
                 self.domain_name, self.domain_dns_value

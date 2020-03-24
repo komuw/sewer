@@ -10,12 +10,23 @@ class MockResponse(object):
         if not content:
             content = {}
 
-        content.update(
-            {"something": "ok", "result": [{"name": "example.com", "id": "some-mock-dns-zone-id"}]}
-        )
+        try:
+            content.update(
+                {
+                    "something": "ok",
+                    "result": [{"name": "example.com", "id": "some-mock-dns-zone-id"}],
+                }
+            )
+        except AttributeError:
+            json_loads = json.loads
+        else:
+            json_loads = lambda a: a
+
         self.content = json.dumps(content).encode()
-        self.status_code = status_code
+        self.text = json_loads(self.content.decode())
+
         self.headers = {}
+        self.status_code = status_code
 
     def json(self):
         return json.loads(self.content.decode())

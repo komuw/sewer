@@ -62,7 +62,17 @@ def main():
         "--dns",
         type=str,
         required=True,
-        choices=["cloudflare", "aurora", "acmedns", "aliyun", "hurricane", "rackspace"],
+        choices=[
+            "cloudflare",
+            "aurora",
+            "acmedns",
+            "aliyun",
+            "hurricane",
+            "rackspace",
+            "dnspod",
+            "duckdns",
+            "cloudns",
+        ],
         help="The name of the dns provider that you want to use.",
     )
     parser.add_argument(
@@ -179,17 +189,25 @@ def main():
     if dns_provider == "cloudflare":
         from . import CloudFlareDns
 
-        try:
-            CLOUDFLARE_EMAIL = os.environ["CLOUDFLARE_EMAIL"]
-            CLOUDFLARE_API_KEY = os.environ["CLOUDFLARE_API_KEY"]
+        CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL", None)
+        CLOUDFLARE_API_KEY = os.environ.get("CLOUDFLARE_API_KEY", None)
+        CLOUDFLARE_TOKEN = os.environ.get("CLOUDFLARE_TOKEN", None)
 
+        if CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY and not CLOUDFLARE_TOKEN:
             dns_class = CloudFlareDns(
                 CLOUDFLARE_EMAIL=CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY=CLOUDFLARE_API_KEY
             )
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
-        except KeyError as e:
-            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
-            raise
+        elif CLOUDFLARE_TOKEN and not CLOUDFLARE_EMAIL and not CLOUDFLARE_API_KEY:
+            dns_class = CloudFlareDns(CLOUDFLARE_TOKEN=CLOUDFLARE_TOKEN)
+        else:
+            err = (
+                "ERROR:: Please supply either CLOUDFLARE_EMAIL and CLOUDFLARE_API_KEY"
+                "or CLOUDFLARE_TOKEN as environment variables."
+            )
+            logger.error(err)
+            raise KeyError(err)
+
+        logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
 
     elif dns_provider == "aurora":
         from . import AuroraDns
@@ -254,6 +272,37 @@ def main():
             RACKSPACE_API_KEY = os.environ["RACKSPACE_API_KEY"]
             dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY)
             logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "dnspod":
+        from . import DNSPodDns
+
+        try:
+            DNSPOD_ID = os.environ["DNSPOD_ID"]
+            DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
+            dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY)
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "duckdns":
+        from . import DuckDNSDns
+
+        try:
+            duckdns_token = os.environ["DUCKDNS_TOKEN"]
+
+            dns_class = DuckDNSDns(duckdns_token=duckdns_token)
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "cloudns":
+        from . import ClouDNSDns
+
+        try:
+            dns_class = ClouDNSDns()
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
