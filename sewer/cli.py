@@ -306,6 +306,18 @@ def main():
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
+    elif dns_provider == "powerdns":
+        from . import PowerDNSDns
+
+        try:
+            powerdns_api_key = os.environ["POWERDNS_API_KEY"]
+            powerdns_api_url = os.environ["POWERDNS_API_URL"]
+
+            dns_class = PowerDNSDns(powerdns_api_key, powerdns_api_url)
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
     else:
         raise ValueError("The dns provider {0} is not recognised.".format(dns_provider))
 
