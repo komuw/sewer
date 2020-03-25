@@ -1,4 +1,3 @@
-import logging
 import mock
 from unittest import TestCase
 import sewer
