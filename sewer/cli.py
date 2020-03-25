@@ -72,6 +72,7 @@ def main():
             "dnspod",
             "duckdns",
             "cloudns",
+            "powerdns",
         ],
         help="The name of the dns provider that you want to use.",
     )
