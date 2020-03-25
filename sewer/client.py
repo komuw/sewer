@@ -710,9 +710,7 @@ class Client(object):
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )
             headers.update({"Content-Type": "application/jose+json"})
-            response = self.POST(
-                url, data=data.encode("utf8"), headers=headers
-            )
+            response = self.POST(url, data=data.encode("utf8"), headers=headers)
         return response
 
     def get_certificate(self):
