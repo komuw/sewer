@@ -12,7 +12,7 @@ It allows you to obtain ssl/tls certificates from Let's Encrypt.
 
 > Let’s Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
 
-Sewer currently supports the DNS ands HTTP modes of validation.                 
+Sewer currently supports the DNS and HTTP modes of validation.                 
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
@@ -24,9 +24,9 @@ The currently supported DNS providers are:
 8. [DuckDNS](https://www.duckdns.org/)
 9. [ClouDNS](https://www.cloudns.net)
 10. [AWS rout353](https://aws.amazon.com/route53/)
-11. [Bring your own dns provider](#bring-your-own-dns-provider)
+11. [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
+12. [Bring your own dns provider](#bring-your-own-dns-provider)
 
-Currently no HTTP providers are included out of the box, but you can define your own.
 ...
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -71,6 +71,9 @@ pip3 install sewer
 
 # with AWS route53 DNS Support
 # pip3 install sewer[route53]
+
+# with PowerDNS DNS Support
+# pip3 install sewer[powerdns]
 ```
 
 sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;

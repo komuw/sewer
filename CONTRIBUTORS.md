@@ -23,5 +23,6 @@ Contributors
 9. [@etienne-napoleone](https://github.com/etienne-napoleone)
 10. [@soloradish](https://github.com/soloradish)
 11. [Moritz Ulmer](https://www.protohaus.org)
-12: [alec T](https://github.com/AlecTroemel)
-13: [Don S](https://github.com/donspaulding)
+12. [rozgonik](https://github.com/rozgonik)
+13: [alec T](https://github.com/AlecTroemel)
+14: [Don S](https://github.com/donspaulding)

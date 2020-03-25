@@ -208,6 +208,48 @@ class Client(object):
             self.logger.error("Unable to intialise client. error={0}".format(str(e)))
             raise e
 
+    def GET(self, url, **kwargs):
+        """
+        wrap requests.get (and post and head, below) to allow:
+          * injection of e.g. UserAgent header in one place rather than all over
+          * hides requests itself to allow for change (unlikely) or use of Session
+          * paves the way to inject the verify option, required to use pebble
+        """
+
+        return self._request("GET", url, **kwargs)
+
+    def HEAD(self, url, **kwargs):
+        return self._request("HEAD", url, **kwargs)
+
+    def POST(self, url, **kwargs):
+        return self._request("POST", url, **kwargs)
+
+    def _request(self, method, url, **kwargs):
+        """
+        shared implementation for GET, POST and HEAD
+        * injects standard request options unless they are already given in kwargs
+          * header:UserAgent, timeout
+        """
+
+        # if there's no UserAgent header in args, inject it
+        headers = kwargs.setdefault("headers", {})
+        if "UserAgent" not in headers:
+            headers["UserAgent"] = self.User_Agent
+
+        # add standard timeout if there's none already present
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
+
+        # awkward implementation to maintain compatibility with current mocked tests
+        if method == "GET":
+            response = requests.get(url, **kwargs)
+        elif method == "HEAD":
+            response = requests.head(url, **kwargs)
+        elif method == "POST":
+            response = requests.post(url, **kwargs)
+
+        return response
+
     @staticmethod
     def log_response(response):
         """
@@ -232,10 +274,7 @@ class Client(object):
 
     def get_acme_endpoints(self):
         self.logger.debug("get_acme_endpoints")
-        headers = {"User-Agent": self.User_Agent}
-        get_acme_endpoints = requests.get(
-            self.ACME_DIRECTORY_URL, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-        )
+        get_acme_endpoints = self.GET(self.ACME_DIRECTORY_URL)
         self.logger.debug(
             "get_acme_endpoints_response. status_code={0}".format(get_acme_endpoints.status_code)
         )
@@ -403,10 +442,7 @@ class Client(object):
         This is also where we get the challenges/tokens.
         """
         self.logger.info("get_identifier_authorization")
-        headers = {"User-Agent": self.User_Agent}
-        get_identifier_authorization_response = requests.get(
-            url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-        )
+        get_identifier_authorization_response = self.GET(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
                 get_identifier_authorization_response.status_code,
@@ -460,10 +496,7 @@ class Client(object):
         number_of_checks = 0
         while True:
             time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
-            headers = {"User-Agent": self.User_Agent}
-            check_authorization_status_response = requests.get(
-                authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-            )
+            check_authorization_status_response = self.GET(authorization_url)
             authorization_status = check_authorization_status_response.json()["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
@@ -472,6 +505,8 @@ class Client(object):
                     self.log_response(check_authorization_status_response),
                 )
             )
+            if authorization_status in desired_status:
+                break
             if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
                 raise StopIteration(
                     "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds.".format(
@@ -480,9 +515,6 @@ class Client(object):
                         self.ACME_AUTH_STATUS_WAIT_PERIOD,
                     )
                 )
-
-            if authorization_status in desired_status:
-                break
 
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
@@ -588,10 +620,7 @@ class Client(object):
         in order to protect against replay attacks.
         """
         self.logger.debug("get_nonce")
-        headers = {"User-Agent": self.User_Agent}
-        response = requests.get(
-            self.ACME_GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-        )
+        response = self.GET(self.ACME_GET_NONCE_URL)
         nonce = response.headers["Replay-Nonce"]
         return nonce
 
@@ -649,11 +678,11 @@ class Client(object):
 
     def make_signed_acme_request(self, url, payload):
         self.logger.debug("make_signed_acme_request")
-        headers = {"User-Agent": self.User_Agent}
+        headers = {}
         payload = self.stringfy_items(payload)
 
         if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
-            response = requests.get(url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers)
+            response = self.GET(url, headers=headers)
         else:
             payload64 = calculate_safe_base64(json.dumps(payload))
             protected = self.get_acme_header(url)
@@ -664,9 +693,7 @@ class Client(object):
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )
             headers.update({"Content-Type": "application/jose+json"})
-            response = requests.post(
-                url, data=data.encode("utf8"), timeout=self.ACME_REQUEST_TIMEOUT, headers=headers
-            )
+            response = self.POST(url, data=data.encode("utf8"), headers=headers)
         return response
 
     def get_certificate(self):
