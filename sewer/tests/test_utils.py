@@ -6,11 +6,34 @@ import sewer
 class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
     def __init__(self):
         self.dns_provider_name = "example_dns_provider"
+        super(ExmpleDnsProvider, self).__init__()
 
     def create_dns_record(self, domain_name, domain_dns_value):
         pass
 
     def delete_dns_record(self, domain_name, domain_dns_value):
+        pass
+
+
+class ExmpleAuthProvider(sewer.auth.BaseAuthProvider):
+    def __init__(self):
+        super(ExmpleAuthProvider, self).__init__("http-01")
+
+    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
+        return {}
+
+    def cleanup_authorization(self, **cleanup_kwargs):
+        pass
+
+
+class ExmpleHttpProvider(sewer.http_providers.common.BaseHttp):
+    def __init__(self):
+        super(ExmpleHttpProvider, self).__init__()
+
+    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
+        pass
+
+    def delete_challenge_file(self, domain_name, token):
         pass
 
 
@@ -35,7 +58,12 @@ class MockResponse(object):
                         "type": "dns-01",
                         "token": "example-token",
                         "url": "http://localhost/challenge-url",
-                    }
+                    },
+                    {
+                        "type": "http-01",
+                        "token": "example-token",
+                        "url": "http://localhost/challenge-url",
+                    },
                 ],
                 "authorizations": ["http://localhost/authorization-url"],
                 "finalize": "http://localhost/finalize-url",

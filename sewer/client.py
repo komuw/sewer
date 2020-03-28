@@ -1,7 +1,6 @@
 import time
 import copy
 import json
-import base64
 import hashlib
 import logging
 import binascii
@@ -13,6 +12,7 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
+from .auth import calculate_safe_base64
 
 
 class Client(object):
@@ -21,12 +21,12 @@ class Client(object):
 
     usage:
         import sewer
-        dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
+        auth_provider = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
                                         CLOUDFLARE_API_KEY='nsa-grade-api-key')
 
         1. to create a new certificate.
         client = sewer.Client(domain_name='example.com',
-                              dns_class=dns_class)
+                              auth_provider=auth_provider)
         certificate = client.cert()
         certificate_key = client.certificate_key
         account_key = client.account_key
@@ -43,7 +43,7 @@ class Client(object):
             account_key = account_key_file.read()
 
         client = sewer.Client(domain_name='example.com',
-                              dns_class=dns_class,
+                              auth_provider=auth_provider,
                               account_key=account_key)
         certificate = client.renew()
         certificate_key = client.certificate_key
@@ -55,13 +55,14 @@ class Client(object):
     def __init__(
         self,
         domain_name,
-        dns_class,
+        dns_class=None,
         domain_alt_names=None,
         contact_email=None,
         account_key=None,
         certificate_key=None,
         bits=2048,
         digest="sha256",
+        auth_provider=None,
         ACME_REQUEST_TIMEOUT=7,
         ACME_AUTH_STATUS_WAIT_PERIOD=8,
         ACME_AUTH_STATUS_MAX_CHECKS=3,
@@ -72,7 +73,11 @@ class Client(object):
         :param domain_name:                  (required) [string]
             the name that you want to acquire/renew certificate for. wildcards are allowed.
         :param dns_class:                    (required) [class]
-            a subclass of sewer.BaseDns which will be called to create/delete DNS TXT records.
+            (DEPRECATED) a subclass of sewer.BaseDns which will be called to create/delete DNS TXT records.
+            do not pass this parameter if also passing auth_provider.
+        :param auth_provider:                (required) [class]
+            a subclass of sewer.BaseAuthProvider which will be called to create/delete auth records.
+            do not pass this parameter if also passing dns_class
         :param domain_alt_names:             (optional) [list]
             list of alternative names that you want to be bundled into the same certificate as domain_name.
         :param contact_email:                (optional) [string]
@@ -131,9 +136,13 @@ class Client(object):
                     LOG_LEVEL
                 )
             )
+        elif dns_class is not None and auth_provider is not None:
+            raise ValueError(
+                "should not specify both `dns_class` and `auth_provider`. `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+            )
 
         self.domain_name = domain_name
-        self.dns_class = dns_class
+        self.auth_provider = auth_provider if auth_provider is not None else dns_class
         if not domain_alt_names:
             domain_alt_names = []
         self.domain_alt_names = domain_alt_names
@@ -182,6 +191,11 @@ class Client(object):
             else:
                 self.account_key = account_key
                 self.PRIOR_REGISTERED = True
+
+            if dns_class is not None:
+                self.logger.warning(
+                    "intialise_warning. parameter `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+                )
 
             self.logger.info(
                 "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
@@ -442,45 +456,25 @@ class Client(object):
                     response=self.log_response(get_identifier_authorization_response),
                 )
             )
-        res = get_identifier_authorization_response.json()
-        domain = res["identifier"]["value"]
-        wildcard = res.get("wildcard")
-        if wildcard:
-            domain = "*." + domain
-
-        for i in res["challenges"]:
-            if i["type"] == "dns-01":
-                dns_challenge = i
-        dns_token = dns_challenge["token"]
-        dns_challenge_url = dns_challenge["url"]
-        identifier_auth = {
-            "domain": domain,
-            "url": url,
-            "wildcard": wildcard,
-            "dns_token": dns_token,
-            "dns_challenge_url": dns_challenge_url,
-        }
-
+        authorization_response = get_identifier_authorization_response.json()
+        identifier_auth = self.auth_provider.get_identifier_auth(authorization_response, url)
         self.logger.debug(
             "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
         )
         self.logger.info("get_identifier_authorization_success")
         return identifier_auth
 
-    def get_keyauthorization(self, dns_token):
+    def get_keyauthorization(self, token):
         self.logger.debug("get_keyauthorization")
         acme_header_jwk_json = json.dumps(
             self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
         )
-        acme_thumbprint = self.calculate_safe_base64(
+        acme_thumbprint = calculate_safe_base64(
             hashlib.sha256(acme_header_jwk_json.encode("utf8")).digest()
         )
-        acme_keyauthorization = "{0}.{1}".format(dns_token, acme_thumbprint)
-        base64_of_acme_keyauthorization = self.calculate_safe_base64(
-            hashlib.sha256(acme_keyauthorization.encode("utf8")).digest()
-        )
+        acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
-        return acme_keyauthorization, base64_of_acme_keyauthorization
+        return acme_keyauthorization
 
     def check_authorization_status(self, authorization_url, desired_status=None):
         """
@@ -525,7 +519,7 @@ class Client(object):
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
 
-    def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
+    def respond_to_challenge(self, acme_keyauthorization, challenge_url):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5.1
         To prove control of the identifier and receive authorization, the
@@ -542,7 +536,7 @@ class Client(object):
         """
         self.logger.info("respond_to_challenge")
         payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
-        respond_to_challenge_response = self.make_signed_acme_request(dns_challenge_url, payload)
+        respond_to_challenge_response = self.make_signed_acme_request(challenge_url, payload)
         self.logger.debug(
             "respond_to_challenge_response. status_code={0}. response={1}".format(
                 respond_to_challenge_response.status_code,
@@ -567,7 +561,7 @@ class Client(object):
         GET request to the order resource to obtain its current state.
         """
         self.logger.info("send_csr")
-        payload = {"csr": self.calculate_safe_base64(self.csr)}
+        payload = {"csr": calculate_safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
         self.logger.debug(
             "send_csr_response. status_code={0}. response={1}".format(
@@ -648,17 +642,6 @@ class Client(object):
             payload[k] = v
         return payload
 
-    @staticmethod
-    def calculate_safe_base64(un_encoded_data):
-        """
-        takes in a string or bytes
-        returns a string
-        """
-        if isinstance(un_encoded_data, str):
-            un_encoded_data = un_encoded_data.encode("utf8")
-        r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
-        return r.decode("utf8")
-
     def get_acme_header(self, url):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
@@ -685,8 +668,8 @@ class Client(object):
             modulus = "{0:x}".format(public_key_public_numbers.n)
             jwk = {
                 "kty": "RSA",
-                "e": self.calculate_safe_base64(binascii.unhexlify(exponent)),
-                "n": self.calculate_safe_base64(binascii.unhexlify(modulus)),
+                "e": calculate_safe_base64(binascii.unhexlify(exponent)),
+                "n": calculate_safe_base64(binascii.unhexlify(modulus)),
             }
             header["jwk"] = jwk
         else:
@@ -701,11 +684,11 @@ class Client(object):
         if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
             response = self.GET(url, headers=headers)
         else:
-            payload64 = self.calculate_safe_base64(json.dumps(payload))
+            payload64 = calculate_safe_base64(json.dumps(payload))
             protected = self.get_acme_header(url)
-            protected64 = self.calculate_safe_base64(json.dumps(protected))
+            protected64 = calculate_safe_base64(json.dumps(protected))
             signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
-            signature64 = self.calculate_safe_base64(signature)  # str
+            signature64 = calculate_safe_base64(signature)  # str
             data = json.dumps(
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )
@@ -715,34 +698,30 @@ class Client(object):
 
     def get_certificate(self):
         self.logger.debug("get_certificate")
-        domain_dns_value = "placeholder"
-        dns_names_to_delete = []
+        cleanup_kwargs_list = []
+
         try:
             self.acme_register()
             authorizations, finalize_url = self.apply_for_cert_issuance()
             responders = []
             for url in authorizations:
                 identifier_auth = self.get_identifier_authorization(url)
-                authorization_url = identifier_auth["url"]
-                dns_name = identifier_auth["domain"]
-                dns_token = identifier_auth["dns_token"]
-                dns_challenge_url = identifier_auth["dns_challenge_url"]
+                token = identifier_auth["token"]
+                acme_keyauthorization = self.get_keyauthorization(token)
+                cleanup_kwargs = self.auth_provider.fulfill_authorization(
+                    identifier_auth, token, acme_keyauthorization
+                )
+                cleanup_kwargs_list.append(cleanup_kwargs)
 
-                acme_keyauthorization, domain_dns_value = self.get_keyauthorization(dns_token)
-                self.dns_class.create_dns_record(dns_name, domain_dns_value)
-                dns_names_to_delete.append(
-                    {"dns_name": dns_name, "domain_dns_value": domain_dns_value}
-                )
-                responders.append(
-                    {
-                        "authorization_url": authorization_url,
-                        "acme_keyauthorization": acme_keyauthorization,
-                        "dns_challenge_url": dns_challenge_url,
-                    }
-                )
+                responder = {
+                    "challenge_url": identifier_auth["challenge_url"],
+                    "acme_keyauthorization": acme_keyauthorization,
+                    "authorization_url": identifier_auth["url"],
+                }
+                responders.append(responder)
 
             # for a case where you want certificates for *.example.com and example.com
-            # you have to create both dns records AND then respond to the challenge.
+            # you have to create both auth records AND then respond to the challenge.
             # see issues/83
             for i in responders:
                 # Make sure the authorization is in a status where we can submit a challenge
@@ -751,7 +730,7 @@ class Client(object):
                 # that was successfully validated, still cached by the server.
                 auth_status_response = self.check_authorization_status(i["authorization_url"])
                 if auth_status_response.json()["status"] == "pending":
-                    self.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
+                    self.respond_to_challenge(i["acme_keyauthorization"], i["challenge_url"])
 
             for i in responders:
                 # Before sending a CSR, we need to make sure the server has completed the
@@ -764,8 +743,8 @@ class Client(object):
             self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)))
             raise e
         finally:
-            for i in dns_names_to_delete:
-                self.dns_class.delete_dns_record(i["dns_name"], i["domain_dns_value"])
+            for cleanup_kwargs in cleanup_kwargs_list:
+                self.auth_provider.cleanup_authorization(**cleanup_kwargs)
 
         return certificate
 

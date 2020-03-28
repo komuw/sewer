@@ -12,7 +12,7 @@ It allows you to obtain ssl/tls certificates from Let's Encrypt.
 
 > Let’s Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
 
-Sewer currently only supports the DNS mode of validation, I have no plans of supporting other modes of validation.                 
+Sewer currently supports the DNS and HTTP modes of validation.                 
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
@@ -23,9 +23,10 @@ The currently supported DNS providers are:
 7. [DNSPod](https://www.dnspod.cn/)
 8. [DuckDNS](https://www.duckdns.org/)
 9. [ClouDNS](https://www.cloudns.net)
-10. [AWS route53](https://aws.amazon.com/route53/)
+10. [AWS rout353](https://aws.amazon.com/route53/)
 11. [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
 12. [Bring your own dns provider](#bring-your-own-dns-provider)
+
 ...
 
 Sewer can be used very easliy programmatically as a library from code.            
@@ -234,9 +235,10 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 - Obtain certificates.
 - Renew certificates.
 - Supports multiple DNS providers.
-- Supports wildcard certificates
+- Supports wildcard certificates.
 - Supports acme version 2 only.
 - [Bring your own dns provider](#bring-your-own-dns-provider) 
+- [Bring your own http provider](#bring-your-own-http-provider) 
 - Support for SAN certificates.
 - Can be used as a python library as well as a command line(CLI) application.
 - Bundling certificates.
@@ -327,6 +329,24 @@ certificate_key = client.certificate_key
 account_key = client.account_key
 print("certificate::", certificate)
 print("certificate's key::", certificate_key)
+```
+
+## Bring your own HTTP provider
+Creating a custom http provider is just like dns, except create your http class as a child class of [`sewer.BaseHttp`](https://github.com/komuw/sewer/blob/master/sewer/http_providers/common.py) and then implement the             
+`create_challenge_file` and `delete_challenge_file` methods.             
+Here's what a certbot+nginx implementation could look like
+```python
+import os
+import sewer
+class CertbotishProvider(sewer.BaseHttp):
+    def __init__(self, nginx_root="/path/to/www/html/"):
+        super(CertbotishProvider, self).__init__("http-01")
+        self.nginx_root = nginx_root
+    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
+        with open(f"{self.nginx_root}/{domain_name}/.well-known/{token}", "w") as fp:
+            fp.write(acme_keyauthorization)
+    def delete_challenge_file(self, domain_name, token):
+        os.unlink(f"{self.nginx_root}/{domain_name}/.well-known/{token}")
 ```
 
 ## Development setup
