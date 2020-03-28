@@ -1,6 +1,8 @@
 import json
 
-import sewer
+import sewer.dns_providers.common
+import sewer.auth
+import sewer.http_providers.common
 
 
 class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):

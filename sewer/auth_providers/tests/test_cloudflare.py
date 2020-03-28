@@ -24,7 +24,7 @@ class TestCloudflare(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class_api_key = sewer.CloudFlareDns(
+            self.dns_class_api_key = sewer.create_auth_provider("CloudFlareDns",
                 CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY,
                 CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL,
@@ -35,7 +35,7 @@ class TestCloudflare(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class_token = sewer.CloudFlareDns(
+            self.dns_class_token = sewer.create_auth_provider("CloudFlareDns",
                 CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN,
                 CLOUDFLARE_API_BASE_URL=self.CLOUDFLARE_API_BASE_URL,
             )
@@ -44,11 +44,10 @@ class TestCloudflare(TestCase):
         pass
 
     def test_delete_dns_record_is_not_called_by_create_dns_record(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.CloudFlareDns.delete_dns_record"
-        ) as mock_delete_dns_record:
+        with mock.patch("requests.post") as mock_requests_post, \
+        mock.patch("requests.get") as mock_requests_get, \
+        mock.patch("requests.delete") as mock_requests_delete, \
+        mock.patch("sewer.auth_providers.cloudflare.CloudFlareDns.delete_dns_record") as mock_delete_dns_record:
             mock_requests_post.return_value = (
                 mock_requests_get.return_value
             ) = (
@@ -69,7 +68,7 @@ class TestCloudflare(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.CloudFlareDns.delete_dns_record"
+            "sewer.auth_providers.cloudflare.CloudFlareDns.delete_dns_record"
         ) as mock_delete_dns_record:
             mock_requests_post.return_value = (
                 mock_requests_get.return_value
@@ -167,27 +166,27 @@ class TestCloudflareTokens(TestCase):
     def test_init_auth_validation(self):
         # Invalid inputs
         with self.assertRaises(ValueError):
-            sewer.CloudFlareDns(
+            sewer.create_auth_provider("CloudFlareDns",
                 CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN,
                 CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL,
                 CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY,
             )
 
         with self.assertRaises(ValueError):
-            sewer.CloudFlareDns(
+            sewer.create_auth_provider("CloudFlareDns",
                 CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN, CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY
             )
 
         with self.assertRaises(ValueError):
-            sewer.CloudFlareDns()
+            sewer.create_auth_provider("CloudFlareDns",)
 
         with self.assertRaises(ValueError):
-            sewer.CloudFlareDns(
+            sewer.create_auth_provider("CloudFlareDns",
                 CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN, CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL
             )
 
         # Valid inputs
-        sewer.CloudFlareDns(
+        sewer.create_auth_provider("CloudFlareDns",
             CLOUDFLARE_EMAIL=self.CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY=self.CLOUDFLARE_API_KEY
         )
-        sewer.CloudFlareDns(CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN)
+        sewer.create_auth_provider("CloudFlareDns",CLOUDFLARE_TOKEN=self.CLOUDFLARE_TOKEN)
