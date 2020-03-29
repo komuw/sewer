@@ -77,5 +77,7 @@ class BaseDns(BaseAuthProvider):
         self.create_dns_record(domain_name, base64_of_acme_keyauthorization)
         return {"domain_name": domain_name, "value": base64_of_acme_keyauthorization}
 
+    ### FIX ME ### how did this incompatible interface get past the pre-commit tests?
+
     def cleanup_authorization(self, domain_name, value):
         self.delete_dns_record(domain_name, value)
