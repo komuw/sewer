@@ -1,6 +1,7 @@
 from hashlib import sha256
 
-from sewer.auth import BaseAuthProvider, calculate_safe_base64
+from sewer.auth import BaseAuthProvider
+from sewer.lib import safe_base64
 
 
 class BaseDns(BaseAuthProvider):
@@ -71,7 +72,7 @@ class BaseDns(BaseAuthProvider):
         record:
         """
         domain_name = identifier_auth["domain"]
-        base64_of_acme_keyauthorization = calculate_safe_base64(
+        base64_of_acme_keyauthorization = safe_base64(
             sha256(acme_keyauthorization.encode("utf8")).digest()
         )
         self.create_dns_record(domain_name, base64_of_acme_keyauthorization)
