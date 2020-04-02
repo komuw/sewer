@@ -12,6 +12,12 @@ from sewer.config import ACME_DIRECTORY_URL_STAGING
 from . import test_utils
 
 
+### FIX ME ### TestClient uses a generic AuthProvider and expects it to work like a concrete
+###            provider.  For now, patched in an auth_type in test_utils to make it sort of OK
+
+### FIX ME ### auth provider tests run an absurd amount of code - 99% Client, 1% provider?
+
+
 class TestClient(TestCase):
     """
     Todo:
