@@ -1,7 +1,7 @@
 import time
 import copy
 import json
-import hashlib
+from hashlib import sha256
 import logging
 import binascii
 import platform
@@ -12,7 +12,7 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-from .auth import calculate_safe_base64
+from .lib import safe_base64
 
 
 class Client(object):
@@ -442,22 +442,38 @@ class Client(object):
         This is also where we get the challenges/tokens.
         """
         self.logger.info("get_identifier_authorization")
-        get_identifier_authorization_response = self.GET(url)
+        response = self.GET(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
-                get_identifier_authorization_response.status_code,
-                self.log_response(get_identifier_authorization_response),
+                response.status_code, self.log_response(response)
             )
         )
-        if get_identifier_authorization_response.status_code not in [200, 201]:
+        if response.status_code not in [200, 201]:
             raise ValueError(
                 "Error getting identifier authorization: status_code={status_code} response={response}".format(
-                    status_code=get_identifier_authorization_response.status_code,
-                    response=self.log_response(get_identifier_authorization_response),
+                    status_code=response.status_code, response=self.log_response(response)
                 )
             )
-        authorization_response = get_identifier_authorization_response.json()
-        identifier_auth = self.auth_provider.get_identifier_auth(authorization_response, url)
+        response_json = response.json()
+        domain = response_json["identifier"]["value"]
+        wildcard = response_json.get("wildcard")
+        if wildcard:
+            domain = "*." + domain
+
+        for i in response_json["challenges"]:
+            if i["type"] == self.auth_provider.auth_type:
+                challenge = i
+                challenge_token = challenge["token"]
+                challenge_url = challenge["url"]
+
+                identifier_auth = {
+                    "domain": domain,
+                    "url": url,
+                    "wildcard": wildcard,
+                    "token": challenge_token,
+                    "challenge_url": challenge_url,
+                }
+
         self.logger.debug(
             "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
         )
@@ -469,9 +485,7 @@ class Client(object):
         acme_header_jwk_json = json.dumps(
             self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
         )
-        acme_thumbprint = calculate_safe_base64(
-            hashlib.sha256(acme_header_jwk_json.encode("utf8")).digest()
-        )
+        acme_thumbprint = safe_base64(sha256(acme_header_jwk_json.encode("utf8")).digest())
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
         return acme_keyauthorization
@@ -561,7 +575,7 @@ class Client(object):
         GET request to the order resource to obtain its current state.
         """
         self.logger.info("send_csr")
-        payload = {"csr": calculate_safe_base64(self.csr)}
+        payload = {"csr": safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
         self.logger.debug(
             "send_csr_response. status_code={0}. response={1}".format(
@@ -668,8 +682,8 @@ class Client(object):
             modulus = "{0:x}".format(public_key_public_numbers.n)
             jwk = {
                 "kty": "RSA",
-                "e": calculate_safe_base64(binascii.unhexlify(exponent)),
-                "n": calculate_safe_base64(binascii.unhexlify(modulus)),
+                "e": safe_base64(binascii.unhexlify(exponent)),
+                "n": safe_base64(binascii.unhexlify(modulus)),
             }
             header["jwk"] = jwk
         else:
@@ -684,11 +698,11 @@ class Client(object):
         if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
             response = self.GET(url, headers=headers)
         else:
-            payload64 = calculate_safe_base64(json.dumps(payload))
+            payload64 = safe_base64(json.dumps(payload))
             protected = self.get_acme_header(url)
-            protected64 = calculate_safe_base64(json.dumps(protected))
+            protected64 = safe_base64(json.dumps(protected))
             signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
-            signature64 = calculate_safe_base64(signature)  # str
+            signature64 = safe_base64(signature)  # str
             data = json.dumps(
                 {"protected": protected64, "payload": payload64, "signature": signature64}
             )

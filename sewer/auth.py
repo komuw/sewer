@@ -1,16 +1,4 @@
 import logging
-import base64
-
-
-def calculate_safe_base64(un_encoded_data):
-    """
-    takes in a string or bytes
-    returns a string
-    """
-    if isinstance(un_encoded_data, str):
-        un_encoded_data = un_encoded_data.encode("utf8")
-    r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
-    return r.decode("utf8")
 
 
 class BaseAuthProvider(object):
@@ -37,29 +25,6 @@ class BaseAuthProvider(object):
         except ValueError:
             log_body = response.content
         return log_body
-
-    def get_identifier_auth(self, authorization_response, url):
-        """
-        grab the identifier authorization info for the implimented auth challenge type
-        """
-        domain = authorization_response["identifier"]["value"]
-        wildcard = authorization_response.get("wildcard")
-        if wildcard:
-            domain = "*." + domain
-
-        for i in authorization_response["challenges"]:
-            if i["type"] == self.auth_type:
-                challenge = i
-                challenge_token = challenge["token"]
-                challenge_url = challenge["url"]
-
-                return {
-                    "domain": domain,
-                    "url": url,
-                    "wildcard": wildcard,
-                    "token": challenge_token,
-                    "challenge_url": challenge_url,
-                }
 
     def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
         """

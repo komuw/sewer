@@ -1,6 +1,13 @@
 from hashlib import sha256
 
-from sewer.auth import BaseAuthProvider, calculate_safe_base64
+from sewer.auth import BaseAuthProvider
+from sewer.lib import safe_base64
+
+
+def dns_challenge(key_auth: str) -> str:
+    "return safe-base64 of hash of key_auth; used for dns response"
+
+    return safe_base64(sha256(key_auth.encode("utf8")).digest())
 
 
 class BaseDns(BaseAuthProvider):
@@ -71,11 +78,9 @@ class BaseDns(BaseAuthProvider):
         record:
         """
         domain_name = identifier_auth["domain"]
-        base64_of_acme_keyauthorization = calculate_safe_base64(
-            sha256(acme_keyauthorization.encode("utf8")).digest()
-        )
-        self.create_dns_record(domain_name, base64_of_acme_keyauthorization)
-        return {"domain_name": domain_name, "value": base64_of_acme_keyauthorization}
+        txt_value = dns_challenge(acme_keyauthorization)
+        self.create_dns_record(domain_name, txt_value)
+        return {"domain_name": domain_name, "value": txt_value}
 
-    def cleanup_authorization(self, domain_name, value):
-        self.delete_dns_record(domain_name, value)
+    def cleanup_authorization(self, **kwargs):
+        self.delete_dns_record(kwargs["domain_name"], kwargs["value"])

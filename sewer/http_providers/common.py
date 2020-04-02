@@ -44,5 +44,5 @@ class BaseHttp(BaseAuthProvider):
             "acme_keyauthorization": acme_keyauthorization,
         }
 
-    def cleanup_authorization(self, domain_name, token, **kwargs):
-        self.delete_challenge_file(domain_name, token)
+    def cleanup_authorization(self, **kwargs):
+        self.delete_challenge_file(kwargs["domain_name"], kwargs["token"])
