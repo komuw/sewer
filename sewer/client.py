@@ -445,13 +445,13 @@ class Client(object):
         response = self.GET(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
-                response.status_code, self.log_response(response),
+                response.status_code, self.log_response(response)
             )
         )
         if response.status_code not in [200, 201]:
             raise ValueError(
                 "Error getting identifier authorization: status_code={status_code} response={response}".format(
-                    status_code=response.status_code, response=self.log_response(response),
+                    status_code=response.status_code, response=self.log_response(response)
                 )
             )
         response_json = response.json()
@@ -466,7 +466,7 @@ class Client(object):
                 challenge_token = challenge["token"]
                 challenge_url = challenge["url"]
 
-                identifier_auth =  {
+                identifier_auth = {
                     "domain": domain,
                     "url": url,
                     "wildcard": wildcard,
@@ -485,9 +485,7 @@ class Client(object):
         acme_header_jwk_json = json.dumps(
             self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
         )
-        acme_thumbprint = safe_base64(
-            sha256(acme_header_jwk_json.encode("utf8")).digest()
-        )
+        acme_thumbprint = safe_base64(sha256(acme_header_jwk_json.encode("utf8")).digest())
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
         return acme_keyauthorization
