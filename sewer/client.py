@@ -76,7 +76,7 @@ class Client(object):
             (DEPRECATED) a subclass of sewer.BaseDns which will be called to create/delete DNS TXT records.
             do not pass this parameter if also passing auth_provider.
         :param auth_provider:                (required) [class]
-            a subclass of sewer.BaseAuthProvider which will be called to create/delete auth records.
+            a subclass of sewer.BaseAuth which will be called to create/delete auth records.
             do not pass this parameter if also passing dns_class
         :param domain_alt_names:             (optional) [list]
             list of alternative names that you want to be bundled into the same certificate as domain_name.
@@ -700,7 +700,7 @@ class Client(object):
 
     def get_certificate(self):
         self.logger.debug("get_certificate")
-        cleanup_kwargs_list = []
+        cleanup_list = []
 
         try:
             self.acme_register()
@@ -710,10 +710,8 @@ class Client(object):
                 identifier_auth = self.get_identifier_authorization(url)
                 token = identifier_auth["token"]
                 acme_keyauthorization = self.get_keyauthorization(token)
-                cleanup_kwargs = self.auth_provider.fulfill_authorization(
-                    identifier_auth, token, acme_keyauthorization
-                )
-                cleanup_kwargs_list.append(cleanup_kwargs)
+                self.auth_provider.setup_auth(identifier_auth, token, acme_keyauthorization)
+                cleanup_list.append((identifier_auth, token, acme_keyauthorization))
 
                 responder = {
                     "challenge_url": identifier_auth["challenge_url"],
@@ -745,8 +743,7 @@ class Client(object):
             self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)))
             raise e
         finally:
-            for cleanup_kwargs in cleanup_kwargs_list:
-                self.auth_provider.cleanup_authorization(**cleanup_kwargs)
+            self.auth_provider.clear_cert(cleanup_list)
 
         return certificate
 

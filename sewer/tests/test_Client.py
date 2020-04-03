@@ -446,27 +446,27 @@ class TestClientHttpAuthProvider(TestCase):
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
             )
 
-    def test_create_challenge_file_is_called(self):
+    def test_http_setup_auth_is_called(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleHttpProvider.create_challenge_file"
-        ) as mock_create_challenge_file:
+            "sewer.tests.test_utils.ExmpleHttpProvider.setup_auth"
+        ) as mock_http_setup_auth:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
-            self.assertTrue(mock_create_challenge_file.called)
+            self.assertTrue(mock_http_setup_auth.called)
 
-    def test_delete_challenge_file_is_called(self):
+    def test_http_clear_auth_is_called(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleHttpProvider.delete_challenge_file"
-        ) as mock_delete_challenge_file:
+            "sewer.tests.test_utils.ExmpleHttpProvider.clear_auth"
+        ) as mock_http_clear_auth:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
-            self.assertTrue(mock_delete_challenge_file.called)
+            self.assertTrue(mock_http_clear_auth.called)
 
 
 # TEST cli

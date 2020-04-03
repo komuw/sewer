@@ -1,4 +1,5 @@
 import logging
+from typing import Sequence, Tuple
 
 from hashlib import sha256
 from sewer.lib import safe_base64
@@ -8,13 +9,64 @@ from sewer.lib import safe_base64
 from sewer.lib import log_response as lib_lr
 
 
-class BaseAuthProvider(object):
-    def __init__(self, logger=None, LOG_LEVEL="INFO"):
+class BaseAuth(object):
+    """
+    Abstract base class for providers of key authorizations that are responsible
+    for taking the challenge info they're given and posting it where the ACME server
+    can find it, as well as for cleaning up after validation is complete.
+
+    There are layers of interface for the challenge setup & clear operations.  The
+    newest, and the one that will be called directly from sewer's ACME code, passes
+    a list of (domain, token, key_auth) containing all of the authorizations that
+    must be validated before a certificate can issue.  These are the *_cert methods.
+
+    The layer below *_cert are interfaces to setup and clean a single authorization
+    per call, and are names *_auth.  They take three arguments, same as each item
+    in the list passed to *_cert.  Aside from naming, these are pretty much the
+    same as the original dns-only provider interface.
+
+    The third level is a temporary one for compatibility with unconverted dns
+    providers that were written before this was introduced.  create_dns_record and
+    delete_dns_record are obsolescent, and will be removed when there are no
+    provders left in the tree that use them.
+
+    The implementation of the *_cert methods here just loops, calling *_auth for
+    each item in the authprizations list.  So providers that have to deal with one
+    auth at a time can just implement that.  Some providers may be able to work
+    more efficently if they can see all the items at once, and those will prefer
+    to implement *_cert, overriding the versions here.
+
+    __init__ arguments protocol:  Taking the lesson from some Django classes that
+    were layered like this (and with many leaf users, some outside of the framework),
+    it is always declared with only self and **kwargs.  Each layer MUST pop the args
+    it knows and wishes to handle, then pass what's left to its immediate base class.
+    The end goal is to allow initializing a provider with whatever it needs to
+    authenticate to and interact with the DNS system that publishes the challenges.
+    Then that can be done outside of sewer's ACME engine (Client class) and passed
+    to it ready to use.
+    """
+
+    def __init__(self, **kwargs):
+        """
+        __init__ accepts logging control argument(s).  From preferred to legacy:
+         *  logger	a configured logging object to use as-is
+         *  log_level	level to setup local logger for, defaulting to INFO
+         *  LOG_LEVEL   obsolescent legacy version of log_level
+
+        logger will override log_level will override LOG_LEVEL if more than one is passed
+        """
+
+        logger = kwargs.pop("logger", None)
+        log_level = kwargs.pop("LOG_LEVEL", "INFO")	# compatibility / obsolescent
+        log_level = kwargs.pop("log_level", log_level)
+        if kwargs:
+            raise ValueError("BaseAuth was passed unrecognized argument(s): %s" % kwargs)
+
         if logger:
             self.logger = logger
         else:
             self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(LOG_LEVEL)
+            self.logger.setLevel(log_level)
             if not self.logger.hasHandlers():
                 handler = logging.StreamHandler()
                 formatter = logging.Formatter("%(message)s")
@@ -24,23 +76,31 @@ class BaseAuthProvider(object):
         ### hack for compatibility with some (3?) existing dns providers
         self.log_response = lib_lr
 
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        """
-        Called by the client to create the required authorization resource. This Could be a dns record (for dns-01)
-        or a challange file hosted on the filesystem.
+    def setup_cert(self, authorizations: Sequence[Tuple[str, str, str]]):
+        for auth in authorizations:
+            self.setup_auth(*auth)
 
-        This method must return a dictionary which are the cleanup_kwargs used in the cleanup_authorization method below
-        """
-        raise NotImplementedError("fulfill_authorization method must be implemented.")
+    def is_ready_cert(self, authorizations: Sequence[Tuple[str, str, str]]):
+        for auth in authorizations:
+            self.is_ready_auth(*auth)
 
-    def cleanup_authorization(self, **cleanup_kwargs):
-        """
-        called after the cert is aquired to cleanup any authorization resources created in the fulfill_authorization method above.
-        """
-        raise NotImplementedError("cleanup_authorization method must be implemented.")
+    def clear_cert(self, authorizations: Sequence[Tuple[str, str, str]]):
+        for auth in authorizations:
+            self.clear_auth(*auth)
+
+    def setup_auth(self, domain: str, token: str, key_auth: str):
+        "setup one authorization - add dns record, file, etc."
+        raise NotImplementedError("setup_auth method must be implemented when setup_cert is not.")
+
+    def is_ready_auth(self, domain: str, token: str, key_auth: str):
+        "is one authorization ready for validation?  answer True or False"
+        raise NotImplementedError("is_ready_auth method must be implemented when is_ready_cert is not.")
 
 
-##########
+    def clear_auth(self, domain: str, token: str, key_auth: str):
+        "clear one authorization - remove dns record, file, etc."
+        raise NotImplementedError("clear_auth method must be implemented when clear_cert is not.")
+
 
 def dns_challenge(key_auth: str) -> str:
     "return safe-base64 of hash of key_auth; used for dns response"
@@ -48,10 +108,30 @@ def dns_challenge(key_auth: str) -> str:
     return safe_base64(sha256(key_auth.encode("utf8")).digest())
 
 
-class BaseDns(BaseAuthProvider):
+class BaseDns(BaseAuth):
+    """
+    BaseDns provides a compatibility layer in the *_auth methods.  These convert
+    the "standard" three arguments into the two that are needed by legacy dns
+    providers, allowing them to work behind these new interfaces.  That's not to
+    say that they have to do that, and if a provider can update multiple texts at
+    a time, it can take advantage of the *_cert interfaces.  Whatever works best...
+    """
+
     def __init__(self, **kwargs):
-        super(BaseDns, self).__init__(kwargs)
+        super(BaseDns, self).__init__(**kwargs)
         self.auth_type = "dns-01"
+
+    def setup_auth(self, domain: str, token: str, key_auth: str):
+        "shim to use legacy create_dns_record method"
+
+        self.create_dns_record(domain, dns_challenge(key_auth))
+
+    def clear_auth(self, domain: str, token: str, key_auth: str):
+        "shim to use legacy delete_dns_record method"
+
+        self.delete_dns_record(domain, dns_challenge(key_auth))
+
+    ### FIX ME ### left the legacy DNS provider methods here for compatibility and documentation
 
     def create_dns_record(self, domain_name, domain_dns_value):
         """
@@ -100,76 +180,13 @@ class BaseDns(BaseAuthProvider):
         """
         raise NotImplementedError("delete_dns_record method must be implemented.")
 
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.4
-        A client fulfills this challenge by constructing a key authorization
-        from the "token" value provided in the challenge and the client's
-        account key.  The client then computes the SHA-256 digest [FIPS180-4]
-        of the key authorization.
 
-        The record provisioned to the DNS contains the base64url encoding of
-        this digest.  The client constructs the validation domain name by
-        prepending the label "_acme-challenge" to the domain name being
-        validated, then provisions a TXT record with the digest value under
-        that name.  For example, if the domain name being validated is
-        "example.org", then the client would provision the following DNS
-        record:
-        """
-        domain_name = identifier_auth["domain"]
-        txt_value = dns_challenge(acme_keyauthorization)
-        self.create_dns_record(domain_name, txt_value)
-        return {"domain_name": domain_name, "value": txt_value}
+class BaseHttp(BaseAuth):
+    """
+    Since support for http providers is new at about the same time as the new
+    interface, there's no need for backwards compatible shims in BaseHttp.
+    """
 
-    def cleanup_authorization(self, **kwargs):
-        self.delete_dns_record(kwargs["domain_name"], kwargs["value"])
-
-
-##########
-
-class BaseHttp(BaseAuthProvider):
     def __init__(self, **kwargs):
         super(BaseHttp, self).__init__(**kwargs)
         self.auth_type = "http-01"
-
-    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
-        """
-        Method that creates/add an http challange record file.
-
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.3
-        A client fulfills this challenge by constructing a key authorization
-        from the "token" value provided in the challenge and the client's
-        account key.  The client then provisions the key authorization as a
-        resource on the HTTP server for the domain in question.
-
-        The path at which the resource is provisioned is comprised of the
-        fixed prefix "/.well-known/acme-challenge/", followed by the "token"
-        value in the challenge.  The value of the resource MUST be the ASCII
-        representation of the key authorization.
-        """
-        raise NotImplementedError("create_challenge_file method must be implemented.")
-
-    def delete_challenge_file(self, domain_name, token):
-        """
-        Method that deletes/removes a http challenge record file
-
-        :param domain_name: :string: The domain/subdomain name whose record ought to be
-            deleted/removed.
-        :param token: :string: The value/content of the record that will be
-            deleted/removed for the given domain/subdomain
-
-        This method should return None
-        """
-        raise NotImplementedError("delete_challenge_file method must be implemented.")
-
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        domain_name = identifier_auth["domain"]
-        self.create_challenge_file(domain_name, token, acme_keyauthorization)
-        return {
-            "domain_name": domain_name,
-            "token": token,
-            "acme_keyauthorization": acme_keyauthorization,
-        }
-
-    def cleanup_authorization(self, **kwargs):
-        self.delete_challenge_file(kwargs["domain_name"], kwargs["token"])

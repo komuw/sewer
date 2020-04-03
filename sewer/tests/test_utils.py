@@ -15,17 +15,17 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
         pass
 
 
-### FIX ME ### have to pretend to be a valid auth_type because these ain't no unit tests :-(
+### FIX ME ### have to pretend to be a valid auth type because these ain't no unit tests :-(
 
-class ExmpleAuthProvider(sewer.auth.BaseAuthProvider):
+class ExmpleAuthProvider(sewer.auth.BaseAuth):
     def __init__(self):
         super(ExmpleAuthProvider, self).__init__()
         self.auth_type = "http-01"
 
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
+    def setup_auth(self, domain, token, key_auth):
         return {}
 
-    def cleanup_authorization(self, **cleanup_kwargs):
+    def clear_auth(self, domain, token, key_auth):
         pass
 
 
@@ -33,10 +33,10 @@ class ExmpleHttpProvider(sewer.http_providers.common.BaseHttp):
     def __init__(self):
         super(ExmpleHttpProvider, self).__init__()
 
-    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
+    def setup_auth(self, domain, token, key_auth):
         pass
 
-    def delete_challenge_file(self, domain_name, token):
+    def clear_auth(self, domain, token, key_auth):
         pass
 
 
