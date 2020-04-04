@@ -97,8 +97,7 @@ class BaseAuth(object):
             self.setup_auth(*auth)
 
     def is_ready_cert(self, authorizations: Sequence[Tuple[str, str, str]]):
-        for auth in authorizations:
-            self.is_ready_auth(*auth)
+        return all(self.is_ready_auth(*auth) for auth in authorizations)
 
     def clear_cert(self, authorizations: Sequence[Tuple[str, str, str]]):
         for auth in authorizations:
@@ -111,7 +110,6 @@ class BaseAuth(object):
     def is_ready_auth(self, domain: str, token: str, key_auth: str):
         "is one authorization ready for validation?  answer True or False"
         raise NotImplementedError("is_ready_auth method must be implemented when is_ready_cert is not.")
-
 
     def clear_auth(self, domain: str, token: str, key_auth: str):
         "clear one authorization - remove dns record, file, etc."
