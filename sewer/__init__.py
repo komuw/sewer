@@ -12,4 +12,3 @@ from .dns_providers import DuckDNSDns  # noqa:F401
 from .dns_providers import ClouDNSDns  # noqa:F401
 from .dns_providers import Route53Dns  # noqa:F401
 from .dns_providers import PowerDNSDns  # noqa:F401
-from .http_providers import BaseHttp  # noqa: F401

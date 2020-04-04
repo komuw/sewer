@@ -15,12 +15,11 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
         pass
 
 
-### FIX ME ### have to pretend to be a valid auth type because these ain't no unit tests :-(
+### FIX ME ### this is now obsolete (see dummy HTTP class below!)
 
 class ExmpleAuthProvider(sewer.auth.BaseAuth):
     def __init__(self):
-        super(ExmpleAuthProvider, self).__init__()
-        self.auth_type = "http-01"
+        super(ExmpleAuthProvider, self).__init__(chal_types=["http-01"])
 
     def setup_auth(self, domain, token, key_auth):
         return {}
@@ -29,9 +28,9 @@ class ExmpleAuthProvider(sewer.auth.BaseAuth):
         pass
 
 
-class ExmpleHttpProvider(sewer.http_providers.common.BaseHttp):
+class ExmpleHttpProvider(sewer.auth.BaseAuth):
     def __init__(self):
-        super(ExmpleHttpProvider, self).__init__()
+        super(ExmpleHttpProvider, self).__init__(chal_types=["http-01"])
 
     def setup_auth(self, domain, token, key_auth):
         pass

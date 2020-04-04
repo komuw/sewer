@@ -449,7 +449,10 @@ class Client(object):
             domain = "*." + domain
 
         for i in response_json["challenges"]:
-            if i["type"] == self.auth_provider.auth_type:
+
+            ### FIX ME ### this works for current limited selection of type names
+
+            if i["type"] in self.auth_provider.chal_types:
                 challenge = i
                 challenge_token = challenge["token"]
                 challenge_url = challenge["url"]
