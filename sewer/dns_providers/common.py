@@ -14,7 +14,7 @@ def dns_challenge(key_auth: str) -> str:
 
 class BaseDns(BaseAuth):
     """
-    BaseDns provides a legacy compatibility layer in the *_auth methods. 
+    BaseDns provides a legacy compatibility layer in the *_auth methods.
     These convert the "standard" three arguments into the two that are
     needed by legacy dns providers, allowing them to work behind these new
     interfaces.

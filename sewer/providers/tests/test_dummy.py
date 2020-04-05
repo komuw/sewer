@@ -1,4 +1,3 @@
-from unittest import mock
 from unittest import TestCase
 
 from sewer.providers import http_dummy
@@ -12,7 +11,6 @@ authorizations = (
 
 
 class TestDummy(TestCase):
-
     def setup(self):
         pass
 

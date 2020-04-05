@@ -17,6 +17,7 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
 
 ### FIX ME ### this is now obsolete (see dummy HTTP class below!)
 
+
 class ExmpleAuthProvider(sewer.auth.BaseAuth):
     def __init__(self):
         super(ExmpleAuthProvider, self).__init__(chal_types=["http-01"])

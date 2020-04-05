@@ -1,15 +1,12 @@
 import logging
 from typing import Sequence, Tuple
 
-from hashlib import sha256
-from sewer.lib import safe_base64
-
 
 class ValidationMethod:
-
     def __init__(self, label: str, id_type: str, supported: bool):
         self.label = label
         self.id_type = id_type
+
 
 supported_validations = {
     "http-01": ValidationMethod("http-01", "dns", True),
@@ -76,7 +73,7 @@ class BaseAuth(object):
             raise ValueError("Unsupported challenge type in list: %s" % self.chal_types)
 
         logger = kwargs.pop("logger", None)
-        log_level = kwargs.pop("LOG_LEVEL", "INFO")	# compatibility / obsolescent
+        log_level = kwargs.pop("LOG_LEVEL", "INFO")  # compatibility / obsolescent
         log_level = kwargs.pop("log_level", log_level)
         if kwargs:
             raise ValueError("BaseAuth was passed unrecognized argument(s): %s" % kwargs)
@@ -109,7 +106,9 @@ class BaseAuth(object):
 
     def is_ready_auth(self, domain: str, token: str, key_auth: str):
         "is one authorization ready for validation?  answer True or False"
-        raise NotImplementedError("is_ready_auth method must be implemented when is_ready_cert is not.")
+        raise NotImplementedError(
+            "is_ready_auth method must be implemented when is_ready_cert is not."
+        )
 
     def clear_auth(self, domain: str, token: str, key_auth: str):
         "clear one authorization - remove dns record, file, etc."

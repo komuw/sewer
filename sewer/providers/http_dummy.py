@@ -6,7 +6,6 @@ from ..auth import BaseAuth
 
 
 class BaseHttpDummy(BaseAuth):
-
     def __init__(self, **kwargs):
         kwargs.setdefault("chal_types", ["http-01"])
         super(BaseHttpDummy, self).__init__(**kwargs)
