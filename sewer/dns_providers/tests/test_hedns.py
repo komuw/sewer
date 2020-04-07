@@ -35,21 +35,8 @@ class TestHEDNS(TestCase):
         self.assertEqual(zone, _zone)
         self.assertEqual(acme_txt, "_acme-challenge.%s" % zone)
 
-        domain = "*.%s.%s" % (_zone, self.domain_name)
-        root, zone, acme_txt = self.dns_class.extract_zone(domain)
-
-        self.assertEqual(root, self.domain_name)
-        self.assertEqual(zone, _zone)
-        self.assertEqual(acme_txt, "_acme-challenge.%s" % zone)
-
     def test_extract_zone_root(self):
         domain = self.domain_name
-        root, zone, acme_txt = self.dns_class.extract_zone(domain)
-        self.assertEqual(root, self.domain_name)
-        self.assertEqual(zone, "")
-        self.assertEqual(acme_txt, "_acme-challenge")
-
-        domain = "*." + self.domain_name
         root, zone, acme_txt = self.dns_class.extract_zone(domain)
         self.assertEqual(root, self.domain_name)
         self.assertEqual(zone, "")
