@@ -457,8 +457,6 @@ class Client(object):
         response_json = response.json()
         domain = response_json["identifier"]["value"]
         wildcard = response_json.get("wildcard")
-        if wildcard:
-            domain = "*." + domain
 
         for i in response_json["challenges"]:
             if i["type"] == self.auth_provider.auth_type:

@@ -26,9 +26,10 @@ class DNSPodDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
         subd = ""
+
+        ### FIX ME ### domain is exactly last two parts (no bbc.co.uk eg.)
+
         if domain_name.count(".") != 1:  # not top level domain
             pos = domain_name.rfind(".", 0, domain_name.rfind("."))
             subd = domain_name[:pos]
@@ -68,8 +69,10 @@ class DNSPodDns(common.BaseDns):
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        domain_name = domain_name.lstrip("*.")
         subd = ""
+
+        ### FIX ME ### domain is exactly last two parts (no bbc.co.uk eg.)
+
         if domain_name.count(".") != 1:  # not top level domain
             pos = domain_name.rfind(".", 0, domain_name.rfind("."))
             subd = domain_name[:pos]

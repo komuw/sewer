@@ -150,8 +150,6 @@ class AliyunDns(common.BaseDns):
         :param str domain_name: the value sewer client passed in, like *.menduo.example.com
         :return tuple: root, zone, acme_txt
         """
-        # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
         if domain_name.count(".") > 1:
             zone, middle, last = str(domain_name).rsplit(".", 2)
             root = ".".join([middle, last])
