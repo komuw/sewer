@@ -173,8 +173,6 @@ class RackspaceDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        # strip wildcard if present
-        domain_name = domain_name.lstrip("*.")
         self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
         record_name = "_acme-challenge." + domain_name
         url = urllib.parse.urljoin(

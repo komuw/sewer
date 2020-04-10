@@ -7,6 +7,9 @@ except ImportError:
 from . import common
 
 
+### FIX ME ### this assumes there are only two levels above the host (no bbc.co.uk eg.)
+
+
 def _split_domain_name(domain_name):
     """ClouDNS requires the domain name and host to be split."""
     full_domain_name = "_acme-challenge.{}".format(domain_name)
@@ -14,9 +17,6 @@ def _split_domain_name(domain_name):
 
     domain_name = ".".join(domain_parts[-2:])
     host = ".".join(domain_parts[:-2])
-
-    if host == "_acme-challenge.*":
-        host = "_acme-challenge"
 
     return domain_name, host
 

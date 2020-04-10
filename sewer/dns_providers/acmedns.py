@@ -35,8 +35,6 @@ class AcmeDnsDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
 
         resolver = Resolver(configure=False)
         resolver.nameservers = ["8.8.8.8"]

@@ -21,8 +21,6 @@ class DuckDNSDns(common.BaseDns):
 
     def _common_dns_record(self, logger_info, domain_name, payload_end_arg):
         self.logger.info("{0}".format(logger_info))
-        # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
         # add provider domain to the domain name if not present
         provider_domain = ".duckdns.org"
         if domain_name.rfind(provider_domain) == -1:

@@ -33,8 +33,6 @@ class AuroraDns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
 
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + "." + extractedDomain.suffix
