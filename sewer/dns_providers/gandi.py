@@ -69,9 +69,7 @@ class GandiDns(common.BaseDns):
                 if idempotent:
                     return None
                 else:
-                    raise RuntimeError(
-                        "there is not exactly one record for domain: " + domain_name
-                    )
+                    raise RuntimeError("there is not exactly one record for domain: " + domain_name)
 
             return subdomain_records[0]
 
@@ -91,8 +89,7 @@ class GandiDns(common.BaseDns):
 
     def get_zone_records_href(self, base_domain):
         domain_resp = self.requests.get(
-            os.path.join(self.GANDI_API_BASE_URL, "domains", base_domain),
-            headers=self.GET_HEADERS,
+            os.path.join(self.GANDI_API_BASE_URL, "domains", base_domain), headers=self.GET_HEADERS,
         )
 
         if not domain_resp.status_code < 300:
@@ -102,9 +99,7 @@ class GandiDns(common.BaseDns):
         return domain_info["zone_records_href"]
 
     def get_all_zone_records(self, zone_records_href):
-        all_records_resp = self.requests.get(
-            zone_records_href, headers=self.GET_HEADERS
-        )
+        all_records_resp = self.requests.get(zone_records_href, headers=self.GET_HEADERS)
         if not all_records_resp.status_code < 300:
             raise RuntimeError("getAllZoneRecords failed")
 

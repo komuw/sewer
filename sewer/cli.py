@@ -209,9 +209,7 @@ def main():
             logger.error(err)
             raise KeyError(err)
 
-        logger.info(
-            "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-        )
+        logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
 
     elif dns_provider == "aurora":
         from . import AuroraDns
@@ -223,13 +221,9 @@ def main():
             dns_class = AuroraDns(
                 AURORA_API_KEY=AURORA_API_KEY, AURORA_SECRET_KEY=AURORA_SECRET_KEY
             )
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
     elif dns_provider == "acmedns":
@@ -245,13 +239,9 @@ def main():
                 ACME_DNS_API_KEY=ACME_DNS_API_KEY,
                 ACME_DNS_API_BASE_URL=ACME_DNS_API_BASE_URL,
             )
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "aliyun":
         from . import AliyunDns
@@ -261,13 +251,9 @@ def main():
             aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
             aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
             dns_class = AliyunDns(aliyun_ak, aliyun_secret, aliyun_endpoint)
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "hurricane":
         from . import HurricaneDns
@@ -276,13 +262,9 @@ def main():
             he_username = os.environ["HURRICANE_USERNAME"]
             he_password = os.environ["HURRICANE_PASSWORD"]
             dns_class = HurricaneDns(he_username, he_password)
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "rackspace":
         from . import RackspaceDns
@@ -291,13 +273,9 @@ def main():
             RACKSPACE_USERNAME = os.environ["RACKSPACE_USERNAME"]
             RACKSPACE_API_KEY = os.environ["RACKSPACE_API_KEY"]
             dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY)
-            logger.info(
-                "chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider)
-            )
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "dnspod":
         from . import DNSPodDns
@@ -306,13 +284,9 @@ def main():
             DNSPOD_ID = os.environ["DNSPOD_ID"]
             DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
             dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY)
-            logger.info(
-                "chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider)
-            )
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "duckdns":
         from . import DuckDNSDns
@@ -321,26 +295,18 @@ def main():
             duckdns_token = os.environ["DUCKDNS_TOKEN"]
 
             dns_class = DuckDNSDns(duckdns_token=duckdns_token)
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "cloudns":
         from . import ClouDNSDns
 
         try:
             dns_class = ClouDNSDns()
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "powerdns":
         from . import PowerDNSDns
@@ -350,13 +316,9 @@ def main():
             powerdns_api_url = os.environ["POWERDNS_API_URL"]
 
             dns_class = PowerDNSDns(powerdns_api_key, powerdns_api_url)
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "gandi":
         from . import GandiDns
@@ -365,13 +327,9 @@ def main():
             gandi_api_key = os.environ["GANDI_API_KEY"]
 
             dns_class = GandiDns(GANDI_API_KEY=gandi_api_key)
-            logger.info(
-                "chosen_dns_provider. Using {0} as dns provider.".format(dns_provider)
-            )
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
-            logger.error(
-                "ERROR:: Please supply {0} as an environment variable.".format(str(e))
-            )
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     else:
         raise ValueError("The dns provider {0} is not recognised.".format(dns_provider))
