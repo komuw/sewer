@@ -340,7 +340,7 @@ def main():
         certificate_key=certificate_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
-        ACME_AUTH_STATUS_MAX_CHECKS=maxChecks
+        ACME_AUTH_STATUS_MAX_CHECKS=maxChecks,
     )
     certificate_key = client.certificate_key
     account_key = client.account_key
