@@ -18,7 +18,7 @@ The currently supported DNS providers are:
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
 3. [acme-dns](https://github.com/joohoi/acme-dns)
 4. [Aliyun](https://help.aliyun.com/document_detail/29739.html)
-5. [HE DNS, Hurricane Electric DNS](https://dns.he.net/)
+5. [Hurricane Electric DNS](https://dns.he.net/)
 6. [Rackspace](https://www.rackspace.com/cloud/dns)
 7. [DNSPod](https://www.dnspod.cn/)
 8. [DuckDNS](https://www.duckdns.org/)
