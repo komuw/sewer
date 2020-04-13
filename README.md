@@ -184,6 +184,7 @@ usage: sewer [-h] [--version] [--account_key ACCOUNT_KEY]
              [--bundle_name BUNDLE_NAME] [--endpoint {production,staging}]
              [--email EMAIL] --action {run,renew} [--out_dir OUT_DIR]
              [--loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
+             [--maxChecks ACME_AUTH_STATUS_MAX_CHECKS]
 
 Sewer is a Let's Encrypt(ACME) client.
 
@@ -223,6 +224,11 @@ optional arguments:
   --loglevel {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         The log level to output log messages at. eg:
                         --loglevel DEBUG
+                        
+  --maxChecks ACME_AUTH_STATUS_MAX_CHECKS
+                        The number of attempts sewer will make to verfiy that
+                        the DNS challenge has propegated. By default sewer will
+                        make this check every 8 seconds.
 ```
 
 The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
