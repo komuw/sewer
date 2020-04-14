@@ -87,10 +87,7 @@ class TestGandiDns(TestCase):
 
     EXPECTED_GET_HEADERS = {"X-Api-Key": MOCK_GANDI_API_KEY}
 
-    EXPECTED_POST_HEADERS = {
-        "X-Api-Key": MOCK_GANDI_API_KEY,
-        "Content-Type": "application/json",
-    }
+    EXPECTED_POST_HEADERS = {"X-Api-Key": MOCK_GANDI_API_KEY, "Content-Type": "application/json"}
 
     def check_correct_headers_passed(self, calls, expectedHeaders):
         for call in calls:
@@ -108,7 +105,7 @@ class TestGandiDns(TestCase):
         self.check_correct_headers_passed(delete_calls, TestGandiDns.EXPECTED_GET_HEADERS)
 
         self.assertEqual(
-            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld",
+            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
         )
         self.assertEqual(get_calls[1][0][0], "mock_zone_records_href")
         self.assertEqual(delete_calls[0][0][0], "mock_record_href")
@@ -138,19 +135,19 @@ class TestGandiDns(TestCase):
         self.check_correct_headers_passed(delete_calls, TestGandiDns.EXPECTED_GET_HEADERS)
 
         self.assertEqual(
-            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld",
+            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
         )
         self.assertEqual(get_calls[1][0][0], "mock_zone_records_href")
         self.assertEqual(delete_calls[0][0][0], "mock_record_href")
 
         self.assertEqual(
-            get_calls[2][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld",
+            get_calls[2][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
         )
         self.assertEqual(post_calls[0][0][0], "mock_zone_records_href")
         self.assertEqual(post_calls[0][1]["json"]["rrset_type"], "TXT")
         self.assertEqual(post_calls[0][1]["json"]["rrset_ttl"], 10800)
         self.assertEqual(
-            post_calls[0][1]["json"]["rrset_name"], "_acme-challenge.subsubdomain.subdomain",
+            post_calls[0][1]["json"]["rrset_name"], "_acme-challenge.subsubdomain.subdomain"
         )
         self.assertEqual(post_calls[0][1]["json"]["rrset_values"], ["val"])
 
@@ -168,13 +165,13 @@ class TestGandiDns(TestCase):
         self.check_correct_headers_passed(delete_calls, TestGandiDns.EXPECTED_GET_HEADERS)
 
         self.assertEqual(
-            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld",
+            get_calls[0][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
         )
         self.assertEqual(get_calls[1][0][0], "mock_zone_records_href")
         self.assertEqual(len(delete_calls), 0)
 
         self.assertEqual(
-            get_calls[2][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld",
+            get_calls[2][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
         )
         self.assertEqual(post_calls[0][0][0], "mock_zone_records_href")
         self.assertEqual(post_calls[0][1]["json"]["rrset_type"], "TXT")

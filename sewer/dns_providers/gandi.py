@@ -32,10 +32,7 @@ class GandiDns(common.BaseDns):
             raise ValueError("Error initializing Gandi DNS adapter. Pass an API key.")
 
         self.GET_HEADERS = {"X-Api-Key": self.GANDI_API_KEY}
-        self.POST_HEADERS = {
-            "X-Api-Key": self.GANDI_API_KEY,
-            "Content-Type": "application/json",
-        }
+        self.POST_HEADERS = {"X-Api-Key": self.GANDI_API_KEY, "Content-Type": "application/json"}
 
         super(GandiDns, self).__init__()
 
@@ -89,7 +86,7 @@ class GandiDns(common.BaseDns):
 
     def get_zone_records_href(self, base_domain):
         domain_resp = self.requests.get(
-            os.path.join(self.GANDI_API_BASE_URL, "domains", base_domain), headers=self.GET_HEADERS,
+            os.path.join(self.GANDI_API_BASE_URL, "domains", base_domain), headers=self.GET_HEADERS
         )
 
         if not domain_resp.status_code < 300:
