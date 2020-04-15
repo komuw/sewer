@@ -40,7 +40,7 @@ class Route53Dns(common.BaseDns):
 
         self._resource_records = collections.defaultdict(list)
 
-        super(Route53Dns).__init__()
+        super(Route53Dns, self).__init__()
 
     def create_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."
