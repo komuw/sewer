@@ -12,7 +12,7 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-from .lib import safe_base64
+from .lib import log_response, safe_base64
 
 
 class Client(object):
@@ -251,18 +251,6 @@ class Client(object):
         return response
 
     @staticmethod
-    def log_response(response):
-        """
-        renders response as json or as a string
-        """
-        # TODO: use this to handle all response logs.
-        try:
-            log_body = response.json()
-        except ValueError:
-            log_body = response.content[:30]
-        return log_body
-
-    @staticmethod
     def get_user_agent():
         return "python-requests/{requests_version} ({system}: {machine}) sewer {sewer_version} ({sewer_url})".format(
             requests_version=requests.__version__,
@@ -282,7 +270,7 @@ class Client(object):
             raise ValueError(
                 "Error while getting Acme endpoints: status_code={status_code} response={response}".format(
                     status_code=get_acme_endpoints.status_code,
-                    response=self.log_response(get_acme_endpoints),
+                    response=log_response(get_acme_endpoints),
                 )
             )
         return get_acme_endpoints
@@ -364,7 +352,7 @@ class Client(object):
         acme_register_response = self.make_signed_acme_request(url=url, payload=payload)
         self.logger.debug(
             "acme_register_response. status_code={0}. response={1}".format(
-                acme_register_response.status_code, self.log_response(acme_register_response)
+                acme_register_response.status_code, log_response(acme_register_response)
             )
         )
 
@@ -372,7 +360,7 @@ class Client(object):
             raise ValueError(
                 "Error while registering: status_code={status_code} response={response}".format(
                     status_code=acme_register_response.status_code,
-                    response=self.log_response(acme_register_response),
+                    response=log_response(acme_register_response),
                 )
             )
 
@@ -411,7 +399,7 @@ class Client(object):
         self.logger.debug(
             "apply_for_cert_issuance_response. status_code={0}. response={1}".format(
                 apply_for_cert_issuance_response.status_code,
-                self.log_response(apply_for_cert_issuance_response),
+                log_response(apply_for_cert_issuance_response),
             )
         )
 
@@ -419,7 +407,7 @@ class Client(object):
             raise ValueError(
                 "Error applying for certificate issuance: status_code={status_code} response={response}".format(
                     status_code=apply_for_cert_issuance_response.status_code,
-                    response=self.log_response(apply_for_cert_issuance_response),
+                    response=log_response(apply_for_cert_issuance_response),
                 )
             )
 
@@ -445,13 +433,13 @@ class Client(object):
         response = self.GET(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
-                response.status_code, self.log_response(response)
+                response.status_code, log_response(response)
             )
         )
         if response.status_code not in [200, 201]:
             raise ValueError(
                 "Error getting identifier authorization: status_code={status_code} response={response}".format(
-                    status_code=response.status_code, response=self.log_response(response)
+                    status_code=response.status_code, response=log_response(response)
                 )
             )
         response_json = response.json()
@@ -514,7 +502,7 @@ class Client(object):
             self.logger.debug(
                 "check_authorization_status_response. status_code={0}. response={1}".format(
                     check_authorization_status_response.status_code,
-                    self.log_response(check_authorization_status_response),
+                    log_response(check_authorization_status_response),
                 )
             )
             if authorization_status in desired_status:
@@ -552,7 +540,7 @@ class Client(object):
         self.logger.debug(
             "respond_to_challenge_response. status_code={0}. response={1}".format(
                 respond_to_challenge_response.status_code,
-                self.log_response(respond_to_challenge_response),
+                log_response(respond_to_challenge_response),
             )
         )
 
@@ -577,7 +565,7 @@ class Client(object):
         send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
         self.logger.debug(
             "send_csr_response. status_code={0}. response={1}".format(
-                send_csr_response.status_code, self.log_response(send_csr_response)
+                send_csr_response.status_code, log_response(send_csr_response)
             )
         )
 
@@ -585,7 +573,7 @@ class Client(object):
             raise ValueError(
                 "Error sending csr: status_code={status_code} response={response}".format(
                     status_code=send_csr_response.status_code,
-                    response=self.log_response(send_csr_response),
+                    response=log_response(send_csr_response),
                 )
             )
         send_csr_response_json = send_csr_response.json()
@@ -603,7 +591,7 @@ class Client(object):
         self.logger.debug(
             "download_certificate_response. status_code={0}. response={1}".format(
                 download_certificate_response.status_code,
-                self.log_response(download_certificate_response),
+                log_response(download_certificate_response),
             )
         )
 
@@ -611,7 +599,7 @@ class Client(object):
             raise ValueError(
                 "Error fetching signed certificate: status_code={status_code} response={response}".format(
                     status_code=download_certificate_response.status_code,
-                    response=self.log_response(download_certificate_response),
+                    response=log_response(download_certificate_response),
                 )
             )
 

@@ -16,16 +16,6 @@ class BaseAuthProvider(object):
 
         self.auth_type = auth_type
 
-    def log_response(self, response):
-        """
-        renders a python-requests response as json or as a string
-        """
-        try:
-            log_body = response.json()
-        except ValueError:
-            log_body = response.content
-        return log_body
-
     def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
         """
         Called by the client to create the required authorization resource. This Could be a dns record (for dns-01)

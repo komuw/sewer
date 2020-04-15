@@ -3,6 +3,7 @@ import urllib.parse
 import requests
 
 from . import common
+from ..lib import log_response
 
 
 class CloudFlareDns(common.BaseDns):
@@ -53,7 +54,7 @@ class CloudFlareDns(common.BaseDns):
             raise ValueError(
                 "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
                     status_code=find_dns_zone_response.status_code,
-                    response=self.log_response(find_dns_zone_response),
+                    response=log_response(find_dns_zone_response),
                 )
             )
 
@@ -66,7 +67,7 @@ class CloudFlareDns(common.BaseDns):
                 "Error unable to get DNS zone for domain_name={domain_name}: status_code={status_code} response={response}".format(
                     domain_name=domain_name,
                     status_code=find_dns_zone_response.status_code,
-                    response=self.log_response(find_dns_zone_response),
+                    response=log_response(find_dns_zone_response),
                 )
             )
 
@@ -92,7 +93,7 @@ class CloudFlareDns(common.BaseDns):
         self.logger.debug(
             "create_cloudflare_dns_record_response. status_code={0}. response={1}".format(
                 create_cloudflare_dns_record_response.status_code,
-                self.log_response(create_cloudflare_dns_record_response),
+                log_response(create_cloudflare_dns_record_response),
             )
         )
         if create_cloudflare_dns_record_response.status_code != 200:
@@ -101,7 +102,7 @@ class CloudFlareDns(common.BaseDns):
             raise ValueError(
                 "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
                     status_code=create_cloudflare_dns_record_response.status_code,
-                    response=self.log_response(create_cloudflare_dns_record_response),
+                    response=log_response(create_cloudflare_dns_record_response),
                 )
             )
         self.logger.info("create_dns_record_end")
@@ -144,8 +145,7 @@ class CloudFlareDns(common.BaseDns):
             )
             self.logger.debug(
                 "delete_dns_record_response. status_code={0}. response={1}".format(
-                    delete_dns_record_response.status_code,
-                    self.log_response(delete_dns_record_response),
+                    delete_dns_record_response.status_code, log_response(delete_dns_record_response)
                 )
             )
             if delete_dns_record_response.status_code != 200:
@@ -154,7 +154,7 @@ class CloudFlareDns(common.BaseDns):
                 self.logger.error(
                     "delete_dns_record_response. status_code={0}. response={1}".format(
                         delete_dns_record_response.status_code,
-                        self.log_response(delete_dns_record_response),
+                        log_response(delete_dns_record_response),
                     )
                 )
 
