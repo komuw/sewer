@@ -1,4 +1,5 @@
 import logging
+from .lib import create_logger
 
 
 class BaseAuthProvider(object):
@@ -6,13 +7,7 @@ class BaseAuthProvider(object):
         self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(self.LOG_LEVEL)
-        if not self.logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(message)s")
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        self.logger = create_logger(__name__, self.LOG_LEVEL)
 
         self.auth_type = auth_type
 

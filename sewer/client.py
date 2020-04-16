@@ -2,7 +2,6 @@ import time
 import copy
 import json
 from hashlib import sha256
-import logging
 import binascii
 import platform
 
@@ -12,7 +11,7 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-from .lib import log_response, safe_base64
+from .lib import create_logger, log_response, safe_base64
 
 
 class Client(object):
@@ -156,13 +155,7 @@ class Client(object):
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(self.LOG_LEVEL)
-        if not self.logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(message)s")
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        self.logger = create_logger(__name__, LOG_LEVEL)
 
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)

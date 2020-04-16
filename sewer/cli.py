@@ -1,10 +1,10 @@
 import os
-import logging
 import argparse
 
 from . import Client
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
+from .lib import create_logger
 
 
 def main():
@@ -166,13 +166,7 @@ def main():
     if not os.access(out_dir, os.W_OK):
         raise OSError("The dir '{0}' is not writable".format(out_dir))
 
-    logger = logging.getLogger()
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("%(message)s")
-    handler.setFormatter(formatter)
-    if not logger.handlers:
-        logger.addHandler(handler)
-    logger.setLevel(loglevel)
+    logger = create_logger(None, loglevel)
 
     if account_key:
         account_key = account_key.read()
