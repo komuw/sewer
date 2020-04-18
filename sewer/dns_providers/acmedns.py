@@ -8,6 +8,7 @@ except ImportError:
 import requests
 
 from . import common
+from ..lib import log_response
 
 
 class AcmeDnsDns(common.BaseDns):
@@ -50,7 +51,7 @@ class AcmeDnsDns(common.BaseDns):
         self.logger.debug(
             "update_acmedns_dns_record_response. status_code={0}. response={1}".format(
                 update_acmedns_dns_record_response.status_code,
-                self.log_response(update_acmedns_dns_record_response),
+                log_response(update_acmedns_dns_record_response),
             )
         )
         if update_acmedns_dns_record_response.status_code != 200:
@@ -59,7 +60,7 @@ class AcmeDnsDns(common.BaseDns):
             raise ValueError(
                 "Error creating acme-dns dns record: status_code={status_code} response={response}".format(
                     status_code=update_acmedns_dns_record_response.status_code,
-                    response=self.log_response(update_acmedns_dns_record_response),
+                    response=log_response(update_acmedns_dns_record_response),
                 )
             )
         self.logger.info("create_dns_record_end")

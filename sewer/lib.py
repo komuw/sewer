@@ -1,5 +1,31 @@
-import base64
+import base64, logging
 from typing import Union
+
+
+def log_response(response) -> str:
+    """
+    renders a python-requests response as json or as a string
+    """
+    try:
+        log_body = response.json()
+    except ValueError:
+        log_body = response.content[:40]
+    return log_body
+
+
+def create_logger(name: str, log_level: Union[str, int]) -> logging.Logger:
+    """
+    return a logger configured with name and log_level
+    """
+
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter("%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    return logger
 
 
 def safe_base64(un_encoded_data: Union[str, bytes]) -> str:

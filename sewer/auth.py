@@ -1,4 +1,5 @@
 import logging
+from .lib import create_logger
 
 
 class BaseAuthProvider(object):
@@ -6,25 +7,9 @@ class BaseAuthProvider(object):
         self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(self.LOG_LEVEL)
-        if not self.logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(message)s")
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+        self.logger = create_logger(__name__, self.LOG_LEVEL)
 
         self.auth_type = auth_type
-
-    def log_response(self, response):
-        """
-        renders a python-requests response as json or as a string
-        """
-        try:
-            log_body = response.json()
-        except ValueError:
-            log_body = response.content
-        return log_body
 
     def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
         """
