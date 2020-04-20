@@ -25,7 +25,8 @@ The currently supported DNS providers are:
 9. [ClouDNS](https://www.cloudns.net)
 10. [AWS Route 53](https://aws.amazon.com/route53/)
 11. [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
-12. [Bring your own dns provider](#bring-your-own-dns-provider)
+12. [Gandi](https://doc.livedns.gandi.net/)
+13. [Bring your own dns provider](#bring-your-own-dns-provider)
 
 ...
 

@@ -73,6 +73,7 @@ def main():
             "duckdns",
             "cloudns",
             "powerdns",
+            "gandi",
         ],
         help="The name of the dns provider that you want to use.",
     )
@@ -309,6 +310,17 @@ def main():
             powerdns_api_url = os.environ["POWERDNS_API_URL"]
 
             dns_class = PowerDNSDns(powerdns_api_key, powerdns_api_url)
+            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+        except KeyError as e:
+            logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
+            raise
+    elif dns_provider == "gandi":
+        from . import GandiDns
+
+        try:
+            gandi_api_key = os.environ["GANDI_API_KEY"]
+
+            dns_class = GandiDns(GANDI_API_KEY=gandi_api_key)
             logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))

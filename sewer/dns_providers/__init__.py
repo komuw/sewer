@@ -10,3 +10,4 @@ from .duckdns import DuckDNSDns  # noqa: F401
 from .cloudns import ClouDNSDns  # noqa: F401
 from .route53 import Route53Dns  # noqa: F401
 from .powerdns import PowerDNSDns
+from .gandi import GandiDns
