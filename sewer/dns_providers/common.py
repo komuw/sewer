@@ -11,7 +11,7 @@ def dns_challenge(key_auth: str) -> str:
 
 
 class BaseDns(BaseAuthProvider):
-    def __init__(self, alias_domain = None):
+    def __init__(self, alias_domain=None):
         super(BaseDns, self).__init__("dns-01")
         self.alias_domain = alias_domain
 
