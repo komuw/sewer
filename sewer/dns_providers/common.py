@@ -11,8 +11,9 @@ def dns_challenge(key_auth: str) -> str:
 
 
 class BaseDns(BaseAuthProvider):
-    def __init__(self):
+    def __init__(self, alias_domain = None):
         super(BaseDns, self).__init__("dns-01")
+        self.alias_domain = alias_domain
 
     def create_dns_record(self, domain_name, domain_dns_value):
         """
@@ -78,6 +79,8 @@ class BaseDns(BaseAuthProvider):
         record:
         """
         domain_name = identifier_auth["domain"]
+        if self.alias_domain:
+            domain_name += "." + self.alias_domain
         txt_value = dns_challenge(acme_keyauthorization)
         self.create_dns_record(domain_name, txt_value)
         return {"domain_name": domain_name, "value": txt_value}
