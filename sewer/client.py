@@ -66,7 +66,6 @@ class Client(object):
         ACME_AUTH_STATUS_WAIT_PERIOD=8,
         ACME_AUTH_STATUS_MAX_CHECKS=3,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_PRODUCTION,
-        ACME_VERIFY=True,
         LOG_LEVEL="INFO",
     ):
         """
@@ -100,8 +99,6 @@ class Client(object):
             the max number of times the client will poll the acme server to check on authorization status
         :param ACME_DIRECTORY_URL:           (optional) [string]
             the url of the acme servers' directory endpoint
-        :param ACME_VERIFY:                  (optional) [bool]
-            suppress verification of SSL cert when set to False (for pebble); hint: -Wignore
         :param LOG_LEVEL:                    (optional) [string]
             the level to output log messages at. one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
         """
@@ -156,7 +153,6 @@ class Client(object):
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
-        self.ACME_VERIFY = ACME_VERIFY
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
         self.logger = create_logger(__name__, LOG_LEVEL)
@@ -236,12 +232,6 @@ class Client(object):
         # add standard timeout if there's none already present
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
-
-        ### FIX ME ### can get current bogus cert from pebble, figure out how to apply here!
-
-        # if ACME_VERIFY is false, disable certificate check in request
-        if not self.ACME_VERIFY:
-            kwargs["verify"] = False
 
         # awkward implementation to maintain compatibility with current mocked tests
         if method == "GET":
@@ -340,7 +330,7 @@ class Client(object):
         provided, then the server SHOULD use status code 409 (Conflict) and
         provide the URL of that account in the Location header field
         """
-        self.logger.info("acme_register (newAccount)")
+        self.logger.info("acme_register")
         if self.PRIOR_REGISTERED:
             payload = {"onlyReturnExisting": True}
         elif self.contact_email:
@@ -352,9 +342,7 @@ class Client(object):
             payload = {"termsOfServiceAgreed": True}
 
         url = self.ACME_NEW_ACCOUNT_URL
-        acme_register_response = self.make_signed_acme_request(
-            url=url, payload=json.dumps(payload), needs_jwk=True
-        )
+        acme_register_response = self.make_signed_acme_request(url=url, payload=payload)
         self.logger.debug(
             "acme_register_response. status_code={0}. response={1}".format(
                 acme_register_response.status_code, log_response(acme_register_response)
@@ -393,16 +381,14 @@ class Client(object):
         The date values seem to be ignored by LetsEncrypt although they are
         in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         """
-        self.logger.info("apply_for_cert_issuance (newOrder)")
+        self.logger.info("apply_for_cert_issuance")
         identifiers = []
         for domain_name in self.all_domain_names:
             identifiers.append({"type": "dns", "value": domain_name})
 
         payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
-        apply_for_cert_issuance_response = self.make_signed_acme_request(
-            url=url, payload=json.dumps(payload)
-        )
+        apply_for_cert_issuance_response = self.make_signed_acme_request(url=url, payload=payload)
         self.logger.debug(
             "apply_for_cert_issuance_response. status_code={0}. response={1}".format(
                 apply_for_cert_issuance_response.status_code,
@@ -436,8 +422,8 @@ class Client(object):
 
         This is also where we get the challenges/tokens.
         """
-        self.logger.info("get_identifier_authorization for %s" % url)
-        response = self.make_signed_acme_request(url, payload="")
+        self.logger.info("get_identifier_authorization")
+        response = self.GET(url)
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
                 response.status_code, log_response(response)
@@ -470,14 +456,14 @@ class Client(object):
         self.logger.debug(
             "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
         )
-        self.logger.info(
-            "get_identifier_authorization got %s, token=%s" % (challenge_url, challenge_token)
-        )
+        self.logger.info("get_identifier_authorization_success")
         return identifier_auth
 
     def get_keyauthorization(self, token):
         self.logger.debug("get_keyauthorization")
-        acme_header_jwk_json = json.dumps(self.get_jwk(), sort_keys=True, separators=(",", ":"))
+        acme_header_jwk_json = json.dumps(
+            self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
+        )
         acme_thumbprint = safe_base64(sha256(acme_header_jwk_json.encode("utf8")).digest())
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
@@ -503,9 +489,7 @@ class Client(object):
         number_of_checks = 0
         while True:
             time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
-            check_authorization_status_response = self.make_signed_acme_request(
-                authorization_url, payload=""
-            )
+            check_authorization_status_response = self.GET(authorization_url)
             authorization_status = check_authorization_status_response.json()["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
@@ -543,10 +527,8 @@ class Client(object):
         request to the authorization URL, and the server responds with the
         current authorization object.
         """
-        self.logger.info(
-            "respond_to_challenge for %s at %s" % (acme_keyauthorization, challenge_url)
-        )
-        payload = json.dumps({"keyAuthorization": "{0}".format(acme_keyauthorization)})
+        self.logger.info("respond_to_challenge")
+        payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
         respond_to_challenge_response = self.make_signed_acme_request(challenge_url, payload)
         self.logger.debug(
             "respond_to_challenge_response. status_code={0}. response={1}".format(
@@ -573,9 +555,7 @@ class Client(object):
         """
         self.logger.info("send_csr")
         payload = {"csr": safe_base64(self.csr)}
-        send_csr_response = self.make_signed_acme_request(
-            url=finalize_url, payload=json.dumps(payload)
-        )
+        send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
         self.logger.debug(
             "send_csr_response. status_code={0}. response={1}".format(
                 send_csr_response.status_code, log_response(send_csr_response)
@@ -595,22 +575,29 @@ class Client(object):
         self.logger.info("send_csr_success")
         return certificate_url
 
-    def download_certificate(self, certificate_url: str) -> str:
+    def download_certificate(self, certificate_url):
         self.logger.info("download_certificate")
 
-        response = self.make_signed_acme_request(certificate_url, payload="")
+        download_certificate_response = self.make_signed_acme_request(
+            certificate_url, payload="DOWNLOAD_Z_CERTIFICATE"
+        )
         self.logger.debug(
             "download_certificate_response. status_code={0}. response={1}".format(
-                response.status_code, log_response(response)
+                download_certificate_response.status_code,
+                log_response(download_certificate_response),
             )
         )
-        if response.status_code not in [200, 201]:
+
+        if download_certificate_response.status_code not in [200, 201]:
             raise ValueError(
                 "Error fetching signed certificate: status_code={status_code} response={response}".format(
-                    status_code=response.status_code, response=log_response(response)
+                    status_code=download_certificate_response.status_code,
+                    response=log_response(download_certificate_response),
                 )
             )
-        pem_certificate = response.content.decode("utf-8")
+
+        pem_certificate = download_certificate_response.content.decode("utf-8")
+
         self.logger.info("download_certificate_success")
         return pem_certificate
 
@@ -648,29 +635,7 @@ class Client(object):
             payload[k] = v
         return payload
 
-    def get_jwk(self):
-        """
-        calculate the JSON Web Key (jwk) from self.account_key
-        """
-        private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-            self.account_key.encode(),
-            password=None,
-            backend=cryptography.hazmat.backends.default_backend(),
-        )
-        public_key_public_numbers = private_key.public_key().public_numbers()
-        # private key public exponent in hex format
-        exponent = "{0:x}".format(public_key_public_numbers.e)
-        exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
-        # private key modulus in hex format
-        modulus = "{0:x}".format(public_key_public_numbers.n)
-        jwk = {
-            "kty": "RSA",
-            "e": safe_base64(binascii.unhexlify(exponent)),
-            "n": safe_base64(binascii.unhexlify(modulus)),
-        }
-        return jwk
-
-    def get_acme_header(self, url, needs_jwk=False):
+    def get_acme_header(self, url):
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
         The JWS Protected Header MUST include the following fields:
@@ -682,26 +647,46 @@ class Client(object):
         """
         self.logger.debug("get_acme_header")
         header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
-
-        if needs_jwk:
-            header["jwk"] = self.get_jwk()
+        if url in [self.ACME_NEW_ACCOUNT_URL, self.ACME_REVOKE_CERT_URL, "GET_THUMBPRINT"]:
+            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                self.account_key.encode(),
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend(),
+            )
+            public_key_public_numbers = private_key.public_key().public_numbers()
+            # private key public exponent in hex format
+            exponent = "{0:x}".format(public_key_public_numbers.e)
+            exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
+            # private key modulus in hex format
+            modulus = "{0:x}".format(public_key_public_numbers.n)
+            jwk = {
+                "kty": "RSA",
+                "e": safe_base64(binascii.unhexlify(exponent)),
+                "n": safe_base64(binascii.unhexlify(modulus)),
+            }
+            header["jwk"] = jwk
         else:
             header["kid"] = self.kid
         return header
 
-    def make_signed_acme_request(self, url, payload, needs_jwk=False):
+    def make_signed_acme_request(self, url, payload):
         self.logger.debug("make_signed_acme_request")
         headers = {}
-        payload64 = safe_base64(payload)
-        protected = self.get_acme_header(url, needs_jwk)
-        protected64 = safe_base64(json.dumps(protected))
-        signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
-        signature64 = safe_base64(signature)  # str
-        data = json.dumps(
-            {"protected": protected64, "payload": payload64, "signature": signature64}
-        )
-        headers.update({"Content-Type": "application/jose+json"})
-        response = self.POST(url, data=data.encode("utf8"), headers=headers)
+        payload = self.stringfy_items(payload)
+
+        if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
+            response = self.GET(url, headers=headers)
+        else:
+            payload64 = safe_base64(json.dumps(payload))
+            protected = self.get_acme_header(url)
+            protected64 = safe_base64(json.dumps(protected))
+            signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
+            signature64 = safe_base64(signature)  # str
+            data = json.dumps(
+                {"protected": protected64, "payload": payload64, "signature": signature64}
+            )
+            headers.update({"Content-Type": "application/jose+json"})
+            response = self.POST(url, data=data.encode("utf8"), headers=headers)
         return response
 
     def get_certificate(self):
