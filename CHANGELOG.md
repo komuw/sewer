@@ -1,6 +1,19 @@
 ## `sewer` changelog:
 most recent version is listed first.   
 
+## **unreleased:** heading for 0.9
+- README and other docs need updating!
+- mypy & python version compatibility verification?
+- at least a couple sample http-01 challenge providers & dns-01 (new or ported to new API)
+- **WIP** refactor provider API; distinction between dns and http providers deprecated
+### This might be a good point for 0.9-alpha - new features but not complete
+- support current RFC8555 protocol (LE staging current, production will require in Nov)
+- collect shared (internal) functions into lib.py
+- use unitest.mock rather than external module
+- client no longer prepends`*.` to wildcards; remove spotty code in providers to strip it
+- added support for non-dns (http-01 challenge) provider [API change, more ahead]
+- added DNS providers powerdns and gandi
+- begin addition of annotations, mostly opportunistically; may be[come] incompat w/py < 3.5
 
 ## **version:** 0.8.1
 - Fix bug where `sewer` was unable to delete wildcard names from clouflare: https://github.com/komuw/sewer/pull/139    
