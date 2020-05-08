@@ -26,6 +26,7 @@ class TestClient(TestCase):
 
     def setUp(self):
         self.domain_name = "example.com"
+        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -39,6 +40,7 @@ class TestClient(TestCase):
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                LOG_LEVEL=self.log_level,
             )
 
     def tearDown(self):
@@ -56,6 +58,7 @@ class TestClient(TestCase):
                     domain_name="example.com",
                     auth_provider=test_utils.ExmpleAuthProvider(),
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                    LOG_LEVEL=self.log_level,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -267,6 +270,7 @@ class TestClient(TestCase):
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                 domain_alt_names="domain_alt_names",
+                LOG_LEVEL=self.log_level,
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -288,6 +292,7 @@ class TestClientForSAN(TestClient):
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
+        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -302,6 +307,7 @@ class TestClientForSAN(TestClient):
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                LOG_LEVEL=self.log_level,
             )
         super(TestClientForSAN, self).setUp()
 
@@ -318,6 +324,7 @@ class TestClientForWildcard(TestClient):
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
+        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -333,6 +340,7 @@ class TestClientForWildcard(TestClient):
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_AUTH_STATUS_MAX_CHECKS=1,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                LOG_LEVEL=self.log_level,
             )
         super(TestClientForWildcard, self).setUp()
 
@@ -344,6 +352,7 @@ class TestClientDnsApiCompatibility(TestCase):
 
     def setUp(self):
         self.domain_name = "example.com"
+        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -357,6 +366,7 @@ class TestClientDnsApiCompatibility(TestCase):
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                LOG_LEVEL=self.log_level,
             )
 
     def test_get_get_acme_endpoints_failure_results_in_exception_with(self):
@@ -371,6 +381,7 @@ class TestClientDnsApiCompatibility(TestCase):
                     domain_name="example.com",
                     dns_class=test_utils.ExmpleDnsProvider(),  # NOTE: dns_class used here
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                    LOG_LEVEL=self.log_level,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -409,6 +420,7 @@ class TestClientDnsApiCompatibility(TestCase):
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                 domain_alt_names="domain_alt_names",
+                LOG_LEVEL=self.log_level,
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -425,6 +437,7 @@ class TestClientHttpAuthProvider(TestCase):
 
     def setUp(self):
         self.domain_name = "example.com"
+        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -438,6 +451,7 @@ class TestClientHttpAuthProvider(TestCase):
                 ACME_REQUEST_TIMEOUT=1,
                 ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                LOG_LEVEL=self.log_level,
             )
 
     def test_create_challenge_file_is_called(self):
