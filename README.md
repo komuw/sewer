@@ -33,7 +33,8 @@ The currently supported DNS providers are:
 Sewer can be used very easliy programmatically as a library from code.            
 Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
 
-For a changelog(release notes), see: https://github.com/komuw/sewer/releases
+Check the [CHANGELOG](https://github.com/komuw/sewer/blob/master/CHANGELOG.md)
+for news about changes.
 
 ## Installation
 
@@ -82,7 +83,7 @@ sewer(since version 0.5.0) is now python3 only. To install the (now unsupported)
 ```shell
 pip install sewer==0.3.0
 ```
-Sewer is in active development and it's API may change in backward incompatible ways.               
+Sewer is in active development and it's API ~~may~~ will change in backward incompatible ways.
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
 
