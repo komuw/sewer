@@ -43,7 +43,8 @@ class PowerDNSDns(common.BaseDns):
                 return domain_name
             elif count <= 0:
                 raise ValueError(
-                    f"Could not determine apex domain: (count: {count}, domain_name: {domain_name})"
+                    "Could not determine apex domain: (count: %s, domain_name: %s)"
+                    % (count, domain_name)
                 )
             else:
                 split = domain_name.split(d)
@@ -66,21 +67,21 @@ class PowerDNSDns(common.BaseDns):
                 }
             ]
         }
-        self.logger.debug(f"PowerDNS domain name: {domain_name}")
-        self.logger.debug(f"PowerDNS payload: {payload}")
+        self.logger.debug("PowerDNS domain name: %s", domain_name)
+        self.logger.debug("PowerDNS payload: %s", payload)
 
         apex_domain = self.validate_powerdns_zone(domain_name)
         url = self.powerdns_api_url + "/" + apex_domain
-        self.logger.debug(f"apex_domain: {apex_domain}")
-        self.logger.debug(f"url: {url}")
+        self.logger.debug("apex_domain: %s", apex_domain)
+        self.logger.debug("url: %s", url)
 
         try:
             response = requests.patch(
                 url, data=json.dumps(payload), headers={"X-API-Key": self.powerdns_api_key}
             )
-            self.logger.debug(f"PowerDNS response: {response.status_code}, {response.text}")
+            self.logger.debug("PowerDNS response: %s, %s", response.status_code, response.text)
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"Unable to communicate with PowerDNS API: {e}")
+            self.logger.error("Unable to communicate with PowerDNS API: %s", e)
             raise
 
         # Per https://doc.powerdns.com/authoritative/http-api/zone.html:
@@ -88,7 +89,7 @@ class PowerDNSDns(common.BaseDns):
         # Creates/modifies/deletes RRsets present in the payload and their comments.
         # Returns 204 No Content on success.
         if response.status_code != 204:
-            raise ValueError(f"Error creating or deleting PowerDNS record: {response.text}")
+            raise ValueError("Error creating or deleting PowerDNS record: %s" % response.text)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self._common_dns_record(domain_name, domain_dns_value, "REPLACE")

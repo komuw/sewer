@@ -1,6 +1,6 @@
-from unittest import TestCase
+from unittest import mock, TestCase
 
-import sewer
+import sewer.dns_providers.common
 
 
 class TestCommon(TestCase):
@@ -10,7 +10,8 @@ class TestCommon(TestCase):
     def setUp(self):
         self.domain_name = "example.com"
         self.domain_dns_value = "wwfw2402if"
-        self.dns_class = sewer.BaseDns()
+        self.challenges = [{"ident_value": "example.com", "key_auth": "abcdefgh12345678"}]
+        self.dns_class = sewer.dns_providers.common.BaseDns()
 
     def tearDown(self):
         pass
@@ -30,3 +31,19 @@ class TestCommon(TestCase):
             )
 
         self.assertRaises(NotImplementedError, mock_delete_dns_record)
+
+    def test_setup_empty(self):
+        self.assertFalse(self.dns_class.setup([]))
+
+    def test_clear_empty(self):
+        self.assertFalse(self.dns_class.clear([]))
+
+    def test_setup_mocked(self):
+        with mock.patch("sewer.dns_providers.common.BaseDns.create_dns_record") as cdr:
+            self.dns_class.setup(self.challenges)
+            self.assertTrue(cdr.called)
+
+    def test_clear_mocked(self):
+        with mock.patch("sewer.dns_providers.common.BaseDns.delete_dns_record") as ddr:
+            self.dns_class.clear(self.challenges)
+            self.assertTrue(ddr.called)

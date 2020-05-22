@@ -1,6 +1,7 @@
 from hashlib import sha256
+from typing import Any, Dict, Sequence
 
-from sewer.auth import BaseAuthProvider
+from sewer.auth import ErrataItemType, ProviderBase
 from sewer.lib import safe_base64
 
 
@@ -10,9 +11,32 @@ def dns_challenge(key_auth: str) -> str:
     return safe_base64(sha256(key_auth.encode("utf8")).digest())
 
 
-class BaseDns(BaseAuthProvider):
-    def __init__(self):
-        super(BaseDns, self).__init__("dns-01")
+class BaseDns(ProviderBase):
+    """
+    Shim for legacy DNS provider interface.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        if "chal_types" not in kwargs:
+            kwargs["chal_types"] = ["dns-01"]
+        super().__init__(**kwargs)
+
+    ### shim methods
+
+    def setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+        for chal in challenges:
+            self.create_dns_record(chal["ident_value"], dns_challenge(chal["key_auth"]))
+        return []
+
+    def unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+        return []
+
+    def clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+        for chal in challenges:
+            self.delete_dns_record(chal["ident_value"], dns_challenge(chal["key_auth"]))
+        return []
+
+    ### legacy DNS methods
 
     def create_dns_record(self, domain_name, domain_dns_value):
         """
@@ -60,27 +84,3 @@ class BaseDns(BaseAuthProvider):
         This method should return None
         """
         raise NotImplementedError("delete_dns_record method must be implemented.")
-
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        """
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.4
-        A client fulfills this challenge by constructing a key authorization
-        from the "token" value provided in the challenge and the client's
-        account key.  The client then computes the SHA-256 digest [FIPS180-4]
-        of the key authorization.
-
-        The record provisioned to the DNS contains the base64url encoding of
-        this digest.  The client constructs the validation domain name by
-        prepending the label "_acme-challenge" to the domain name being
-        validated, then provisions a TXT record with the digest value under
-        that name.  For example, if the domain name being validated is
-        "example.org", then the client would provision the following DNS
-        record:
-        """
-        domain_name = identifier_auth["domain"]
-        txt_value = dns_challenge(acme_keyauthorization)
-        self.create_dns_record(domain_name, txt_value)
-        return {"domain_name": domain_name, "value": txt_value}
-
-    def cleanup_authorization(self, **kwargs):
-        self.delete_dns_record(kwargs["domain_name"], kwargs["value"])

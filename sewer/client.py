@@ -4,6 +4,7 @@ import json
 from hashlib import sha256
 import binascii
 import platform
+from typing import Dict, Union, cast
 
 import requests
 import OpenSSL
@@ -14,18 +15,21 @@ from .config import ACME_DIRECTORY_URL_PRODUCTION
 from .lib import create_logger, log_response, safe_base64
 
 
-class Client(object):
+class Client:
     """
     todo: improve documentation.
 
     usage:
         import sewer
-        auth_provider = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
-                                        CLOUDFLARE_API_KEY='nsa-grade-api-key')
+        provider = sewer.CloudFlareDns(
+            CLOUDFLARE_EMAIL='example@example.com',
+            CLOUDFLARE_API_KEY='nsa-grade-api-key'
+        )
 
-        1. to create a new certificate.
-        client = sewer.Client(domain_name='example.com',
-                              auth_provider=auth_provider)
+        ### to create a new certificate.
+        client = sewer.Client(
+            domain_name='example.com', provider=provider
+        )
         certificate = client.cert()
         certificate_key = client.certificate_key
         account_key = client.account_key
@@ -36,19 +40,18 @@ class Client(object):
         with open('certificate.key', 'w') as certificate_key_file:
             certificate_key_file.write(certificate_key)
 
-
-        2. to renew a certificate:
+        ### to renew a certificate:
         with open('account_key.key', 'r') as account_key_file:
             account_key = account_key_file.read()
 
-        client = sewer.Client(domain_name='example.com',
-                              auth_provider=auth_provider,
-                              account_key=account_key)
+        client = sewer.Client(
+            domain_name='example.com', provider=provider,
+            account_key=account_key
+        )
         certificate = client.renew()
         certificate_key = client.certificate_key
 
-    todo:
-        - handle more exceptions
+    todo: handle more exceptions
     """
 
     def __init__(
@@ -61,7 +64,7 @@ class Client(object):
         certificate_key=None,
         bits=2048,
         digest="sha256",
-        auth_provider=None,
+        provider=None,
         ACME_REQUEST_TIMEOUT=7,
         ACME_AUTH_STATUS_WAIT_PERIOD=8,
         ACME_AUTH_STATUS_MAX_CHECKS=3,
@@ -73,10 +76,10 @@ class Client(object):
         :param domain_name:                  (required) [string]
             the name that you want to acquire/renew certificate for. wildcards are allowed.
         :param dns_class:                    (required) [class]
-            (DEPRECATED) a subclass of sewer.BaseDns which will be called to create/delete DNS TXT records.
-            do not pass this parameter if also passing auth_provider.
-        :param auth_provider:                (required) [class]
-            a subclass of sewer.BaseAuthProvider which will be called to create/delete auth records.
+            (DEPRECATED) a subclass of BaseDns which will be called to create/delete DNS TXT records.
+            do not pass this parameter if also passing provider.
+        :param provider:                (required) [class]
+            a subclass of ProviderBase which will be called to create/delete auth records.
             do not pass this parameter if also passing dns_class
         :param domain_alt_names:             (optional) [list]
             list of alternative names that you want to be bundled into the same certificate as domain_name.
@@ -138,13 +141,13 @@ class Client(object):
                     LOG_LEVEL
                 )
             )
-        elif dns_class is not None and auth_provider is not None:
+        elif dns_class is not None and provider is not None:
             raise ValueError(
-                "should not specify both `dns_class` and `auth_provider`. `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+                "passed both the DEPRECATED 'dns_class' parameter as well as 'provider'."
             )
 
         self.domain_name = domain_name
-        self.auth_provider = auth_provider if auth_provider is not None else dns_class
+        self.provider = provider if provider is not None else dns_class
         if not domain_alt_names:
             domain_alt_names = []
         self.domain_alt_names = domain_alt_names
@@ -191,7 +194,7 @@ class Client(object):
 
             if dns_class is not None:
                 self.logger.warning(
-                    "intialise_warning. parameter `dns_class` is deprecated(it will be removed in the next version of sewer), use `auth_provider` instead."
+                    "DEPRECATED parameter 'dns_class' will be removed in 0.9; use 'provider' instead"
                 )
 
             self.logger.info(
@@ -201,11 +204,14 @@ class Client(object):
                     self.ACME_DIRECTORY_URL[:20] + "...",
                 )
             )
+
+        ### FIX ME ### [:100] is bandaid to reduce spew during tests
+
         except Exception as e:
-            self.logger.error("Unable to intialise client. error={0}".format(str(e)))
+            self.logger.error("Unable to intialise Client. error={0}".format(str(e)[:100]))
             raise e
 
-    def GET(self, url, **kwargs):
+    def GET(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
         """
         wrap requests.get (and post and head, below) to allow:
           * injection of e.g. UserAgent header in one place rather than all over
@@ -215,21 +221,24 @@ class Client(object):
 
         return self._request("GET", url, **kwargs)
 
-    def HEAD(self, url, **kwargs):
+    def HEAD(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
         return self._request("HEAD", url, **kwargs)
 
-    def POST(self, url, **kwargs):
+    def POST(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
         return self._request("POST", url, **kwargs)
 
-    def _request(self, method, url, **kwargs):
+    def _request(
+        self, method: str, url: str, **kwargs: Union[str, Dict[str, str], bool]
+    ) -> requests.Response:
         """
         shared implementation for GET, POST and HEAD
         * injects standard request options unless they are already given in kwargs
           * header:UserAgent, timeout
+          * verify - this is a hack to make sewer accept pebble's intentionally bogus cert
         """
 
         # if there's no UserAgent header in args, inject it
-        headers = kwargs.setdefault("headers", {})
+        headers = cast(Dict[str, str], kwargs.setdefault("headers", {}))
         if "UserAgent" not in headers:
             headers["UserAgent"] = self.User_Agent
 
@@ -237,7 +246,7 @@ class Client(object):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
 
-        ### FIX ME ### can get current bogus cert from pebble, figure out how to apply here!
+        ### FIX ME ### can get current bogus cert from pebble, figure out how to use it here?
 
         # if ACME_VERIFY is false, disable certificate check in request
         if not self.ACME_VERIFY:
@@ -245,11 +254,14 @@ class Client(object):
 
         # awkward implementation to maintain compatibility with current mocked tests
         if method == "GET":
-            response = requests.get(url, **kwargs)
+            ### Incredibly stupid hack to reconcile mypy to requests' API
+            response = requests.get(url, None, **kwargs)
         elif method == "HEAD":
             response = requests.head(url, **kwargs)
         elif method == "POST":
-            response = requests.post(url, **kwargs)
+            ### Incredibly stupid hack to reconcile mypy to requests' API
+            data_hack = cast(Union[Dict[str, str], None], kwargs.pop("data", None))
+            response = requests.post(url, data_hack, **kwargs)
 
         return response
 
@@ -425,7 +437,7 @@ class Client(object):
         self.logger.info("apply_for_cert_issuance_success")
         return authorizations, finalize_url
 
-    def get_identifier_authorization(self, url):
+    def get_identifier_authorization(self, auth_url: str) -> Dict[str, str]:
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5
         When a client receives an order from the server it downloads the
@@ -436,8 +448,9 @@ class Client(object):
 
         This is also where we get the challenges/tokens.
         """
-        self.logger.info("get_identifier_authorization for %s" % url)
-        response = self.make_signed_acme_request(url, payload="")
+        self.logger.info("get_identifier_authorization for %s" % auth_url)
+        response = self.make_signed_acme_request(auth_url, payload="")
+
         self.logger.debug(
             "get_identifier_authorization_response. status_code={0}. response={1}".format(
                 response.status_code, log_response(response)
@@ -454,14 +467,14 @@ class Client(object):
         wildcard = response_json.get("wildcard")
 
         for i in response_json["challenges"]:
-            if i["type"] == self.auth_provider.auth_type:
+            if i["type"] in self.provider.chal_types:
                 challenge = i
                 challenge_token = challenge["token"]
                 challenge_url = challenge["url"]
 
                 identifier_auth = {
                     "domain": domain,
-                    "url": url,
+                    "url": auth_url,
                     "wildcard": wildcard,
                     "token": challenge_token,
                     "challenge_url": challenge_url,
@@ -706,55 +719,114 @@ class Client(object):
 
     def get_certificate(self):
         self.logger.debug("get_certificate")
-        cleanup_kwargs_list = []
+        challenges = []
 
         try:
             self.acme_register()
             authorizations, finalize_url = self.apply_for_cert_issuance()
-            responders = []
-            for url in authorizations:
-                identifier_auth = self.get_identifier_authorization(url)
-                token = identifier_auth["token"]
-                acme_keyauthorization = self.get_keyauthorization(token)
-                cleanup_kwargs = self.auth_provider.fulfill_authorization(
-                    identifier_auth, token, acme_keyauthorization
-                )
-                cleanup_kwargs_list.append(cleanup_kwargs)
 
-                responder = {
-                    "challenge_url": identifier_auth["challenge_url"],
-                    "acme_keyauthorization": acme_keyauthorization,
-                    "authorization_url": identifier_auth["url"],
+            for auth_url in authorizations:
+                identifier_auth = self.get_identifier_authorization(auth_url)
+                token = identifier_auth["token"]
+                challenge = {
+                    "ident_value": identifier_auth["domain"],
+                    "token": token,
+                    "key_auth": self.get_keyauthorization(token),  # responder acme_keyauth..
+                    "wildcard": identifier_auth["wildcard"],
+                    "auth_url": auth_url,  # responder auth.._url
+                    "chal_url": identifier_auth["challenge_url"],  # responder challenge_url
                 }
-                responders.append(responder)
+                challenges.append(challenge)
+
+            # any errors in setup are fatal (here - they are all necessary for same cert)
+            failures = self.provider.setup(challenges)
+            if failures:
+                raise RuntimeError("get_certificate: challenge setup failed for %s" % failures)
+
+            ### FIX ME ### should abort cert and try to clear on error
+
+            self.propagation_delay(challenges)
 
             # for a case where you want certificates for *.example.com and example.com
             # you have to create both auth records AND then respond to the challenge.
             # see issues/83
-            for i in responders:
+            for chal in challenges:
                 # Make sure the authorization is in a status where we can submit a challenge
                 # response. The authorization can be in the "valid" state before submitting
                 # a challenge response if there was a previous authorization for these hosts
                 # that was successfully validated, still cached by the server.
-                auth_status_response = self.check_authorization_status(i["authorization_url"])
+                auth_status_response = self.check_authorization_status(chal["auth_url"])
                 if auth_status_response.json()["status"] == "pending":
-                    self.respond_to_challenge(i["acme_keyauthorization"], i["challenge_url"])
+                    self.respond_to_challenge(chal["key_auth"], chal["chal_url"])
 
-            for i in responders:
+            ### TO DO ### this is the obfuscated timeout loop.  Clean this mess up!
+            ### # # # ### it also keeps trying even when the auth is failed :-(
+
+            for chal in challenges:
                 # Before sending a CSR, we need to make sure the server has completed the
                 # validation for all the authorizations
-                self.check_authorization_status(i["authorization_url"], ["valid"])
+                self.check_authorization_status(chal["auth_url"], ["valid"])
 
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
+
+        ### FIX ME ### [:100] is a bandaid to reduce spew during tests
+
         except Exception as e:
-            self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)))
+            self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)[:100]))
             raise e
         finally:
-            for cleanup_kwargs in cleanup_kwargs_list:
-                self.auth_provider.cleanup_authorization(**cleanup_kwargs)
+            # best-effort attempt to clear challenges
+            failures = self.provider.clear(challenges)
 
         return certificate
+
+    def sleep_iter(self):
+        "returns values from list, then repeats last value forever"
+
+        for cur_time in self.provider.prop_sleep_times:
+            yield cur_time
+        while True:
+            yield cur_time
+
+    def propagation_delay(self, challenges):
+        """
+        Wait for the challenges to propagate through the service.
+
+        SHOULD return success or failure... TBD.
+
+        This process is controlled by two attributes and one method on the provider.
+        unpropagated() is called to check whether the listed challenges are thought
+        to be ready to be validated by the ACME server.  If it fails, propagation_delay
+        will sleep and retry until it times out.  The attributes on the provider are
+        prop_timeout and prop_sleep_times.  See docs/unpropagated.md for the details.
+        """
+
+        if self.provider.prop_timeout:
+            unready = challenges
+            end_time = time.time() + self.provider.prop_timeout
+            next_sleep = self.sleep_iter()
+            num_checks = 0
+            while unready:
+                errata = self.provider.unpropagated(unready)
+                num_checks += 1
+
+                ### FIX ME ### if any errata have status "failed", exit with error
+                if errata:
+                    poll_time = time.time()
+                    # intentional: do an "extra" check rather than running short
+                    if end_time < poll_time:
+                        break
+                    # wait a while to let more propagation happen
+                    time.sleep(next(next_sleep))
+
+                unready = [err[2] for err in errata]
+
+            ### FIX ME ### might be good for mock tests, but really should try to clear, eh?
+            if unready:
+                raise RuntimeError(
+                    "propagation_delay: time out after %s probes: %s" % (num_checks, unready)
+                )
 
     def cert(self):
         """
