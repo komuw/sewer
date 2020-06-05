@@ -1,12 +1,13 @@
 import json
 
-import sewer
+from ..auth import ProviderBase
+from ..dns_providers.common import BaseDns
 
 
-class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
-    def __init__(self):
+class ExmpleDnsProvider(BaseDns):
+    def __init__(self, **kwargs):
         self.dns_provider_name = "example_dns_provider"
-        super(ExmpleDnsProvider, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         pass
@@ -15,26 +16,32 @@ class ExmpleDnsProvider(sewer.dns_providers.common.BaseDns):
         pass
 
 
-class ExmpleAuthProvider(sewer.auth.BaseAuthProvider):
+class ExmpleDNS(ExmpleDnsProvider):
+    "fail unpropagated first n times DNS mock provider"
+
+    def __init__(self, fail_prop_count, **kwargs):
+        super().__init__(**kwargs)
+        self.fail_prop_count = fail_prop_count
+
+    def unpropagated(self, challenges):
+        if self.fail_prop_count <= 0:
+            return []
+        self.fail_prop_count -= 1
+        return [("unready", "", c) for c in challenges]
+
+
+class ExmpleHttpProvider(ProviderBase):
     def __init__(self):
-        super(ExmpleAuthProvider, self).__init__("http-01")
+        super().__init__(chal_types=["http-01"])
 
-    def fulfill_authorization(self, identifier_auth, token, acme_keyauthorization):
-        return {}
+    def setup(self, challenges):
+        return []
 
-    def cleanup_authorization(self, **cleanup_kwargs):
-        pass
+    def unpropagated(self, challenges):
+        return []
 
-
-class ExmpleHttpProvider(sewer.http_providers.common.BaseHttp):
-    def __init__(self):
-        super(ExmpleHttpProvider, self).__init__()
-
-    def create_challenge_file(self, domain_name, token, acme_keyauthorization):
-        pass
-
-    def delete_challenge_file(self, domain_name, token):
-        pass
+    def clear(self, challenges):
+        return []
 
 
 class MockResponse(object):

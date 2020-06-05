@@ -6,13 +6,30 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
 
-Sewer is a Let's Encrypt(ACME) client.           
-It's name is derived from Kenyan hip hop artiste, Kitu Sewer.                        
-It allows you to obtain ssl/tls certificates from Let's Encrypt.       
+Sewer is a Let's Encrypt(ACME) client.  
+It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-> Let’s Encrypt is a free, automated, and open Certificate Authority. - https://letsencrypt.org
+Check the [CHANGELOG](https://github.com/komuw/sewer/blob/master/CHANGELOG.md)
+for news about changes.
+See also [what's new in 0.8.2](docs/0.8.2-notes.md) for a description of
+the many changes in this release.
 
-Sewer currently supports the DNS and HTTP modes of validation.                 
+## Features
+- Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
+- Supports acme version 2 (current RFC).
+- Support for SAN certificates.
+- Supports wildcard certificates.
+- Bundling certificates.
+- Supports [DNS](#dns-services-supported) and HTTP challenges.
+- [Bring your own dns provider](#bring-your-own-dns-provider)
+- [Bring your own http provider](#bring-your-own-http-provider)
+- sewer is both a [command-line program](#cli) and a [Python library](#usage) for customization
+- Well written(if I have to say so myself):
+  - [Good test coverage](https://codecov.io/gh/komuW/sewer)
+  - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
+  - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
+
+## DNS services supported
 The currently supported DNS providers are:         
 1. [Cloudflare](https://www.cloudflare.com/dns)               
 2. [Aurora](https://www.pcextreme.com/aurora/dns)                 
@@ -26,15 +43,7 @@ The currently supported DNS providers are:
 10. [AWS Route 53](https://aws.amazon.com/route53/)
 11. [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
 12. [Gandi](https://doc.livedns.gandi.net/)
-13. [Bring your own dns provider](#bring-your-own-dns-provider)
-
-...
-
-Sewer can be used very easliy programmatically as a library from code.            
-Sewer also comes with a command-line(cli) interface(app) that you can use from your favourite terminal           
-
-Check the [CHANGELOG](https://github.com/komuw/sewer/blob/master/CHANGELOG.md)
-for news about changes.
+13. ... or [bring your own dns provider](#bring-your-own-dns-provider)
 
 ## Installation
 
@@ -231,23 +240,6 @@ The cerrtificate, certificate key and account key will be saved in the directory
 
 The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
 
-
-
-## Features
-- Obtain certificates.
-- Renew certificates.
-- Supports multiple DNS providers.
-- Supports wildcard certificates.
-- Supports acme version 2 only.
-- [Bring your own dns provider](#bring-your-own-dns-provider) 
-- [Bring your own http provider](#bring-your-own-http-provider) 
-- Support for SAN certificates.
-- Can be used as a python library as well as a command line(CLI) application.
-- Bundling certificates.
-- Well written(if I have to say so myself):
-  - [Good test coverage](https://codecov.io/gh/komuW/sewer)
-  - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
-  - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
 
 ## Bring your own DNS provider          
 It is very easy to use any dns provider with sewer.          

@@ -1,6 +1,5 @@
-from .client import Client  # noqa: F401
+### legacy DNS bindings - DEPRECATED ###
 
-from .dns_providers import BaseDns  # noqa: F401
 from .dns_providers import AuroraDns  # noqa: F401
 from .dns_providers import CloudFlareDns  # noqa: F401
 from .dns_providers import AcmeDnsDns  # noqa: F401
@@ -13,4 +12,3 @@ from .dns_providers import ClouDNSDns  # noqa:F401
 from .dns_providers import Route53Dns  # noqa:F401
 from .dns_providers import PowerDNSDns  # noqa:F401
 from .dns_providers import GandiDns  # noqa:F401
-from .http_providers import BaseHttp  # noqa: F401

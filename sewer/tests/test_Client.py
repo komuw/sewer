@@ -6,10 +6,19 @@ from unittest import mock
 import cryptography
 from unittest import TestCase
 
-import sewer
+import sewer.client
 from sewer.config import ACME_DIRECTORY_URL_STAGING
 
 from . import test_utils
+
+LOG_LEVEL = "CRITICAL"
+
+usual_ACME = {
+    "ACME_REQUEST_TIMEOUT": 1,
+    "ACME_AUTH_STATUS_WAIT_PERIOD": 0,
+    "ACME_DIRECTORY_URL": ACME_DIRECTORY_URL_STAGING,
+    "LOG_LEVEL": LOG_LEVEL,
+}
 
 
 class TestClient(TestCase):
@@ -26,39 +35,29 @@ class TestClient(TestCase):
 
     def setUp(self):
         self.domain_name = "example.com"
-        self.log_level = "WARNING"
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ):
 
-            self.auth_provider = test_utils.ExmpleAuthProvider()
-            self.client = sewer.Client(
-                domain_name=self.domain_name,
-                auth_provider=self.auth_provider,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                LOG_LEVEL=self.log_level,
+            self.provider = test_utils.ExmpleHttpProvider()
+            self.client = sewer.client.Client(
+                domain_name=self.domain_name, provider=self.provider, **usual_ACME
             )
 
     def tearDown(self):
         pass
 
     def test_get_get_acme_endpoints_failure_results_in_exception(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse(status_code=409)
-            mock_requests_get.return_value = test_utils.MockResponse(status_code=409)
+        with mock.patch(
+            "requests.post", return_value=test_utils.MockResponse(status_code=409)
+        ), mock.patch("requests.get", return_value=test_utils.MockResponse(status_code=409)):
 
             def mock_create_acme_client():
-                sewer.Client(
+                sewer.client.Client(
                     domain_name="example.com",
-                    auth_provider=test_utils.ExmpleAuthProvider(),
+                    provider=test_utils.ExmpleHttpProvider(),
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                    LOG_LEVEL=self.log_level,
+                    LOG_LEVEL=LOG_LEVEL,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -67,21 +66,18 @@ class TestClient(TestCase):
             self.assertIn("Error while getting Acme endpoints", str(raised_exception.exception))
 
     def test_user_agent_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ):
 
             for i in ["python-requests", "sewer", "https://github.com/komuw/sewer"]:
                 self.assertIn(i, self.client.User_Agent)
 
     def test_certificate_key_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ):
+
             certificate_key = self.client.certificate_key
 
             certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -94,11 +90,10 @@ class TestClient(TestCase):
             )
 
     def test_account_key_is_generated(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ):
+
             account_key = self.client.account_key
 
             account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -111,20 +106,17 @@ class TestClient(TestCase):
             )
 
     def test_acme_registration_is_done(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch("sewer.Client.acme_register") as mock_acme_registration:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ), mock.patch("sewer.client.Client.acme_register") as mock_acme_registration:
+
             self.client.cert()
             self.assertTrue(mock_acme_registration.called)
 
     def test_acme_registration_failure_doesnt_result_in_certificate(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse(status_code=400)
-            mock_requests_get.return_value = test_utils.MockResponse(status_code=400)
+        with mock.patch(
+            "requests.post", return_value=test_utils.MockResponse(status_code=400)
+        ), mock.patch("requests.get", return_value=test_utils.MockResponse(status_code=400)):
 
             def mock_get_certificate():
                 self.client.cert()
@@ -135,30 +127,31 @@ class TestClient(TestCase):
             self.assertIn("Error while registering", str(raised_exception.exception))
 
     def test_get_identifier_authorization_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.Client.get_identifier_authorization"
-        ) as mock_get_identifier_authorization:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
-            mock_get_identifier_authorization.return_value = {
-                "domain": "example.com",
-                "url": "http://localhost",
-                "wildcard": None,
-                "token": "token",
-                "challenge_url": "challenge_url",
-            }
+        gia_return_value = {
+            "domain": "example.com",
+            "url": "http://localhost",
+            "wildcard": None,
+            "token": "token",
+            "challenge_url": "challenge_url",
+        }
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ), mock.patch(
+            "sewer.client.Client.get_identifier_authorization", return_value=gia_return_value
+        ) as mock_gia:
+
             self.client.cert()
-            self.assertTrue(mock_get_identifier_authorization.called)
+            self.assertTrue(mock_gia.called)
 
     def test_get_identifier_authorization_is_not_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch("sewer.Client.acme_register") as mock_acme_register:
-            mock_requests_post.return_value = test_utils.MockResponse(status_code=400)
-            mock_requests_get.return_value = test_utils.MockResponse(status_code=400)
-            mock_acme_register.return_value = test_utils.MockResponse(status_code=201)
+        with mock.patch(
+            "requests.post", return_value=test_utils.MockResponse(status_code=400)
+        ), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse(status_code=400)
+        ), mock.patch(
+            "sewer.client.Client.acme_register",
+            return_value=test_utils.MockResponse(status_code=201),
+        ):
 
             def mock_get_certificate():
                 self.client.cert()
@@ -177,39 +170,37 @@ class TestClient(TestCase):
         valid_status_mock = mock.Mock()
         valid_status_mock.json.return_value = {"status": "valid"}
 
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.Client.respond_to_challenge"
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ), mock.patch(
+            "sewer.client.Client.respond_to_challenge"
         ) as mock_respond_to_challenge, mock.patch(
-            "sewer.Client.check_authorization_status"
+            "sewer.client.Client.check_authorization_status"
         ) as mock_check_authorization_status:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
             mock_check_authorization_status.side_effect = [
                 # 1st call returns 'pending', so respond_to_challenge has to be made
                 pending_status_mock,
                 # 2nd call returns 'valid', so loop breaks
                 valid_status_mock,
             ]
+
             self.client.cert()
             self.assertTrue(mock_respond_to_challenge.called)
 
     def test_check_authorization_status_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.Client.check_authorization_status"
-        ) as mock_check_authorization_status:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse()
+        ), mock.patch("sewer.client.Client.check_authorization_status") as mock_cas:
+
             self.client.cert()
-            self.assertTrue(mock_check_authorization_status.called)
+            self.assertTrue(mock_cas.called)
 
     def test_get_certificate_is_called(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
-        ) as mock_requests_get, mock.patch("sewer.Client.get_certificate") as mock_get_certificate:
+        ) as mock_requests_get, mock.patch(
+            "sewer.client.Client.get_certificate"
+        ) as mock_get_certificate:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             self.client.cert()
@@ -225,23 +216,23 @@ class TestClient(TestCase):
                 self.assertIn(i, self.client.cert())
 
     def test_certificate_is_not_issued(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.Client.get_identifier_authorization"
-        ) as mock_get_identifier_authorization, mock.patch(
-            "sewer.Client.acme_register"
-        ) as mock_acme_register:
-            mock_requests_post.return_value = test_utils.MockResponse(status_code=400)
-            mock_requests_get.return_value = test_utils.MockResponse(status_code=400)
-            mock_get_identifier_authorization.return_value = {
-                "domain": "example.com",
-                "url": "http://localhost",
-                "wildcard": None,
-                "token": "token",
-                "challenge_url": "challenge_url",
-            }
-            mock_acme_register.return_value = test_utils.MockResponse(status_code=409)
+        gia_return_value = {
+            "domain": "example.com",
+            "url": "http://localhost",
+            "wildcard": None,
+            "token": "token",
+            "challenge_url": "challenge_url",
+        }
+        with mock.patch(
+            "requests.post", return_value=test_utils.MockResponse(status_code=400)
+        ), mock.patch(
+            "requests.get", return_value=test_utils.MockResponse(status_code=400)
+        ), mock.patch(
+            "sewer.client.Client.get_identifier_authorization", return_value=gia_return_value
+        ), mock.patch(
+            "sewer.client.Client.acme_register",
+            return_value=test_utils.MockResponse(status_code=409),
+        ):
 
             def mock_get_certificate():
                 self.client.cert()
@@ -263,14 +254,11 @@ class TestClient(TestCase):
 
     def test_right_args_to_client(self):
         def mock_instantiate_client():
-            self.client = sewer.Client(
+            self.client = sewer.client.Client(
                 domain_name=self.domain_name,
-                auth_provider=self.auth_provider,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
+                provider=self.provider,
                 domain_alt_names="domain_alt_names",
-                LOG_LEVEL=self.log_level,
+                **usual_ACME,
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -286,13 +274,11 @@ class TestClientForSAN(TestClient):
     """
 
     def setUp(self):
-        self.domain_name = "exampleSAN.com"
         self.domain_alt_names = [
             "blog.exampleSAN.com",
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
-        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -300,14 +286,11 @@ class TestClientForSAN(TestClient):
             mock_requests_get.return_value = test_utils.MockResponse()
 
             self.dns_class = test_utils.ExmpleDnsProvider()
-            self.client = sewer.Client(
-                domain_name=self.domain_name,
+            self.client = sewer.client.Client(
+                domain_name="exampleSAN.com",
                 dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                LOG_LEVEL=self.log_level,
+                **usual_ACME,
             )
         super(TestClientForSAN, self).setUp()
 
@@ -318,13 +301,11 @@ class TestClientForWildcard(TestClient):
     """
 
     def setUp(self):
-        self.domain_name = "*.exampleSTARcom"
         self.domain_alt_names = [
             "blog.exampleSAN.com",
             "staging.exampleSAN.com",
             "www.exampleSAN.com",
         ]
-        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -332,27 +313,23 @@ class TestClientForWildcard(TestClient):
             mock_requests_get.return_value = test_utils.MockResponse()
 
             self.dns_class = test_utils.ExmpleDnsProvider()
-            self.client = sewer.Client(
-                domain_name=self.domain_name,
+            self.client = sewer.client.Client(
+                domain_name="*.exampleSTARcom",
                 dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
                 ACME_AUTH_STATUS_MAX_CHECKS=1,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                LOG_LEVEL=self.log_level,
+                **usual_ACME,
             )
         super(TestClientForWildcard, self).setUp()
 
 
 class TestClientDnsApiCompatibility(TestCase):
     """
-    Test Acme client for the existing dns provider api.
+    Test Acme client support with the deprecated dns_class parameter.
     """
 
     def setUp(self):
         self.domain_name = "example.com"
-        self.log_level = "WARNING"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get:
@@ -360,28 +337,21 @@ class TestClientDnsApiCompatibility(TestCase):
             mock_requests_get.return_value = test_utils.MockResponse()
 
             self.dns_class = test_utils.ExmpleDnsProvider()
-            self.client = sewer.Client(
-                domain_name=self.domain_name,
-                dns_class=self.dns_class,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                LOG_LEVEL=self.log_level,
+            self.client = sewer.client.Client(
+                domain_name=self.domain_name, dns_class=self.dns_class, **usual_ACME
             )
 
     def test_get_get_acme_endpoints_failure_results_in_exception_with(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse(status_code=409)
-            mock_requests_get.return_value = test_utils.MockResponse(status_code=409)
+        with mock.patch(
+            "requests.post", return_value=test_utils.MockResponse(status_code=409)
+        ), mock.patch("requests.get", return_value=test_utils.MockResponse(status_code=409)):
 
             def mock_create_acme_client():
-                sewer.Client(
+                sewer.client.Client(
                     domain_name="example.com",
                     dns_class=test_utils.ExmpleDnsProvider(),  # NOTE: dns_class used here
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                    LOG_LEVEL=self.log_level,
+                    LOG_LEVEL=LOG_LEVEL,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -413,14 +383,11 @@ class TestClientDnsApiCompatibility(TestCase):
 
     def test_right_args_to_client(self):
         def mock_instantiate_client():
-            self.client = sewer.Client(
+            self.client = sewer.client.Client(
                 domain_name=self.domain_name,
                 dns_class=self.dns_class,  # NOTE: dns_class used here
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                 domain_alt_names="domain_alt_names",
-                LOG_LEVEL=self.log_level,
+                **usual_ACME,
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -430,57 +397,25 @@ class TestClientDnsApiCompatibility(TestCase):
         )
 
 
-class TestClientHttpAuthProvider(TestCase):
-    """
-    Test Acme client with an http auth provider
-    """
+class TestClientUnits(TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mock_args = {"domain_name": "example.com", "LOG_LEVEL": LOG_LEVEL}
+        self.mock_challenges = [{"ident_value": "example.com", "key_auth": "abcdefgh12345678"}]
 
-    def setUp(self):
-        self.domain_name = "example.com"
-        self.log_level = "WARNING"
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
+    def mock_sewer(self, provider):
+        return sewer.client.Client(provider=provider, **self.mock_args)
 
-            self.auth_provider = test_utils.ExmpleHttpProvider()
-            self.client = sewer.Client(
-                domain_name=self.domain_name,
-                auth_provider=self.auth_provider,
-                ACME_REQUEST_TIMEOUT=1,
-                ACME_AUTH_STATUS_WAIT_PERIOD=0,
-                ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
-                LOG_LEVEL=self.log_level,
-            )
+    def test01_prop_timeout_okay(self):
+        p = test_utils.ExmpleDNS(prop_timeout=1, fail_prop_count=0)
+        self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 
-    def test_create_challenge_file_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleHttpProvider.create_challenge_file"
-        ) as mock_create_challenge_file:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
-            self.client.cert()
-            self.assertTrue(mock_create_challenge_file.called)
+    def test02_prop_timeout_timeout(self):
+        # with default [1,2,4,8] sleep times and delay of 5, needs >4 failures to hit exception
+        p = test_utils.ExmpleDNS(prop_timeout=5, fail_prop_count=5)
+        with self.assertRaises(RuntimeError):
+            self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 
-    def test_delete_challenge_file_is_called(self):
-        with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "requests.get"
-        ) as mock_requests_get, mock.patch(
-            "sewer.tests.test_utils.ExmpleHttpProvider.delete_challenge_file"
-        ) as mock_delete_challenge_file:
-            mock_requests_post.return_value = test_utils.MockResponse()
-            mock_requests_get.return_value = test_utils.MockResponse()
-            self.client.cert()
-            self.assertTrue(mock_delete_challenge_file.called)
-
-
-# TEST cli
-# from unittest import TestCase
-# from funniest.command_line import main
-
-# class TestConsole(TestCase):
-#     def test_basic(self):
-#         main()
+    def test02_prop_timeout_delayed_okay(self):
+        p = test_utils.ExmpleDNS(prop_timeout=20, fail_prop_count=2)
+        self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)

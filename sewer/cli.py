@@ -1,7 +1,7 @@
 import os
 import argparse
 
-from . import Client
+from .client import Client
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
 from .lib import create_logger
