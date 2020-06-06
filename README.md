@@ -98,15 +98,20 @@ Sewer is in active development and it's API ~~may~~ will change in backward inco
 
 ## Usage
 
+This is basic _sewer as a library_ use.
 ```python
 import sewer
 
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
-                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
+    CLOUDFLARE_EMAIL='example@example.com',
+    CLOUDFLARE_API_KEY='nsa-grade-api-key'
+)
 
 # 1. to create a new certificate:
-client = sewer.Client(domain_name='example.com',
-                      dns_class=dns_class)
+client = sewer.client.Client(
+    domain_name='example.com',
+    dns_class=dns_class
+)
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
@@ -130,15 +135,19 @@ with open('account_key.key', 'w') as account_key_file:
 # 2. to renew a certificate:
 import sewer
 
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
-                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
+dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
+    CLOUDFLARE_EMAIL='example@example.com',
+    CLOUDFLARE_API_KEY='nsa-grade-api-key'
+)
 
 with open('account_key.key', 'r') as account_key_file:
     account_key = account_key_file.read()
 
-client = sewer.Client(domain_name='example.com',
-                      dns_class=dns_class,
-                      account_key=account_key)
+client = sewer.Client(
+    domain_name='example.com',
+    dns_class=dns_class,
+    account_key=account_key
+)
 certificate = client.renew()
 certificate_key = client.certificate_key
 
@@ -149,21 +158,25 @@ with open('certificate.key', 'w') as certificate_key_file:
 
 # 3. You can also request/renew wildcard certificates:
 import sewer
-dns_class = sewer.CloudFlareDns(CLOUDFLARE_EMAIL='example@example.com',
-                                CLOUDFLARE_API_KEY='nsa-grade-api-key')
-client = sewer.Client(domain_name='*.example.com',
-                      dns_class=dns_class)
+dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
+    CLOUDFLARE_EMAIL='example@example.com',
+    CLOUDFLARE_API_KEY='nsa-grade-api-key'
+)
+client = sewer.Client(
+    domain_name='*.example.com',
+    dns_class=dns_class
+)
 certificate = client.cert()
 certificate_key = client.certificate_key
 account_key = client.account_key
 ```
 
-
 ## CLI
-Sewer also ships with a commandline interface(called `sewer` or `sewer-cli`) that you can use to get/renew certificates.            
+Sewer also ships with a commandline interface (called `sewer` or `sewer-cli`)
+that you can use to get/renew certificates.
 Your dns providers credentials need to be supplied as environment variables.
  
-To get certificate, run:                
+To get a certificate, run:                
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_API_KEY=api-key \
@@ -173,7 +186,7 @@ sewer \
 --action run
 ```              
 
-To renew a certificate, run:                
+To renew a certificate, run:
 ```shell
 CLOUDFLARE_EMAIL=example@example.com \
 CLOUDFLARE_API_KEY=api-key \
@@ -236,15 +249,14 @@ optional arguments:
                         --loglevel DEBUG
 ```
 
-The cerrtificate, certificate key and account key will be saved in the directory that you run sewer from.             
-
-The commandline interface(app) is called `sewer` or alternatively you could use, `sewer-cli`.                   
-
+The certificate, certificate key and account key will be saved in the directory
+that you run sewer from.
 
 ## Bring your own DNS provider          
-NB: this section is out of date.  It describes the Legacy DNS interface.
+NB: This section is out of date.  It describes the Legacy DNS interface.
 Newer documentation, though not a worked example like this, can be found in
 the docs directory.
+
 ---
 It is very easy to use any dns provider with sewer.          
 All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
@@ -336,6 +348,7 @@ Newer documentation, though not a worked example like this, can be found in
 the docs directory.
 There is a minimal new-model provider in sewer/provoders/demo.py that may be
 of assistance as well.
+
 ---
 Creating a custom http provider is just like dns, except create your http class as a child class of [`sewer.BaseHttp`](https://github.com/komuw/sewer/blob/master/sewer/http_providers/common.py) and then implement the             
 `create_challenge_file` and `delete_challenge_file` methods.             
@@ -355,11 +368,11 @@ class CertbotishProvider(sewer.BaseHttp):
 ```
 
 ## Development setup
-see the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)                
 
-
+See the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)
 
 ## TODO
+- docs, especially this README, badly need updating for recent chnages
 - support more DNS providers
 - https://github.com/komuw/sewer/milestone/1
 
