@@ -39,7 +39,7 @@ class TestAuth01(unittest.TestCase):
         with self.assertRaises(ValueError):
             pbj(jelly="strawberry")
 
-    ### what about the logger and LOG_LEVEL parameters?
+    ### optional, one but not both -  logger and LOG_LEVEL parameters?
 
     def test06_accepts_logger(self):
         self.assertTrue(pbj(logger=lib.create_logger("", "INFO")))
@@ -51,13 +51,28 @@ class TestAuth01(unittest.TestCase):
         with self.assertRaises(ValueError):
             pbj(logger=lib.create_logger("", "INFO"), LOG_LEVEL="INFO")
 
-    ### and that new-fangled prop_timeout, what about that?
+    ### optional prop_timeout, prop_sleep_times
 
-    def test09_prop_timeout_default(self):
-        self.assertEqual(auth.ProviderBase(chal_types=["dns-01"]).prop_timeout, 0)
+    def test09_prop_timeout_and_times_default(self):
+        p = auth.ProviderBase(chal_types=["dns-01"])
+        self.assertEqual(p.prop_timeout, 0)
+        self.assertEqual(p.prop_sleep_times, [1, 2, 4, 8])
 
     def test10_prop_timeout_accepted(self):
         self.assertEqual(auth.ProviderBase(chal_types=["dns-01"], prop_timeout=30).prop_timeout, 30)
+
+    def test11_prop_sleep_times_int_accepted(self):
+        self.assertEqual(pbj(prop_sleep_times=4).prop_sleep_times, [4])
+
+    def test12_prop_sleep_times_list_accepted(self):
+        self.assertEqual(pbj(prop_sleep_times=[2, 4, 6, 8, 10]).prop_sleep_times, [2, 4, 6, 8, 10])
+
+    def test13_prop_sleep_times_tuple_accepted(self):
+        self.assertEqual(pbj(prop_sleep_times=(2, 4, 6, 8, 10)).prop_sleep_times, [2, 4, 6, 8, 10])
+
+    def test14_prop_sleep_times_rejects(self):
+        with self.assertRaises(ValueError):
+            pbj(prop_sleep_times=[1, "b", 4, 8])
 
 
 class TestAuth02(unittest.TestCase):
