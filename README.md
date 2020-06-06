@@ -242,6 +242,10 @@ The commandline interface(app) is called `sewer` or alternatively you could use,
 
 
 ## Bring your own DNS provider          
+NB: this section is out of date.  It describes the Legacy DNS interface.
+Newer documentation, though not a worked example like this, can be found in
+the docs directory.
+---
 It is very easy to use any dns provider with sewer.          
 All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     
@@ -326,6 +330,13 @@ print("certificate's key::", certificate_key)
 ```
 
 ## Bring your own HTTP provider
+NB: this section is out of date.  It describes an early version of the HTTP
+provider interface.
+Newer documentation, though not a worked example like this, can be found in
+the docs directory.
+There is a minimal new-model provider in sewer/provoders/demo.py that may be
+of assistance as well.
+---
 Creating a custom http provider is just like dns, except create your http class as a child class of [`sewer.BaseHttp`](https://github.com/komuw/sewer/blob/master/sewer/http_providers/common.py) and then implement the             
 `create_challenge_file` and `delete_challenge_file` methods.             
 Here's what a certbot+nginx implementation could look like
