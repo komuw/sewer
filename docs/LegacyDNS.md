@@ -2,8 +2,8 @@
 
 ### `BaseDns` shim class
 
-A child of `ProviderBase` that acts as an adapter between the Provider
-interface and the Legacy DNS providers.
+A child of `DNSProviderBase` that acts as an adapter between the Provider
+interface and the Legacy DNS provider interface.
 
 #### `__init__(self, **kwargs: Any) -> None`
 
@@ -12,20 +12,20 @@ Injects chal_types=["dns-01"].
 
 #### `setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Dict[str, str]]`
 
-Iterates over the challenges, extracting the values needed for dns-01 from
-each challenge in the list, and passing them to create_dns_record.
-Always returns an empty list since there is no error return from
-create_dns_record other than raising an exception.
+Iterates over the challenges, extracting the values needed for the Legacy
+DNS interface from each challenge in the list, and passing them to
+`create_dns_record`.  Always returns an empty list since there is no error
+return from `create_dns_record` other than raising an exception.
 
 #### `unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Dict[str, str]]`
 
 Always returns an empty list, signalling "all ready as far as I know".
-A DNS provider wishing to do something useful here must migrate to the new
-API.
+A Legacy DNS provider wishing to do something useful here MAY implement
+`unpropagated` without migrating the rest of its interface.
 
 #### `clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Dict[str, str]]`
 
-Same as setup except it calls the legacy delete_dns_record, of course.
+Same as setup except it calls the legacy `delete_dns_record`, of course.
 
 ### Legacy DNS class
 
@@ -33,7 +33,7 @@ Same as setup except it calls the legacy delete_dns_record, of course.
 
 Args are explicitly named per provider; no provision for passing any to
 `super().__init__` - which makes sense, since there used not to be any the
-parent was prepared to receive.
+parent (original `BaseDns`) was prepared to receive.
 
 #### `def create_dns_record(self, domain_name, domain_dns_value)`
 
@@ -45,4 +45,11 @@ All very provider-dependent.
 
 In theory it should undo the effects of setup.
 In practice, at least one of the services is unable to do that
-(according to the comment).
+(according to the author's comment).
+
+### Legacy DNS vs Aliasing
+
+Legacy DNS providers MAY adapt to using the [aliasing](DNS-ALiasing), though
+a potentially fragile faking of the new-model challenge dict is required. 
+See the `unbound_ssh` example driver, and bear in mind that a change to the
+data type of the challenge items IS anticipated, perhaps in 0.9.

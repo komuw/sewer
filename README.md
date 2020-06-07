@@ -20,7 +20,7 @@ the many changes in this release.
 - Support for SAN certificates.
 - Supports wildcard certificates.
 - Bundling certificates.
-- Supports [DNS](#dns-services-supported) and HTTP challenges.
+- Supports [DNS](dns-01) and HTTP challenges.
 - [Bring your own dns provider](#bring-your-own-dns-provider)
 - [Bring your own http provider](#bring-your-own-http-provider)
 - sewer is both a [command-line program](#cli) and a [Python library](#usage) for customization
@@ -261,11 +261,9 @@ The certificate, certificate key and account key will be saved in the directory
 that you run sewer from.
 
 ## Bring your own DNS provider          
-NB: This section is out of date.  It describes the Legacy DNS interface.
-Newer documentation, though not a worked example like this, can be found in
-the docs directory.
+>NB: This section is out of date.  It describes the Legacy DNS interface.
+>Newer documentation can be found in[docs/dns-01](docs/dns-01.md).
 
----
 It is very easy to use any dns provider with sewer.          
 All you have to do is create your own dns class that is a child class of [`sewer.BaseDns`](https://github.com/komuw/sewer/blob/master/sewer/dns_providers/common.py) and then implement the             
 `create_dns_record` and `delete_dns_record` methods.                     

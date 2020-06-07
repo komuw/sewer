@@ -2,6 +2,8 @@ import base64, logging
 from hashlib import sha256
 from typing import Any, Union
 
+LoggerType = logging.Logger
+
 
 ### FIX ME ### can be more specific about response's type... somehow
 
@@ -17,7 +19,7 @@ def log_response(response: Any) -> str:
     return log_body
 
 
-def create_logger(name: str, log_level: Union[str, int]) -> logging.Logger:
+def create_logger(name: str, log_level: Union[str, int]) -> LoggerType:
     """
     return a logger configured with name and log_level
     """
