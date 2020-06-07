@@ -4,14 +4,18 @@ import json
 from hashlib import sha256
 import binascii
 import platform
-from typing import Dict, Union, cast
+from typing import Dict, Sequence, Tuple, Union, cast
 
 import requests
-import OpenSSL
-import cryptography
+import OpenSSL.crypto
+
+# used to just import cryptography, which worked only because other modules did more :-(
+import cryptography.hazmat.primitives.serialization
+import cryptography.hazmat.backends
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
+from .auth import ChalListType, ErrataListType
 from .lib import create_logger, log_response, safe_base64
 
 
@@ -167,6 +171,8 @@ class Client:
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
+
+            ### FIX ME ### is this a dangling duplicate, or was it s'posed to be all_domain_names?
             self.domain_alt_names = list(set(self.domain_alt_names))
 
             self.User_Agent = self.get_user_agent()
@@ -325,7 +331,8 @@ class Client:
             [
                 OpenSSL.crypto.X509Extension(
                     "subjectAltName".encode("utf8"), critical=False, value=SAN
-                )
+                ),
+                # OpenSSL.crypto.X509Extension(b"tlsfeature", critical=False, value=b"status_request")
             ]
         )
         pk = OpenSSL.crypto.load_privatekey(
@@ -727,7 +734,7 @@ class Client:
 
             ### FIX ME ### should abort cert and try to clear on error
 
-            self.propagation_delay(challenges)
+            error, errata_list = self.propagation_delay(challenges)
 
             # for a case where you want certificates for *.example.com and example.com
             # you have to create both auth records AND then respond to the challenge.
@@ -771,44 +778,52 @@ class Client:
         while True:
             yield cur_time
 
-    def propagation_delay(self, challenges):
+    def propagation_delay(self, challenges: ChalListType) -> Tuple[str, ErrataListType]:
         """
         Wait for the challenges to propagate through the service.
 
-        SHOULD return success or failure... TBD.
+        Returns (error: str, errata_list)
+        * ("", []) is complete success
+        * ("timeout", [...]) list contains challenges that weren't ready
+        * ("failure", [...]) list contains both failed and not-yet-ready challenges
 
-        This process is controlled by two attributes and one method on the provider.
-        unpropagated() is called to check whether the listed challenges are thought
-        to be ready to be validated by the ACME server.  If it fails, propagation_delay
-        will sleep and retry until it times out.  The attributes on the provider are
-        prop_timeout and prop_sleep_times.  See docs/unpropagated.md for the details.
+        See docs/unpropagated.md for the details.
         """
+
+        if self.provider.prop_delay:
+            time.sleep(self.provider.prop_delay)
 
         if self.provider.prop_timeout:
             unready = challenges
             end_time = time.time() + self.provider.prop_timeout
-            next_sleep = self.sleep_iter()
+            sleep_time = self.sleep_iter()
             num_checks = 0
+
             while unready:
                 errata = self.provider.unpropagated(unready)
                 num_checks += 1
 
-                ### FIX ME ### if any errata have status "failed", exit with error
+                # right idea, but details aren't yet nailed down?
+                # failed = [e for e in errata if e['status'].startswith("FAIL")]
+
                 if errata:
                     poll_time = time.time()
                     # intentional: do an "extra" check rather than running short
                     if end_time < poll_time:
                         break
                     # wait a while to let more propagation happen
-                    time.sleep(next(next_sleep))
+                    time.sleep(next(sleep_time))
 
                 unready = [err[2] for err in errata]
 
-            ### FIX ME ### might be good for mock tests, but really should try to clear, eh?
             if unready:
+                ### FIX ME ### might be good for mock tests, but really should try to clear, eh?
+                # return ("timeout", unready)
                 raise RuntimeError(
                     "propagation_delay: time out after %s probes: %s" % (num_checks, unready)
                 )
+
+        return ("", [])
 
     def cert(self):
         """

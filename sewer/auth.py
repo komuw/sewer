@@ -1,7 +1,10 @@
-from .lib import create_logger
-from typing import Any, Dict, Sequence, Tuple, Union
+from .lib import create_logger, LoggerType
+from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
 
-ErrataItemType = Tuple[str, str, Dict[str, str]]
+ChalItemType = Dict[str, str]
+ChalListType = Sequence[ChalItemType]
+ErrataItemType = Tuple[str, str, ChalItemType]
+ErrataListType = Sequence[ErrataItemType]
 
 
 class ProviderBase:
@@ -9,49 +12,45 @@ class ProviderBase:
     New-model driver documentation is in docs/UnifiedProvider.md
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        # REQUIRED chal_types - with "fail fast" strict checking
-        chal_types = kwargs.pop("chal_types")
-        if not isinstance(chal_types, (list, tuple)) or any(
-            not isinstance(ct, str) for ct in chal_types
-        ):
+    def __init__(
+        self,
+        *,
+        chal_types: Sequence[str],
+        logger: Optional[LoggerType] = None,
+        LOG_LEVEL: str = "INFO",
+        prop_delay: int = 0,
+        prop_timeout: int = 0,
+        prop_sleep_times: Union[Sequence[int], int] = (1, 2, 4, 8)
+    ) -> None:
+
+        # TypeError if missing, still check that it's a sequencey value; non-str vals, meh
+        if not isinstance(chal_types, (list, tuple)):
             raise ValueError("chal_types must be a list or tuple of strings, not: %s" % chal_types)
         self.chal_types = chal_types
 
-        # OPTIONAL logger or LOG_LEVEL (obsolescent) - setup logging; exactly one is accepted!
-        if "logger" in kwargs:
-            self.logger = kwargs.pop("logger")
+        # setup logging.  let it pass if both are given; logger supersedes old LOG_LEVEL
+        if logger:
+            self.logger = logger
         else:
-            self.logger = create_logger(__name__, kwargs.pop("LOG_LEVEL", "INFO"))
+            self.logger = create_logger(__name__, LOG_LEVEL)
 
-        # OPTIONAL prop_timeout - how long to wait for unpropagated list to clear?
-        self.prop_timeout = kwargs.pop("prop_timeout", 0)
+        # prop_* control delay before and timeout of checking loop as well as internal sleeps
+        self.prop_delay = int(prop_delay)
+        self.prop_timeout = int(prop_timeout)
 
-        # OPTIONAL prop_sleep_times - int or sequence of ints of seconds to sleep
-        if "prop_sleep_times" not in kwargs:
-            self.prop_sleep_times = [1, 2, 4, 8]  # default: sleep for 1, 2, 4, 8, 8 ...
+        ### eratta ### accepts str value(s) that pass int(); low importance
+        if isinstance(prop_sleep_times, (list, tuple)):
+            self.prop_sleep_times = tuple(int(v) for v in prop_sleep_times)
         else:
-            pst = kwargs.pop("prop_sleep_times")
-            if isinstance(pst, int):
-                self.prop_sleep_times = [pst]
-            elif isinstance(pst, (list, tuple)):
-                if any(not isinstance(value, int) for value in pst):
-                    raise ValueError("prop_sleep_times list includes non-int value: %s" % pst)
-                self.prop_sleep_times = list(pst)
-            else:
-                raise ValueError("prop_sleep_time must be Union[int, Sequence[int]]: %s" % pst)
+            self.prop_sleep_times = (int(cast(int, prop_sleep_times)),)
 
-        # UNKNOWN ARGS LEFTOVER?  Could be it got more than one of the logging args.
-        if kwargs:
-            raise ValueError("BaseAuth was passed unknown or redundant argument(s): %s" % kwargs)
-
-    def setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+    def setup(self, challenges: ChalListType) -> ErrataListType:
         raise NotImplementedError("setup method not implemented by %s" % self.__class__)
 
-    def unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+    def unpropagated(self, challenges: ChalListType) -> ErrataListType:
         raise NotImplementedError("unpropagated method not implemented by %s" % self.__class__)
 
-    def clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
+    def clear(self, challenges: ChalListType) -> ErrataListType:
         raise NotImplementedError("clear method not implemented by %s" % self.__class__)
 
 
@@ -74,22 +73,25 @@ class DNSProviderBase(ProviderBase):
     """
     Base class for new-model DNS drivers - legacy drivers use the one in common.py
 
-    This is a placeholder for now, implementing only the initialization where it
-    captures the upcoming alias parameter.  Implementation details for alias are TBD.
+    Accepts the alias optional argument and adds cname_domain and target_domain
+    to support the implementation of aliasing in drivers that inherit from it.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        alias = kwargs.pop("alias", None)
+    def __init__(self, *, alias: str = "", **kwargs: Any) -> None:
         if "chal_types" not in kwargs:
             kwargs["chal_types"] = ["dns-01"]
         super().__init__(**kwargs)
         self.alias = alias
 
-    ### minimal support for using a DNS alias to hold the challenge response
+    ### support for using a DNS alias
 
     def cname_domain(self, chal: Dict[str, str]) -> Union[str, None]:
+        "returns fqdn where CNAME should be if aliasing, else None"
+
         return "_acme-challenge." + chal["domain"] if self.alias else None
 
     def target_domain(self, chal: Dict[str, str]) -> str:
+        "returns fqdn where challenge TXT should be placed"
+
         d = chal["domain"]
         return "_acme-challenge." + d if not self.alias else d + "." + self.alias
