@@ -1,3 +1,5 @@
+# pylint: disable-all
+
 import unittest
 
 from .. import auth, lib
