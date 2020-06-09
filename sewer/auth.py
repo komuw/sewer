@@ -10,49 +10,55 @@ class ProviderBase:
     """
 
     def __init__(
-        self, *, chal_types: Sequence[str], logger: Any=None, LOG_LEVEL: str="INFO",
-        prop_timeout: int=0, prop_sleep_times: Union[int, Sequence[int]]=[1, 2, 4, 8]
+        self,
+        *,
+        chal_types: Sequence[str],
+        logger: Any = None,
+        LOG_LEVEL: str = "INFO",
+        prop_timeout: int = 0,
+        prop_sleep_times: Union[int, Sequence[int]] = [1, 2, 4, 8]
     ) -> None:
         # REQUIRED chal_types - with "fail fast" strict checking
         self.chal_types = chal_types
-#        chal_types = kwargs.pop("chal_types")
-#        if not isinstance(chal_types, (list, tuple)) or any(
-#            not isinstance(ct, str) for ct in chal_types
-#        ):
-#            raise ValueError("chal_types must be a list or tuple of strings, not: %s" % chal_types)
-#        self.chal_types = chal_types
+        #        chal_types = kwargs.pop("chal_types")
+        #        if not isinstance(chal_types, (list, tuple)) or any(
+        #            not isinstance(ct, str) for ct in chal_types
+        #        ):
+        #            raise ValueError("chal_types must be a list or tuple of strings, not: %s" % chal_types)
+        #        self.chal_types = chal_types
 
         # OPTIONAL logger or LOG_LEVEL (obsolescent) - setup logging; exactly one is accepted!
         if logger is not None:
             self.logger = logger
-#        if "logger" in kwargs:
-#            self.logger = kwargs.pop("logger")
+        #        if "logger" in kwargs:
+        #            self.logger = kwargs.pop("logger")
         else:
             self.logger = create_logger(__name__, LOG_LEVEL)
-#            self.logger = create_logger(__name__, kwargs.pop("LOG_LEVEL", "INFO"))
+        #            self.logger = create_logger(__name__, kwargs.pop("LOG_LEVEL", "INFO"))
 
         # OPTIONAL prop_timeout - how long to wait for unpropagated list to clear?
         self.prop_timeout = prop_timeout
-#        self.prop_timeout = kwargs.pop("prop_timeout", 0)
+        #        self.prop_timeout = kwargs.pop("prop_timeout", 0)
 
         # OPTIONAL prop_sleep_times - int or sequence of ints of seconds to sleep
         self.prop_sleep_times = prop_sleep_times
-#        if "prop_sleep_times" not in kwargs:
-#            self.prop_sleep_times = [1, 2, 4, 8]  # default: sleep for 1, 2, 4, 8, 8 ...
-#        else:
-#            pst = kwargs.pop("prop_sleep_times")
-#            if isinstance(pst, int):
-#                self.prop_sleep_times = [pst]
-#            elif isinstance(pst, (list, tuple)):
-#                if any(not isinstance(value, int) for value in pst):
-#                    raise ValueError("prop_sleep_times list includes non-int value: %s" % pst)
-#                self.prop_sleep_times = list(pst)
-#            else:
-#                raise ValueError("prop_sleep_time must be Union[int, Sequence[int]]: %s" % pst)
 
-        # UNKNOWN ARGS LEFTOVER?  Could be it got more than one of the logging args.
-#        if kwargs:
-#            raise ValueError("BaseAuth was passed unknown or redundant argument(s): %s" % kwargs)
+    #        if "prop_sleep_times" not in kwargs:
+    #            self.prop_sleep_times = [1, 2, 4, 8]  # default: sleep for 1, 2, 4, 8, 8 ...
+    #        else:
+    #            pst = kwargs.pop("prop_sleep_times")
+    #            if isinstance(pst, int):
+    #                self.prop_sleep_times = [pst]
+    #            elif isinstance(pst, (list, tuple)):
+    #                if any(not isinstance(value, int) for value in pst):
+    #                    raise ValueError("prop_sleep_times list includes non-int value: %s" % pst)
+    #                self.prop_sleep_times = list(pst)
+    #            else:
+    #                raise ValueError("prop_sleep_time must be Union[int, Sequence[int]]: %s" % pst)
+
+    # UNKNOWN ARGS LEFTOVER?  Could be it got more than one of the logging args.
+    #        if kwargs:
+    #            raise ValueError("BaseAuth was passed unknown or redundant argument(s): %s" % kwargs)
 
     def setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
         raise NotImplementedError("setup method not implemented by %s" % self.__class__)
@@ -88,7 +94,7 @@ class DNSProviderBase(ProviderBase):
     """
 
     def __init__(self, *, alias=None, **kwargs: Any) -> None:
-#        alias = kwargs.pop("alias", None)
+        #        alias = kwargs.pop("alias", None)
         if "chal_types" not in kwargs:
             kwargs["chal_types"] = ["dns-01"]
         super().__init__(**kwargs)
