@@ -1,8 +1,11 @@
 import base64, logging
-from typing import Union
+from hashlib import sha256
+from typing import Any, Union
 
 
-def log_response(response) -> str:
+### FIX ME ### can be more specific about response's type... somehow
+
+def log_response(response: Any) -> str:
     """
     renders a python-requests response as json or as a string
     """
@@ -29,9 +32,15 @@ def create_logger(name: str, log_level: Union[str, int]) -> logging.Logger:
 
 
 def safe_base64(un_encoded_data: Union[str, bytes]) -> str:
-    "return ACME-safe base64 encoding of un_encoded_data"
+    "return ACME-safe base64 encoding of un_encoded_data as a string"
 
     if isinstance(un_encoded_data, str):
         un_encoded_data = un_encoded_data.encode("utf8")
     r = base64.urlsafe_b64encode(un_encoded_data).rstrip(b"=")
     return r.decode("utf8")
+
+
+def dns_challenge(key_auth: str) -> str:
+    "return the ACME challenge response for a DNS TXT record"
+
+    return safe_base64(sha256(key_auth.encode("utf8")).digest())

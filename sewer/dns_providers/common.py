@@ -1,14 +1,7 @@
-from hashlib import sha256
 from typing import Any, Dict, Sequence
 
 from sewer.auth import ErrataItemType, ProviderBase
-from sewer.lib import safe_base64
-
-
-def dns_challenge(key_auth: str) -> str:
-    "return safe-base64 of hash of key_auth; used for dns response"
-
-    return safe_base64(sha256(key_auth.encode("utf8")).digest())
+from sewer.lib import dns_challenge
 
 
 class BaseDns(ProviderBase):
