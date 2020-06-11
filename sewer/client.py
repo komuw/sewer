@@ -643,24 +643,6 @@ class Client:
         nonce = response.headers["Replay-Nonce"]
         return nonce
 
-    @staticmethod
-    def stringfy_items(payload):
-        """
-        method that takes a dictionary and then converts any keys or values
-        in that are of type bytes into unicode strings.
-        This is necessary esp if you want to then turn that dict into a json string.
-        """
-        if isinstance(payload, str):
-            return payload
-
-        for k, v in payload.items():
-            if isinstance(k, bytes):
-                k = k.decode("utf-8")
-            if isinstance(v, bytes):
-                v = v.decode("utf-8")
-            payload[k] = v
-        return payload
-
     def get_jwk(self):
         """
         calculate the JSON Web Key (jwk) from self.account_key
