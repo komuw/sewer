@@ -12,6 +12,8 @@ class BaseDns(ProviderBase):
     def __init__(self, **kwargs: Any) -> None:
         if "chal_types" not in kwargs:
             kwargs["chal_types"] = ["dns-01"]
+        if "LOG_LEVEL" not in kwargs:
+            kwargs["LOG_LEVEL"] = "WARNING"
         super().__init__(**kwargs)
 
     ### shim methods
