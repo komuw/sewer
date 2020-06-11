@@ -1,25 +1,10 @@
 try:
     cloudns_dependencies = True
-    from cloudns_api import record
+    import cloudns_api
 except ImportError:
     cloudns_dependencies = False
 
 from . import common
-
-
-### FIX ME ### this assumes there are only two levels above the host (no bbc.co.uk eg.)
-
-
-def _split_domain_name(domain_name):
-    """ClouDNS requires the domain name and host to be split."""
-    full_domain_name = "_acme-challenge.{}".format(domain_name)
-    domain_parts = full_domain_name.split(".")
-
-    domain_name = ".".join(domain_parts[-2:])
-    host = ".".join(domain_parts[:-2])
-
-    return domain_name, host
-
 
 class ClouDNSDns(common.BaseDns):
 
@@ -33,38 +18,53 @@ class ClouDNSDns(common.BaseDns):
             )
 
         super(ClouDNSDns, self).__init__(*args, **kwargs)
+        self.records = {}
+
+    def _find_dns_zone(self, domain):
+        zones = cloudns_api.zone.list().payload
+        match = {'name': ''}
+        for zone in zones:
+            if zone['zone'] != 'domain':
+                continue
+            pos = domain.find(zone['name'])
+            self.logger.debug("Trying to match zone: %s", repr(zone))
+            if pos != -1:
+                # this is the zone
+                self.logger.debug("Got a match: {}".format(repr(zone)))
+                if match['name']:
+                    if match['priority'] > pos:
+                        match = {'name': zone['name'], 'priority': pos}
+                else:
+                    match = {'name': zone['name'], 'priority': pos}
+        if not match['name']:
+            return False
+        zonename = match['name']
+        self.logger.debug("Matched domain name: %s", zonename)
+        return zonename
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
-        domain_name, host = _split_domain_name(domain_name)
-        response = record.create(
-            domain_name=domain_name, host=host, record_type="TXT", record=domain_dns_value, ttl=60
+        zone, host = self._find_dns_zone(domain_name), "_acme-challenge"
+        if not zone:
+            self.logger.info("No matching zone found in ClouDNS for domain name " + domain_name)
+            raise Exception("No matching zone found in ClouDNS for domain name " + domain_name)
+
+        response = cloudns_api.record.create(
+            domain_name=zone, host=host, record_type="TXT", record=domain_dns_value, ttl=60
         )
 
         if not response.success:
             self.logger.info("ClouDNS could not create DNS record.")
             raise Exception("ClouDNS responded with an error.")
 
+        self.records[domain_name] = {'id': response.payload['data']['id'], 'zone': zone}
         self.logger.info("create_dns_record_success")
         return
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        domain_name, host = _split_domain_name(domain_name)
-        response = record.list(domain_name=domain_name, host=host, record_type="TXT")
+        response = cloudns_api.record.delete(self.records[domain_name]['zone'], self.records[domain_name]['id'])
 
         if not response.success:
             self.logger.info("ClouDNS could not find DNS record to delete.")
             raise Exception("ClouDNS responded with an error.")
-
-        for record_id, item in response.payload.items():
-            if item["record"] == domain_dns_value:
-                response = record.delete(domain_name=domain_name, record_id=record_id)
-                if not response.success:
-                    self.logger.info("ClouDNS could not delete DNS record.")
-                    raise Exception("ClouDNS responded with an error.")
-                self.logger.info("delete_dns_record_success")
-                return
-
-        self.logger.info("ClouDNS could not find DNS record to delete.")
-        raise Exception("ClouDNS responded with an error.")
