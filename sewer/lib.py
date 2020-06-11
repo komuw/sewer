@@ -5,6 +5,7 @@ from typing import Any, Union
 
 ### FIX ME ### can be more specific about response's type... somehow
 
+
 def log_response(response: Any) -> str:
     """
     renders a python-requests response as json or as a string
