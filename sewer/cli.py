@@ -148,6 +148,14 @@ def main():
         help="The log level to output log messages at. \
         eg: --loglevel DEBUG",
     )
+    parser.add_argument(
+        "--maxChecks",
+        type=int,
+        required=False,
+        default=3,
+        help="The number of times sewer will check the global DNS records to see if the challenge text is available \
+            eg: --maxChecks 10",
+    )
 
     args = parser.parse_args()
 
@@ -162,6 +170,7 @@ def main():
     email = args.email
     loglevel = args.loglevel
     out_dir = args.out_dir
+    maxChecks = args.maxChecks
 
     # Make sure the output dir user specified is writable
     if not os.access(out_dir, os.W_OK):
@@ -337,6 +346,7 @@ def main():
         certificate_key=certificate_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
+        ACME_AUTH_STATUS_MAX_CHECKS=maxChecks,
     )
     certificate_key = client.certificate_key
     account_key = client.account_key
