@@ -20,7 +20,7 @@ class AuroraDns(common.BaseDns):
 
     dns_provider_name = "aurora"
 
-    def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY):
+    def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY, **kwargs):
 
         if not aurora_dependencies:
             raise ImportError(
@@ -29,7 +29,7 @@ class AuroraDns(common.BaseDns):
 
         self.AURORA_API_KEY = AURORA_API_KEY
         self.AURORA_SECRET_KEY = AURORA_SECRET_KEY
-        super(AuroraDns, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")

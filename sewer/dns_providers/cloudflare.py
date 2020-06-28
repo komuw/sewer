@@ -18,6 +18,7 @@ class CloudFlareDns(common.BaseDns):
         CLOUDFLARE_API_KEY=None,
         CLOUDFLARE_API_BASE_URL="https://api.cloudflare.com/client/v4/",
         CLOUDFLARE_TOKEN=None,
+        **kwargs,
     ):
         self.CLOUDFLARE_DNS_ZONE_ID = None
         self.CLOUDFLARE_EMAIL = CLOUDFLARE_EMAIL
@@ -40,7 +41,7 @@ class CloudFlareDns(common.BaseDns):
                 "Error initializing Cloudflare DNS adapter. Pass either email and API key or a token."
             )
 
-        super(CloudFlareDns, self).__init__()
+        super().__init__(**kwargs)
 
     def find_dns_zone(self, domain_name):
         self.logger.debug("find_dns_zone")

@@ -16,7 +16,7 @@ class Route53Dns(common.BaseDns):
     connect_timeout = 30
     read_timeout = 30
 
-    def __init__(self, access_key_id=None, secret_access_key=None):
+    def __init__(self, access_key_id=None, secret_access_key=None, **kwargs):
         if not route53_dependencies:
             raise ImportError(
                 """You need to install Route53Dns dependencies. run; pip3 install sewer[route53]"""
@@ -40,7 +40,7 @@ class Route53Dns(common.BaseDns):
 
         self._resource_records = collections.defaultdict(list)
 
-        super(Route53Dns, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."

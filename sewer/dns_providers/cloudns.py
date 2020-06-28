@@ -25,14 +25,14 @@ class ClouDNSDns(common.BaseDns):
 
     dns_provider_name = "cloudns"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
 
         if not cloudns_dependencies:
             raise ImportError(
                 """You need to install ClouDNSDns dependencies. run; pip3 install sewer[cloudns]"""
             )
 
-        super(ClouDNSDns, self).__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")

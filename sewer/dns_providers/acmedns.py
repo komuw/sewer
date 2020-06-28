@@ -17,7 +17,7 @@ class AcmeDnsDns(common.BaseDns):
 
     dns_provider_name = "acmedns"
 
-    def __init__(self, ACME_DNS_API_USER, ACME_DNS_API_KEY, ACME_DNS_API_BASE_URL):
+    def __init__(self, ACME_DNS_API_USER, ACME_DNS_API_KEY, ACME_DNS_API_BASE_URL, **kwargs):
 
         if not acmedns_dependencies:
             raise ImportError(
@@ -32,7 +32,7 @@ class AcmeDnsDns(common.BaseDns):
             self.ACME_DNS_API_BASE_URL = ACME_DNS_API_BASE_URL + "/"
         else:
             self.ACME_DNS_API_BASE_URL = ACME_DNS_API_BASE_URL
-        super(AcmeDnsDns, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")

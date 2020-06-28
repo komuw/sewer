@@ -55,7 +55,7 @@ class RackspaceDns(common.BaseDns):
             api_base_url = url_data["endpoints"][0]["publicURL"] + "/"
         return (api_token, api_base_url)
 
-    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY):
+    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY, **kwargs):
 
         if not rackspace_dependencies:
             raise ImportError(
@@ -65,7 +65,7 @@ class RackspaceDns(common.BaseDns):
         self.RACKSPACE_USERNAME = RACKSPACE_USERNAME
         self.RACKSPACE_API_KEY = RACKSPACE_API_KEY
         self.HTTP_TIMEOUT = 65  # seconds
-        super(RackspaceDns, self).__init__()
+        super().__init__(**kwargs)
         self.RACKSPACE_API_TOKEN, self.RACKSPACE_API_BASE_URL = self.get_rackspace_credentials()
         self.RACKSPACE_HEADERS = {
             "X-Auth-Token": self.RACKSPACE_API_TOKEN,
