@@ -148,6 +148,13 @@ def main():
         help="The log level to output log messages at. \
         eg: --loglevel DEBUG",
     )
+    parser.add_argument(
+        "--acme_timeout",
+        type=int,
+        required=False,
+        default=7,
+        help="The maximum time the client will wait for a network call (HTTPS request to ACME server) to complete.  Default is 7",
+    )
 
     args = parser.parse_args()
 
@@ -337,6 +344,7 @@ def main():
         certificate_key=certificate_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
+        ACME_REQUEST_TIMEOUT=args.acme_timeout,
     )
     certificate_key = client.certificate_key
     account_key = client.account_key
