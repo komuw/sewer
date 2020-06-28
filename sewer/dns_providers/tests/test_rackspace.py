@@ -1,7 +1,7 @@
 from unittest import mock
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.rackspace import RackspaceDns
 
 from . import test_utils
 
@@ -20,15 +20,15 @@ class TestRackspace(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch(
-            "sewer.RackspaceDns.get_rackspace_credentials"
+            "sewer.dns_providers.rackspace.RackspaceDns.get_rackspace_credentials"
         ) as mock_get_credentials, mock.patch(
-            "sewer.RackspaceDns.find_dns_zone_id", autospec=True
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_zone_id", autospec=True
         ) as mock_find_dns_zone_id:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
             mock_get_credentials.return_value = "mock-api-token", "http://example.com/"
             mock_find_dns_zone_id.return_value = "mock_zone_id"
-            self.dns_class = sewer.RackspaceDns(
+            self.dns_class = RackspaceDns(
                 RACKSPACE_USERNAME=self.RACKSPACE_USERNAME, RACKSPACE_API_KEY=self.RACKSPACE_API_KEY
             )
 
@@ -59,7 +59,7 @@ class TestRackspace(TestCase):
 
     def test_find_dns_record_id(self):
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
-            "sewer.RackspaceDns.find_dns_zone_id"
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_zone_id"
         ) as mock_find_dns_zone_id:
             # see: https://developer.rackspace.com/docs/cloud-dns/v1/api-reference/records/
             mock_dns_record_id = "A-1234"
@@ -88,14 +88,16 @@ class TestRackspace(TestCase):
             self.assertTrue(mock_find_dns_zone_id.called)
 
     def test_delete_dns_record_is_not_called_by_create_dns_record(self):
-        with mock.patch("sewer.RackspaceDns.find_dns_zone_id") as mock_find_dns_zone_id, mock.patch(
-            "requests.post"
-        ) as mock_requests_post, mock.patch("requests.get") as mock_requests_get, mock.patch(
+        with mock.patch(
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_zone_id"
+        ) as mock_find_dns_zone_id, mock.patch("requests.post") as mock_requests_post, mock.patch(
+            "requests.get"
+        ) as mock_requests_get, mock.patch(
             "requests.delete"
         ) as mock_requests_delete, mock.patch(
-            "sewer.RackspaceDns.delete_dns_record"
+            "sewer.dns_providers.rackspace.RackspaceDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch(
-            "sewer.RackspaceDns.poll_callback_url"
+            "sewer.dns_providers.rackspace.RackspaceDns.poll_callback_url"
         ) as mock_poll_callback_url:
             mock_find_dns_zone_id.return_value = "mock_zone_id"
             mock_requests_get.return_value = (
@@ -113,11 +115,11 @@ class TestRackspace(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.RackspaceDns.delete_dns_record"
+            "sewer.dns_providers.rackspace.RackspaceDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch(
-            "sewer.RackspaceDns.find_dns_zone_id"
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_zone_id"
         ) as mock_find_dns_zone_id, mock.patch(
-            "sewer.RackspaceDns.poll_callback_url"
+            "sewer.dns_providers.rackspace.RackspaceDns.poll_callback_url"
         ) as mock_poll_callback_url:
             mock_requests_content = {"callbackUrl": "http://example.com/callbackUrl"}
             mock_requests_post.return_value = test_utils.MockResponse(202, mock_requests_content)
@@ -143,11 +145,11 @@ class TestRackspace(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.RackspaceDns.find_dns_zone_id"
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_zone_id"
         ) as mock_find_dns_zone_id, mock.patch(
-            "sewer.RackspaceDns.poll_callback_url"
+            "sewer.dns_providers.rackspace.RackspaceDns.poll_callback_url"
         ) as mock_poll_callback_url, mock.patch(
-            "sewer.RackspaceDns.find_dns_record_id"
+            "sewer.dns_providers.rackspace.RackspaceDns.find_dns_record_id"
         ) as mock_find_dns_record_id:
             mock_requests_content = {"callbackUrl": "http://example.com/callbackUrl"}
             mock_requests_post.return_value = (

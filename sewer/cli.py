@@ -190,7 +190,7 @@ def main():
         ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_PRODUCTION
 
     if dns_provider == "cloudflare":
-        from . import CloudFlareDns
+        from .dns_providers.cloudflare import CloudFlareDns
 
         CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL", None)
         CLOUDFLARE_API_KEY = os.environ.get("CLOUDFLARE_API_KEY", None)
@@ -213,7 +213,7 @@ def main():
         logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
 
     elif dns_provider == "aurora":
-        from . import AuroraDns
+        from .dns_providers.auroradns import AuroraDns
 
         try:
             AURORA_API_KEY = os.environ["AURORA_API_KEY"]
@@ -228,7 +228,7 @@ def main():
             raise
 
     elif dns_provider == "acmedns":
-        from . import AcmeDnsDns
+        from .dns_providers.acmedns import AcmeDnsDns
 
         try:
             ACME_DNS_API_USER = os.environ["ACME_DNS_API_USER"]
@@ -245,7 +245,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "aliyun":
-        from . import AliyunDns
+        from .dns_providers.aliyundns import AliyunDns
 
         try:
             aliyun_ak = os.environ["ALIYUN_AK_ID"]
@@ -257,7 +257,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "hurricane":
-        from . import HurricaneDns
+        from .dns_providers.hurricane import HurricaneDns
 
         try:
             he_username = os.environ["HURRICANE_USERNAME"]
@@ -268,7 +268,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "rackspace":
-        from . import RackspaceDns
+        from .dns_providers.rackspace import RackspaceDns
 
         try:
             RACKSPACE_USERNAME = os.environ["RACKSPACE_USERNAME"]
@@ -279,7 +279,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "dnspod":
-        from . import DNSPodDns
+        from .dns_providers.dnspod import DNSPodDns
 
         try:
             DNSPOD_ID = os.environ["DNSPOD_ID"]
@@ -290,7 +290,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "duckdns":
-        from . import DuckDNSDns
+        from .dns_providers.duckdns import DuckDNSDns
 
         try:
             duckdns_token = os.environ["DUCKDNS_TOKEN"]
@@ -301,7 +301,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "cloudns":
-        from . import ClouDNSDns
+        from .dns_providers.cloudns import ClouDNSDns
 
         try:
             dns_class = ClouDNSDns()
@@ -310,7 +310,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "powerdns":
-        from . import PowerDNSDns
+        from .dns_providers.powerdns import PowerDNSDns
 
         try:
             powerdns_api_key = os.environ["POWERDNS_API_KEY"]
@@ -322,7 +322,7 @@ def main():
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
     elif dns_provider == "gandi":
-        from . import GandiDns
+        from .dns_providers.gandi import GandiDns
 
         try:
             gandi_api_key = os.environ["GANDI_API_KEY"]

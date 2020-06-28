@@ -1,7 +1,7 @@
 from unittest import mock
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.auroradns import AuroraDns
 
 from . import test_utils
 
@@ -25,7 +25,7 @@ class TestAurora(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.AuroraDns(
+            self.dns_class = AuroraDns(
                 AURORA_API_KEY=self.AURORA_API_KEY, AURORA_SECRET_KEY=self.AURORA_SECRET_KEY
             )
 
@@ -38,7 +38,7 @@ class TestAurora(TestCase):
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
             "sewer.dns_providers.auroradns.get_driver"
         ) as mock_get_driver, mock.patch(
-            "sewer.AuroraDns.delete_dns_record"
+            "sewer.dns_providers.auroradns.AuroraDns.delete_dns_record"
         ) as mock_delete_dns_record:
             mock_requests_post.return_value = (
                 mock_requests_get.return_value

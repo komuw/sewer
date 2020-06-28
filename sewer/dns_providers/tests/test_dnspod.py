@@ -1,7 +1,7 @@
 from unittest import mock
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.dnspod import DNSPodDns
 
 from . import test_utils
 
@@ -42,7 +42,7 @@ class TestDNSPod(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.DNSPodDns(
+            self.dns_class = DNSPodDns(
                 DNSPOD_ID=self.DNSPOD_ID,
                 DNSPOD_API_KEY=self.DNSPOD_API_KEY,
                 DNSPOD_API_BASE_URL=self.DNSPOD_API_BASE_URL,
@@ -57,7 +57,7 @@ class TestDNSPod(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch(
-            "sewer.DNSPodDns.delete_dns_record"
+            "sewer.dns_providers.dnspod.DNSPodDns.delete_dns_record"
         ) as mock_delete_dns_record:
             mock_resp = {"status": {"code": "1", "message": "Action completed successful"}}
             mock_requests_post.return_value = (
@@ -73,7 +73,7 @@ class TestDNSPod(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.DNSPodDns.delete_dns_record"
+            "sewer.dns_providers.dnspod.DNSPodDns.delete_dns_record"
         ) as mock_delete_dns_record:
             for test_data in self.test_datas:
                 mock_resp = {"status": {"code": "1", "message": "Action completed successful"}}
@@ -135,7 +135,7 @@ class TestDNSPod(TestCase):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
             "requests.get"
         ) as mock_requests_get, mock.patch("requests.delete") as mock_requests_delete, mock.patch(
-            "sewer.DNSPodDns.delete_dns_record"
+            "sewer.dns_providers.dnspod.DNSPodDns.delete_dns_record"
         ) as mock_delete_dns_record:
             for test_data in self.test_datas:
                 mock_resp = {"status": {"code": "-15", "message": "Domain name has been banned."}}
