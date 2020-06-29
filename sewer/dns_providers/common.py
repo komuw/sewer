@@ -1,7 +1,7 @@
 from typing import Any, Dict, Sequence
 
-from sewer.auth import ErrataItemType, ProviderBase
-from sewer.lib import dns_challenge
+from ..auth import ErrataItemType, ProviderBase
+from ..lib import dns_challenge
 
 
 class BaseDns(ProviderBase):

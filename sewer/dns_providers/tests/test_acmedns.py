@@ -2,7 +2,7 @@ from unittest import mock
 import json
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.acmedns import AcmeDnsDns
 
 from . import test_utils
 
@@ -23,7 +23,7 @@ class Testacmedns(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.AcmeDnsDns(
+            self.dns_class = AcmeDnsDns(
                 ACME_DNS_API_USER=self.acmedns_API_USER,
                 ACME_DNS_API_KEY=self.acmedns_API_KEY,
                 ACME_DNS_API_BASE_URL=self.acmedns_API_BASE_URL,
@@ -34,7 +34,7 @@ class Testacmedns(TestCase):
 
     def test_acmedns_is_called_by_create_dns_record(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "sewer.AcmeDnsDns.delete_dns_record"
+            "sewer.dns_providers.acmedns.AcmeDnsDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch("dns.resolver.Resolver.query") as mock_dns_resolver:
             mock_requests_post.return_value = (
                 mock_delete_dns_record.return_value

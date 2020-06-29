@@ -1,7 +1,7 @@
 from unittest import mock
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.gandi import GandiDns
 
 MOCK_GANDI_API_KEY = "gandi-Api-Key"
 
@@ -95,7 +95,7 @@ class TestGandiDns(TestCase):
 
     @mock_requests
     def test_delete_existing_record(self, mock_requests_lib):
-        gandi_dns = sewer.GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
+        gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
         gandi_dns.delete_dns_record("subsubdomain.subdomain.second-level-domain.tld", "val")
 
         get_calls = mock_requests_lib.get.call_args_list
@@ -112,7 +112,7 @@ class TestGandiDns(TestCase):
 
     @mock_requests
     def test_delete_non_existing_record(self, mock_requests_lib):
-        gandi_dns = sewer.GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
+        gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
         with self.assertRaises(RuntimeError) as context:
             gandi_dns.delete_dns_record("no-exist.second-level-domain.tld", "val")
 
@@ -123,7 +123,7 @@ class TestGandiDns(TestCase):
 
     @mock_requests
     def test_create_record(self, mock_requests_lib):
-        gandi_dns = sewer.GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
+        gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
         gandi_dns.create_dns_record("subsubdomain.subdomain.second-level-domain.tld", "val")
 
         get_calls = mock_requests_lib.get.call_args_list
@@ -153,7 +153,7 @@ class TestGandiDns(TestCase):
 
     @mock_requests
     def test_create_non_existing_record(self, mock_requests_lib):
-        gandi_dns = sewer.GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
+        gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
         gandi_dns.create_dns_record("subdomain.second-level-domain.tld", "val")
 
         get_calls = mock_requests_lib.get.call_args_list

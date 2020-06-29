@@ -8,7 +8,7 @@ class DuckDNSDns(common.BaseDns):
 
     dns_provider_name = "duckdns"
 
-    def __init__(self, duckdns_token, DUCKDNS_API_BASE_URL="https://www.duckdns.org"):
+    def __init__(self, duckdns_token, DUCKDNS_API_BASE_URL="https://www.duckdns.org", **kwargs):
 
         self.duckdns_token = duckdns_token
         self.HTTP_TIMEOUT = 65  # seconds
@@ -17,7 +17,7 @@ class DuckDNSDns(common.BaseDns):
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL + "/"
         else:
             self.DUCKDNS_API_BASE_URL = DUCKDNS_API_BASE_URL
-        super(DuckDNSDns, self).__init__()
+        super().__init__(**kwargs)
 
     def _common_dns_record(self, logger_info, domain_name, payload_end_arg):
         self.logger.info("{0}".format(logger_info))

@@ -11,7 +11,9 @@ class DNSPodDns(common.BaseDns):
 
     dns_provider_name = "dnspod"
 
-    def __init__(self, DNSPOD_ID, DNSPOD_API_KEY, DNSPOD_API_BASE_URL="https://dnsapi.cn/"):
+    def __init__(
+        self, DNSPOD_ID, DNSPOD_API_KEY, DNSPOD_API_BASE_URL="https://dnsapi.cn/", **kwargs
+    ):
         self.DNSPOD_ID = DNSPOD_ID
         self.DNSPOD_API_KEY = DNSPOD_API_KEY
         self.DNSPOD_API_BASE_URL = DNSPOD_API_BASE_URL
@@ -22,7 +24,7 @@ class DNSPodDns(common.BaseDns):
             self.DNSPOD_API_BASE_URL = DNSPOD_API_BASE_URL + "/"
         else:
             self.DNSPOD_API_BASE_URL = DNSPOD_API_BASE_URL
-        super(DNSPodDns, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")

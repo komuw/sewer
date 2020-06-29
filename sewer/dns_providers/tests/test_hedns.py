@@ -1,6 +1,8 @@
 from unittest import mock
 from unittest import TestCase
-import sewer
+
+from sewer.dns_providers.hurricane import HurricaneDns
+
 from . import test_utils
 
 
@@ -19,9 +21,7 @@ class TestHEDNS(TestCase):
         ) as mock_requests_get:
             mock_requests_post.return_value = test_utils.MockResponse()
             mock_requests_get.return_value = test_utils.MockResponse()
-            self.dns_class = sewer.HurricaneDns(
-                username=self.he_uesrname, password=self.he_password
-            )
+            self.dns_class = HurricaneDns(username=self.he_uesrname, password=self.he_password)
 
     def tearDown(self):
         pass
@@ -44,7 +44,7 @@ class TestHEDNS(TestCase):
 
     def test_hedns_is_called_by_create_dns_record(self):
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
-            "sewer.HurricaneDns.delete_dns_record"
+            "sewer.dns_providers.hurricane.HurricaneDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch("dns.resolver.Resolver.query") as mock_dns_resolver:
             mock_requests_post.return_value = (
                 mock_delete_dns_record.return_value

@@ -1,6 +1,7 @@
 from unittest import mock
 from unittest import TestCase
-import sewer
+
+from sewer.dns_providers.powerdns import PowerDNSDns
 
 from . import test_utils
 
@@ -20,7 +21,7 @@ class TestPowerDNS(TestCase):
         self.apex_response = test_utils.MockResponse(status_code=200)
         with mock.patch("requests.patch") as mock_requests_get:
             mock_requests_get.return_value = self.common_response
-            self.dns_class = sewer.PowerDNSDns(
+            self.dns_class = PowerDNSDns(
                 powerdns_api_key=self.powerdns_api_key, powerdns_api_url=self.powerdns_api_url
             )
 
@@ -31,7 +32,7 @@ class TestPowerDNS(TestCase):
         fqdn = f"fu.bar.baz.{self.domain_name}"
 
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
-            "sewer.PowerDNSDns.validate_powerdns_zone"
+            "sewer.dns_providers.powerdns.PowerDNSDns.validate_powerdns_zone"
         ) as mock_validate_powerdns_zone:
 
             mock_requests_get.return_value.status_code = self.apex_response
@@ -76,7 +77,7 @@ class TestPowerDNS(TestCase):
 
     def test_powerdns_is_called_by_create_dns_record(self):
         with mock.patch("requests.patch") as mock_requests_patch, mock.patch(
-            "sewer.PowerDNSDns.delete_dns_record"
+            "sewer.dns_providers.powerdns.PowerDNSDns.delete_dns_record"
         ) as mock_delete_dns_record, mock.patch("requests.get") as mock_requests_get:
 
             mock_requests_get.return_value = self.apex_response

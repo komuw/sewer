@@ -16,6 +16,7 @@ class GandiDns(common.BaseDns):
         GANDI_API_BASE_URL="https://dns.api.gandi.net/api/v5/",
         DEFAULT_TTL=10800,
         requests_lib=requests,
+        **kwargs,
     ):
         self.GANDI_API_KEY = GANDI_API_KEY
         self.HTTP_TIMEOUT = 65  # seconds
@@ -34,7 +35,7 @@ class GandiDns(common.BaseDns):
         self.GET_HEADERS = {"X-Api-Key": self.GANDI_API_KEY}
         self.POST_HEADERS = {"X-Api-Key": self.GANDI_API_KEY, "Content-Type": "application/json"}
 
-        super(GandiDns, self).__init__()
+        super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self.delete_record(domain_name, idempotent=True)

@@ -2,7 +2,7 @@ from unittest import mock
 from os import environ
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.cloudns import ClouDNSDns
 
 from . import test_utils
 
@@ -18,7 +18,7 @@ class TestClouDNS(TestCase):
         self.cloudns_auth_id = "mock-api-id"
         self.cloudns_auth_password = "mock-api-password"
 
-        self.dns_class = sewer.ClouDNSDns()
+        self.dns_class = ClouDNSDns()
 
         environ["CLOUDNS_API_AUTH_ID"] = self.cloudns_auth_id
         environ["CLOUDNS_API_AUTH_PASSWORD"] = self.cloudns_auth_password

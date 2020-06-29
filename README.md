@@ -100,7 +100,8 @@ Sewer is in active development and it's API ~~may~~ will change in backward inco
 
 This is basic _sewer as a library_ use.
 ```python
-import sewer
+import sewer.client
+import sewer.dns_providers.cloudflare
 
 dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
     CLOUDFLARE_EMAIL='example@example.com',
@@ -133,7 +134,8 @@ with open('account_key.key', 'w') as account_key_file:
 
 
 # 2. to renew a certificate:
-import sewer
+import sewer.client
+import sewer.dns_providers.cloudflare
 
 dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
     CLOUDFLARE_EMAIL='example@example.com',
@@ -143,7 +145,7 @@ dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
 with open('account_key.key', 'r') as account_key_file:
     account_key = account_key_file.read()
 
-client = sewer.Client(
+client = sewer.client.Client(
     domain_name='example.com',
     dns_class=dns_class,
     account_key=account_key
@@ -157,12 +159,14 @@ with open('certificate.key', 'w') as certificate_key_file:
     certificate_key_file.write(certificate_key)
 
 # 3. You can also request/renew wildcard certificates:
-import sewer
+import sewer.client
+import sewer.dns_providers.cloudflare
+
 dns_class = sewer.dns_providers.cloudflare.CloudFlareDns(
     CLOUDFLARE_EMAIL='example@example.com',
     CLOUDFLARE_API_KEY='nsa-grade-api-key'
 )
-client = sewer.Client(
+client = sewer.client.Client(
     domain_name='*.example.com',
     dns_class=dns_class
 )

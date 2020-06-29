@@ -2,7 +2,7 @@ from unittest import mock
 import json
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.duckdns import DuckDNSDns
 
 from . import test_utils
 
@@ -20,7 +20,7 @@ class TestDuckDNS(TestCase):
         self.duck_mresponse = test_utils.MockResponse(content="OK")
         with mock.patch("requests.get") as mock_requests_get:
             mock_requests_get.return_value = self.duck_mresponse
-            self.dns_class = sewer.DuckDNSDns(
+            self.dns_class = DuckDNSDns(
                 duckdns_token=self.duckdns_API_KEY, DUCKDNS_API_BASE_URL=self.duckdns_API_BASE_URL
             )
 
@@ -29,7 +29,7 @@ class TestDuckDNS(TestCase):
 
     def test_duckdns_is_called_by_create_dns_record(self):
         with mock.patch("requests.get") as mock_requests_get, mock.patch(
-            "sewer.DuckDNSDns.delete_dns_record"
+            "sewer.dns_providers.duckdns.DuckDNSDns.delete_dns_record"
         ) as mock_delete_dns_record:
 
             mock_requests_get.return_value = (

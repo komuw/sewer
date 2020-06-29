@@ -29,7 +29,7 @@ class _ResponseForAliyun(object):
 
 
 class AliyunDns(common.BaseDns):
-    def __init__(self, key, secret, endpoint="cn-beijing", debug=False):
+    def __init__(self, key, secret, endpoint="cn-beijing", debug=False, **kwargs):
         """
         aliyun dns client
         :param str key: access key
@@ -37,7 +37,7 @@ class AliyunDns(common.BaseDns):
         :param str endpoint: endpoint
         :param bool debug: if debug?
         """
-        super(AliyunDns, self).__init__()
+        super().__init__(**kwargs)
         if not aliyun_dependencies:
             raise ImportError(
                 """You need to install aliyunDns dependencies. run; pip3 install sewer[aliyun]"""

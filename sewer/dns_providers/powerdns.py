@@ -21,10 +21,10 @@ class PowerDNSDns(common.BaseDns):
 
     dns_provider_name = "powerdns"
 
-    def __init__(self, powerdns_api_key, powerdns_api_url):
+    def __init__(self, powerdns_api_key, powerdns_api_url, *kwargs):
         self.powerdns_api_key = powerdns_api_key
         self.powerdns_api_url = powerdns_api_url
-        super(PowerDNSDns, self).__init__()
+        super().__init__(*kwargs)
 
     def validate_powerdns_zone(self, domain_name):
         """

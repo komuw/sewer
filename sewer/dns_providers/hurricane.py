@@ -29,8 +29,8 @@ class _Response(object):
 
 
 class HurricaneDns(common.BaseDns):
-    def __init__(self, username, password):
-        super(HurricaneDns, self).__init__()
+    def __init__(self, username, password, **kwargs):
+        super().__init__(**kwargs)
         if not hedns_dependencies:
             raise ImportError(
                 """You need to install HurricaneDns dependencies. run: pip3 install sewer[hurricane]"""

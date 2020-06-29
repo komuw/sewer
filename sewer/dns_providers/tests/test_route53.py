@@ -1,7 +1,7 @@
 from unittest import mock
 from unittest import TestCase
 
-import sewer
+from sewer.dns_providers.route53 import Route53Dns
 
 
 class TestRoute53(TestCase):
@@ -13,7 +13,7 @@ class TestRoute53(TestCase):
         self.domain_dns_value = "mock-domain_dns_value"
         self.route53_key_id = "mock-key-id"
         self.route53_key_secret = "mock-key-secret"
-        self.dns_class = sewer.Route53Dns(self.route53_key_id, self.route53_key_secret)
+        self.dns_class = Route53Dns(self.route53_key_id, self.route53_key_secret)
 
     def tearDown(self):
         pass
@@ -69,7 +69,7 @@ class TestRoute53(TestCase):
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_user_given_credential(self, mock_client):
-        dns_class = sewer.Route53Dns("mock-key", "mock-secret")
+        dns_class = Route53Dns("mock-key", "mock-secret")
         mock_client.assert_called_once_with(
             "route53",
             aws_access_key_id="mock-key",
@@ -79,12 +79,12 @@ class TestRoute53(TestCase):
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_user_not_given_credential(self, mock_client):
-        dns_class = sewer.Route53Dns()
+        dns_class = Route53Dns()
         mock_client.assert_called_once_with("route53", config=dns_class.aws_config)
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_route53_create_record(self, mock_client):
-        dns_class = sewer.Route53Dns()
+        dns_class = Route53Dns()
         # mock list zones paginator response
         mock_client.return_value.get_paginator.return_value.paginate.return_value = (
             self.mocked_find_zone_response()
@@ -103,7 +103,7 @@ class TestRoute53(TestCase):
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_route53_delete_record(self, mock_client):
-        dns_class = sewer.Route53Dns()
+        dns_class = Route53Dns()
         # mock list zones paginator response
         mock_client.return_value.get_paginator.return_value.paginate.return_value = (
             self.mocked_find_zone_response()
