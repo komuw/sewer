@@ -48,3 +48,6 @@ htmlcov/
 *.key
 .idea
 .vscode
+
+.mypy_cache/
+local/
