@@ -78,8 +78,7 @@ class DNSProviderBase(ProviderBase):
     captures the upcoming alias parameter.  Implementation details for alias are TBD.
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        alias = kwargs.pop("alias", None)
+    def __init__(self, *, alias: str = "", **kwargs: Any) -> None:
         if "chal_types" not in kwargs:
             kwargs["chal_types"] = ["dns-01"]
         super().__init__(**kwargs)
