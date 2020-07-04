@@ -11,7 +11,7 @@ to check that your changes are fully propagated to all their servers.  With
 many, however, you just have to wait.
 
 Sewer provides a flexible _delay until actually published_ mechanism through
-three optional driver parameters, `prop_delay`, prop_timeout`,
+three optional driver parameters, `prop_delay`, `prop_timeout`,
 `prop_sleep_times`, and the [`unpropagated` method](unpropagated).
 Let's see how they're used in various circumstances.
 
@@ -27,7 +27,7 @@ and sewer's engine will add that many seconds of delay after the challenge
 setup returns before it signals the ACME server to validate those
 challenges.
 
-**--prop_delay is available for all providers as of 0.8.3**
+**CLI option --p_opt prop_delay=... is available for all providers as of 0.8.3**
 
 ### API support or can check: use a timeout
 
@@ -43,8 +43,7 @@ before it starts checking.  And there's a delay between checks that has a
 hopefully sensible default, but which you can adjust if necessary through
 the `prop_sleep_times` parameter.
 
-**legacy providers do not implement `unpropagated` as of 0.8.3, and so neither
---prop_timeout nor --prop_sleep_times have been added to sewer-cli**
+**legacy providers do not implement `unpropagated` as of 0.8.3**
 
 ### You probably don't need to change `prop_sleep_times`
 
@@ -100,5 +99,6 @@ you break it!
 
 Yes!  I have no experience with http-01 in any setting where such a delay
 might be needed, but the mechanism is implemented in sewer's engine, and all
-that needs be done is to setup the parameters (and unpropagated if using
-more than just `prop_delay`) as described above and there you are!
+that needs be done is to setup the parameters (and implement unpropagated in
+the driver if using more than just `prop_delay`) as described above and
+there you are!

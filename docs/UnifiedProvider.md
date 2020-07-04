@@ -1,6 +1,6 @@
 ## DNS and HTTP challenges unified
 
-_Still very drafty, but it's slowly getting better._
+_There's still a draft when the wind is blowing, but it's getting less._
 
 ### Dedication
 
@@ -24,15 +24,11 @@ etc.
 `ProviderBase` described here defines the interface the ACME engine uses
 with new-model drivers (all http-01 drivers, as there are no old ones).  New
 drivers normally should inherit from the `DNSProviderBase` or
-`HTTPProviderBase` classes in auth.py.  _(for those who watched the
-unification, no, this isn't really dividing them back up - they still have
-the identical interface defined in `ProviderBase`.  But there are
-unavoidable implementation differences, and once `DNSProviderBase` was added
-to anchor the aliasing suport, it just seemed prudent to put
-`HTTPProviderBase` there as a hedge against future need.)_
+`HTTPProviderBase` classes in auth.py.
 
-sewer has support for [aliasing](docs/Aliasing), though drivers need to
-be created (or modified) to support it at this time.
+`DNSProviderBase` has support for [aliasing](docs/Aliasing), though the
+individual drivers need to be created (or modified) to support it at this
+time.  _unbound_ssh is a quirky but working example that supports aliasing.`
 
 ### ProviderBase interface for ACME engine
 
@@ -90,39 +86,44 @@ Abstract base class for driver implementations ultimately inherit from.
         chal_types: Sequence[str],
         logger: Optional[LoggerType] = None,
         LOG_LEVEL: Optional[str] = "INFO",
-        alias: Optional[str] = None,
         prop_delay: int = 0
         prop_timeout: int = 0,
         prop_sleep_times: Union[Sequence[int], int] = (1, 2, 4, 8)
     ) -> None:
 
 
-The drivers' `__init__` methods accept only keyword arguments.  Here we see
+The drivers' `__init__` methods accept only keyword arguments.  We can see
 that ProviderBase has become the final recipient of quite a few, mostly
-optional, arguments.  This is the general form that Provider subclasses are
-expected to follow: explicitly list the arguments which that driver requires
-after the *, so they must be passed as keyword args, but give no default
-value so that they will be diagnosed as missing by the call protocol.
+optional, arguments.  They ended up here because they are not specific to a
+subclass; a counterexample is the `alias` parameter, which is handled in
+`DNSProviderBase`.  The conventions for ProviderBase and its subclasses are:
+- keyword only arguments (other than self, of course)
+- Required arguments never have a default value
+- Optional arguments must have a default, of course
+- Everything not explicitly handled is left to kwargs
 
-Conveniently, ProviderBase's __init__ has instance of all the variations.
-chal_types is required, so it has no default value and will be diagnosed by
-Python itself.  logger/LOG_LEVEL are... weird.  Without the legacy DNS
-providers I would be inclined to just require logger, pushing the job of
-setting up logging firmly back up the stack.  As it is, logger cannot be
-required (yet), so both have defaults that work with the __init__ logic to
-setup logging as sanely as possible.  Eventually LOG_LEVEL should get
-deprecated and then dropped, and logger is just required...
+Conveniently, ProviderBase's __init__ demonstrates all of these aside from
+the use of kwargs (because it is the final base class, so any unrecognized
+arguments would be in error):
+- chal_types is required, so it has no default value and will be diagnosed by
+  Python's calling mechanism if omitted.
+- logger/LOG_LEVEL are...  weird.  Without the legacy DNS providers I would
+  be inclined to just require logger, pushing the job of setting up logging
+  firmly back up the stack.  As it is, logger cannot be required (yet), so
+  both have defaults that work with the __init__ logic to setup logging as
+  sanely as possible.  Eventually LOG_LEVEL should get deprecated and then
+  dropped, and logger is just required...
+- the prop_* arguments are all optional, and receive default values that the
+  engine code is designed to deal with - by disabling the optional behavior
+  they control.  These are all parameters that were introduced for a
+  lower-level driver or driverBase class, but which have migrated up to
+  ProviderBase because they may apply to any sort of Provider.
 
-alias and the prop_* arguments are all optional, and have default values
-that the engine code is designed to deal with - by disabling the optional
-behavior they control.  These are all parameters that were introduced for a
-lower-level driver or driverBase class, but which have migrated up to
-ProviderBase because they may apply to any sort of Provider.
+In all subclasses, kwargs is expected to catch parameters that may need to
+pass up the Provider classes, and so it must be passed to super()__init__. 
+It is allowed to add, change, or even remove items from kwargs if necessary
 
-In all child classes, kwargs is expected to catch parameters that may need
-to pass up the Provider classes, and so it must be passed to
-super()__init__.  It is allowed to add, change, or even remove items from
-kwargs if necessary - see the intermediate *ProviderBase classes.
+--- see the intermediate *ProviderBase classes.
 
 --- (see where for args documentation?  DNS-Alias and DNS-Propagation & ???)
 
@@ -190,21 +191,26 @@ _? should have a status word for "this one's hard failed, forget about it"?_
 
 ### `DNSProviderBase`
 
-Accepts the `alias` parameter and provides chal_types if not passed in. 
-Defines two methods that use the `alias` string (or its absence, the default
-condition) and a challenge dict to form the target_domain name (where the
-TXT with the challenge response data goes) and, if `alias` was specified, the
-cname_domain where the CNAME should be.
+The driver *interface* is the same for everything except legacy DNS drivers,
+but there are some differences which it makes no sense to push into
+`ProviderBase`.  `DNSProviderBase` provides a nice example of this:
 
-> This could allow a hypothetical library function to attempt to verify the
-propagation, and that might happen in the future.  It doesn't really address
-the problems of a really widespread (anycast, other names?) service provider
-where there may be no way to enumerate "the authoritative nameservers".
+`__init__(self, *, alias: str = "", **kwargs: Any) -> None`
 
-NB: `self.target_domain(chal)` SHOULD be used to form the DNS name for the
-TXT record unless you're doing something very strange.
+def cname_domain(self, chal: Dict[str, str]) -> Union[str, None]
+
+def target_domain(self, chal: Dict[str, str]) -> str
+
+The class's `__init__` handles the `alias` argument, and provides chal_types
+suitable for a DNS driver if they weren't already present.  Its value, if
+any, is stored locally for use by the helper methods.  `target_domain` is to
+be used in the driver to get the actual DNS name for the challenge TXT,
+handling both the aliasing and non-aliasing case.  `cname_domain` forms the
+DNS name for the CNAME that should exist in the aliasing case and returns it
+for the use of a hypothetical sanity check, or None when not aliasing.
 
 ### `HTTPProviderBase`
 
-Does nothing aside from setting up chal_types as `["http-01"]` if it's not
-already there.  They also serve who only redirect...
+This intermediate base class stands ready to handle any HTTP-specific
+options or helper methods.  No additions are expected until sewer has had
+some actual drivers added.  It also provides chal_types if needed.

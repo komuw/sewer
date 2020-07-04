@@ -22,14 +22,20 @@ service's API is difficult.
 
 ## Add a driver for your DNS service
 
-sewer's [legacy DNS driver interface](LegacyDNS) (BaseDns in dns_providers/common.py)
-is deprecated, although there is no schedule for its removal at this time.
-These legacy drivers should be migrated to the new DNSProviderBase (in
-auth.py) when practical.  New DNS drivers should use DNSProviderBase from
-the start, of course, and will be placed in sewer/providers/ if added to the
-project.
+Most (?) of the DNS drivers came about because someone wanted to use sewer
+with their DNS service provider, but there wasn't a driver to use with the
+SP yet.  This involvement of sewer and DNS-service users is a practical
+necessity, as there is no substitute for being able to test the driver
+against the DNS-service, and many such services are for-pay or bundled with
+other for-pay services.
 
-    # sketch of dns-01 provider, including alias support
+sewer's [legacy DNS driver interface](LegacyDNS) (BaseDns in dns_providers/common.py)
+is deprecated, although there is no plan for its removal other than
+_after they have all migrated to the new interface_.
+New DNS drivers should use DNSProviderBase from the start, of course,
+and will be placed in sewer/providers/ if added to the project.
+
+    # sketch of dns-01 provider, including alias support [which is NOT in 0.8.2]
 
     from ..auth import DNSProviderBase
     from ..lib import dns_challenge
@@ -59,11 +65,11 @@ project.
         def my_api_del_txt(self, fqdn):
             # talk to DNS service to remove TXT
 
-Most of your work is in implementing the two methods which actually
-communicate with the DNS service.  This can be easy or very difficult,
-depending on the service provider's API (or lack of designed API if you have
-to use a mix of web scraping and HTTP request generation to operate a
-mechanism that was designed for interactive use).
+Most of your work is in implementing the two methods (or one method, or
+inline code) which actually communicate with the DNS service.  This can be
+easy or very difficult, depending on the service provider's API (or lack of
+designed API if you have to use a mix of web scraping and HTTP request
+generation to operate a mechanism that was designed for interactive use).
 
 The above is bare-bones, not taking advantage of the batching of challenges
 which the new-model interface provides - that can be huge if you have to
@@ -73,30 +79,42 @@ commands to them.  It does show the use of target_domain to support
 
 ## Legacy DNS drivers vs. $FEATURES
 
-Three recent features that have varying support in the Legacy drivers.
-
-_wildcard_ is support for the special case where both *.domain.tld and
-domin.tld are requested in the same certificate.  The potential problem and
-the fix are service-specific.
-
-_alias_ is the new (0.8.3) --alias_domain feature, which none of the legacy
-drivers initially supported.
-
-_prop_ is support for the "check & wait" propagation wait (new in 0.8.2),
-which none of the legacy providers initially supported.
+Three features that have varying support in the Legacy drivers.
 
 | driver name | wildcard | alias | prop | notes |
 | --- | :-: | :-: | :-: | ---|
 | acmedns | ? | no | no | |
 | aliyun | ? | no | no | |
 | aurora | ? | no | no | |
-| cloudns | ? | no | no | |
-| cloudflare | ? | no | no | wc patch exists, reported to work |
+| cloudns | ? | no | no | test coverage 75% |
+| cloudflare | ? | no | no | patch in #123, needs confirmation? |
 | dnspod | ? | no | no | |
 | duckdns | ? | no | no | |
-| hurricane | ? | no | no | |
-| powerdns | ? | no | no | |
-| rackspace | ? | no | no | | 
-| route53 | ok | no | no | wc +1 from pre-0.8.2 |
+| gandi | OK | no | no | wildcard & other fixes in 0.8.3 |
+| hurricane | ? | no | no | test coverage 70% |
+| powerdns | NO | no | no | apparently not in 0.8.2; bug #195 |
+| rackspace | ? | no | no | test coverage 69% | 
+| route53 | OK | no | no | wildcard since pre-0.8.2 |
+| unbound_ssh | OK | yes | no | Working demonstrator model |
+
+_wildcard_ is NOT the older issue - since 0.8.2, all drivers should be able
+to support creating certificates for simple `*.domain.tld` requests.
+There is a deeper problem when one wants a wildcard that _also_ covers plain
+`domain.tld`, which is sometimes desired.
+Because of the way ACME and DNS work, such a certificate must post two
+different challenge responses on the same DNS name (domain.tld).
+DNS inherently supports this, and all the DNS services that have been
+examined so far support it, but their APIs don't always make it easy.
+And that's why some drivers cannot yet handle these _wildcard-plus_
+requests.  _I'm sure some of those "unknowns" are "OK", but I can't find
+evidence at this time._
+
+_alias_ is the new (0.8.3) `--p_opts alias=...` feature, which none of the legacy
+drivers initially supported.
+
+_prop_ is support for the "check & wait" propagation wait (engine support in 0.8.2),
+which none of the legacy providers support (yet?).  Note that `prop_delay`,
+although passed through the driver, is working without driver support aside
+from **kwargs.  The other `prop_*` parameters are what this column reports.
 
 _updated pre-0.8.3 release_

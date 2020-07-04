@@ -14,7 +14,7 @@ know that the process isn't working smoothly as-is.
 The `alias` option in sewer is available to drivers that derive from
 `DNSProviderBase`.
 
->0.8.3 added the --alias_domain option, but legacy drivers don't take
+>Added in 0.8.3: `--p_opts alias=...`, but legacy drivers don't take
 advantage of the aliasing support in their parent classes yet.
 
 ## Isn't aliasing just for DNS?

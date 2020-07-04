@@ -86,14 +86,15 @@ available keys:
 - install_dir = path (should be absolute) to directory where new key & crt are installed
 - install_post_cmd = command to be run after key is installed (to make it take effect)
 
-As seen above, a [cert_default] section will be folded in to every
-[cert_f.q.d.n] section.  This is convenient for truly universal settings,
-but the `_method` mechanism is preferred for setting that apply to a subset
-of all the certificates in a config file.
+As seen above, a [cert_default] section will be folded in to every [cert_CN]
+section.  This is convenient for truly universal settings, but the `_method`
+mechanism is preferred for settings that apply less universally.  In any
+event, an explicit setting in [cert_CN] will always take precedence over
+those injected from other sources.
 
 ### The `_method` Method
 
-This allows a goupr of settings that are shared among some of the
+This allows a group of settings that are shared among some of the
 certificates to be grouped and defined once, then included by name.  More or
 less:
 
@@ -115,20 +116,20 @@ less:
     install_method = apache2
     install_ssh_to = hostmaster@www.example.com
 
-The mechanism finds keys of the form <PREFIX>_method = <NAME> and looks for
-a section [<PREFIX>_<NAME>].  It then replaces the <PREFIX>_method item with
-the items in that section after prepending <PREFIX>_ to each key.  So in the
+The mechanism finds keys of the form PREFIX_method = NAME and looks for
+a section [PREFIX_NAME].  It then replaces the PREFIX_method item with
+the items in that section after prepending PREFIX_ to each key.  So in the
 above, each occurence of
 
     install_method = apache2
 
-is replaced by
+is replaced by items from [install_apache2] which become
 
     install_transport = ssh
-    dir = /etc/apache2/ssl
-    post_cmd = systemctl restart apache2
+    install_dir = /etc/apache2/ssl
+    install_post_cmd = systemctl restart apache2
 
 Which is much like what a [cert_default] section would do except it wouldn't
 try to add the apache config items into certs that are for an nginx hosted
-domain, say.  The `_method` method only imports the settings it's asked to
-import.
+domain, say.  The `_method` method only injects the settings it's explicitly
+asked to insert.
