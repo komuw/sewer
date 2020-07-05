@@ -125,4 +125,4 @@ class GandiDns(common.BaseDns):
 
     @staticmethod
     def subdomain_to_challenge_domain(subdomain):
-        return "_acme-challenge" + "." + subdomain
+        return "_acme-challenge" + (('.' + subdomain) if subdomain != '@' else '')
