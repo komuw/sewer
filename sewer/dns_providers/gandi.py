@@ -1,4 +1,6 @@
 import os
+from itertools import chain
+
 import requests
 
 from . import common
@@ -38,16 +40,22 @@ class GandiDns(common.BaseDns):
         super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.delete_record(domain_name, idempotent=True)
         [subdomain, base_domain] = GandiDns.split_domain(domain_name)
         zone_records_href = self.get_zone_records_href(base_domain)
+        all_records = self.get_all_zone_records(zone_records_href)
+        subdomain_records = self._get_subdomain_records(
+            GandiDns.subdomain_to_challenge_domain(subdomain), all_records
+        )
 
         request_body = {
             "rrset_type": "TXT",
             "rrset_ttl": self.RECORD_TTL,
             "rrset_name": GandiDns.subdomain_to_challenge_domain(subdomain),
-            "rrset_values": [domain_dns_value],
+            "rrset_values": list(chain.from_iterable([subdomain_record['rrset_values'] for subdomain_record in subdomain_records])) + [domain_dns_value],
         }
+
+        if subdomain_records:
+            self.delete_record(domain_name)
 
         create_record_resp = self.requests.post(
             zone_records_href, headers=self.POST_HEADERS, json=request_body
@@ -58,27 +66,18 @@ class GandiDns(common.BaseDns):
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.delete_record(domain_name)
 
-    def delete_record(self, domain_name, idempotent=False):
-        def get_subdomain_record(subdomain, all_records):
-            subdomain_records = list(
-                filter(lambda rec: rec["rrset_name"] == subdomain, all_records)
-            )
-            if not len(subdomain_records) == 1:
-                if idempotent:
-                    return None
-                else:
-                    raise RuntimeError("there is not exactly one record for domain: " + domain_name)
+    def _get_subdomain_records(self, subdomain, all_records):
+        return list(
+            filter(lambda rec: rec["rrset_name"] == subdomain, all_records)
+        )
 
-            return subdomain_records[0]
-
+    def delete_record(self, domain_name):
         [subdomain, base_domain] = GandiDns.split_domain(domain_name)
         zone_records_href = self.get_zone_records_href(base_domain)
         all_records = self.get_all_zone_records(zone_records_href)
-        subdomain_record = get_subdomain_record(
-            GandiDns.subdomain_to_challenge_domain(subdomain), all_records
-        )
 
-        if subdomain_record:
+        subdomain_records = self._get_subdomain_records(GandiDns.subdomain_to_challenge_domain(subdomain), all_records)
+        for subdomain_record in subdomain_records:
             del_record_resp = self.requests.delete(
                 subdomain_record["rrset_href"], headers=self.GET_HEADERS
             )
