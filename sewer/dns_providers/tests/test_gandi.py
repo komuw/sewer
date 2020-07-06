@@ -111,6 +111,11 @@ class TestGandiDns(TestCase):
         self.assertEqual(delete_calls[0][0][0], "mock_record_href")
 
     @mock_requests
+    def test_delete_non_existing_record(self, mock_requests_lib):
+        gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
+        gandi_dns.delete_dns_record("no-exist.second-level-domain.tld", "val")
+
+    @mock_requests
     def test_create_record(self, mock_requests_lib):
         gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
         gandi_dns.create_dns_record("subsubdomain.subdomain.second-level-domain.tld", "val")
