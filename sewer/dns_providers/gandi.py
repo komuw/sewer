@@ -51,7 +51,12 @@ class GandiDns(common.BaseDns):
             "rrset_type": "TXT",
             "rrset_ttl": self.RECORD_TTL,
             "rrset_name": GandiDns.subdomain_to_challenge_domain(subdomain),
-            "rrset_values": list(chain.from_iterable([subdomain_record['rrset_values'] for subdomain_record in subdomain_records])) + [domain_dns_value],
+            "rrset_values": list(
+                chain.from_iterable(
+                    [subdomain_record["rrset_values"] for subdomain_record in subdomain_records]
+                )
+            )
+            + [domain_dns_value],
         }
 
         if subdomain_records:
@@ -67,16 +72,16 @@ class GandiDns(common.BaseDns):
         self.delete_record(domain_name)
 
     def _get_subdomain_records(self, subdomain, all_records):
-        return list(
-            filter(lambda rec: rec["rrset_name"] == subdomain, all_records)
-        )
+        return list(filter(lambda rec: rec["rrset_name"] == subdomain, all_records))
 
     def delete_record(self, domain_name):
         [subdomain, base_domain] = GandiDns.split_domain(domain_name)
         zone_records_href = self.get_zone_records_href(base_domain)
         all_records = self.get_all_zone_records(zone_records_href)
 
-        subdomain_records = self._get_subdomain_records(GandiDns.subdomain_to_challenge_domain(subdomain), all_records)
+        subdomain_records = self._get_subdomain_records(
+            GandiDns.subdomain_to_challenge_domain(subdomain), all_records
+        )
         for subdomain_record in subdomain_records:
             del_record_resp = self.requests.delete(
                 subdomain_record["rrset_href"], headers=self.GET_HEADERS
