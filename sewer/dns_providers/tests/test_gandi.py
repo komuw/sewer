@@ -113,13 +113,7 @@ class TestGandiDns(TestCase):
     @mock_requests
     def test_delete_non_existing_record(self, mock_requests_lib):
         gandi_dns = GandiDns(GANDI_API_KEY=MOCK_GANDI_API_KEY, requests_lib=mock_requests_lib)
-        with self.assertRaises(RuntimeError) as context:
-            gandi_dns.delete_dns_record("no-exist.second-level-domain.tld", "val")
-
-        self.assertEqual(
-            "there is not exactly one record for domain: no-exist.second-level-domain.tld",
-            str(context.exception),
-        )
+        gandi_dns.delete_dns_record("no-exist.second-level-domain.tld", "val")
 
     @mock_requests
     def test_create_record(self, mock_requests_lib):
@@ -149,7 +143,7 @@ class TestGandiDns(TestCase):
         self.assertEqual(
             post_calls[0][1]["json"]["rrset_name"], "_acme-challenge.subsubdomain.subdomain"
         )
-        self.assertEqual(post_calls[0][1]["json"]["rrset_values"], ["val"])
+        self.assertEqual(post_calls[0][1]["json"]["rrset_values"], ["challenge_text", "val"])
 
     @mock_requests
     def test_create_non_existing_record(self, mock_requests_lib):
@@ -170,9 +164,6 @@ class TestGandiDns(TestCase):
         self.assertEqual(get_calls[1][0][0], "mock_zone_records_href")
         self.assertEqual(len(delete_calls), 0)
 
-        self.assertEqual(
-            get_calls[2][0][0], "https://dns.api.gandi.net/api/v5/domains/second-level-domain.tld"
-        )
         self.assertEqual(post_calls[0][0][0], "mock_zone_records_href")
         self.assertEqual(post_calls[0][1]["json"]["rrset_type"], "TXT")
         self.assertEqual(post_calls[0][1]["json"]["rrset_ttl"], 10800)

@@ -24,5 +24,6 @@ Contributors
 10. [@soloradish](https://github.com/soloradish)
 11. [Moritz Ulmer](https://www.protohaus.org)
 12. [rozgonik](https://github.com/rozgonik)
-13: [alec T](https://github.com/AlecTroemel)
-14: [Don S](https://github.com/donspaulding)
+13. [alec T](https://github.com/AlecTroemel)
+14. [Don S](https://github.com/donspaulding)
+15. [Julien Demoor](https://github.com/jdkx)
