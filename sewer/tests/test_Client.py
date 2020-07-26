@@ -406,16 +406,25 @@ class TestClientUnits(TestCase):
     def mock_sewer(self, provider):
         return sewer.client.Client(provider=provider, **self.mock_args)
 
-    def test01_prop_timeout_okay(self):
+    # sleep_iter is a prerequisite for the prop_timeout machinery
+
+    def test01_sleep_iter_sticky(self):
+        p = test_utils.ExmpleDNS(1, prop_sleep_times=[1, 2, 3, 4])
+        sleep = self.mock_sewer(provider=p).sleep_iter()
+        self.assertEqual([1, 2, 3, 4, 4, 4, 4, 4], [next(sleep) for i in range(8)])
+
+    # prop_timeout mechanism (Client.propagation_delay)
+
+    def test02_prop_timeout_okay(self):
         p = test_utils.ExmpleDNS(prop_timeout=1, fail_prop_count=0)
         self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 
-    def test02_prop_timeout_timeout(self):
+    def test03_prop_timeout_timeout(self):
         # with default [1,2,4,8] sleep times and delay of 5, needs >4 failures to hit exception
         p = test_utils.ExmpleDNS(prop_timeout=5, fail_prop_count=5)
         with self.assertRaises(RuntimeError):
             self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 
-    def test02_prop_timeout_delayed_okay(self):
+    def test04_prop_timeout_delayed_okay(self):
         p = test_utils.ExmpleDNS(prop_timeout=20, fail_prop_count=2)
         self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)

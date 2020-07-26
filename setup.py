@@ -11,9 +11,9 @@ about = {}
 try:
     import pypandoc
 
-    long_description = pypandoc.convert("README.md", "rst")
+    long_description = pypandoc.convert("docs/README.md", "rst")
 except ImportError:
-    long_description = codecs.open("README.md", encoding="utf8").read()
+    long_description = codecs.open("docs/README.md", encoding="utf8").read()
 
 with open(os.path.join(here, "sewer", "__version__.py"), "r") as f:
     exec(f.read(), about)

@@ -1,5 +1,6 @@
 import os
 import argparse
+from typing import List
 
 from .client import Client
 from . import __version__ as sewer_version
@@ -7,12 +8,42 @@ from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
 from .lib import create_logger
 
 
-def main():
-    "See docs/sewer-cli.md for docs & examples"
+### this is a stand-in for the planned (and more disruptive) provider catalog
 
+_known_providers = {
+    "cloudflare": "CloudFlare DNS service",
+    "aurora": "AururaDNS service",
+    "acmedns": "AcmeDNS service",
+    "aliyun": "Aliyun DNS service",
+    "hurricane": "Hurricane Electric DNS",
+    "rackspace": "RackSpace DNS service",
+    "dnspod": "DNSPod service",
+    "duckdns": "DuckDNS service",
+    "cloudns": "ClouDNS service",
+    "powerdns": "PowerDNS service",
+    "gandi": "Gandi DNS service",
+    "unbound_ssh": "Demonstrater to manage unbound through ssh",
+}
+
+
+def known_providers_names() -> List[str]:
+    names = [k for k in _known_providers]
+    names.sort()
+    return names
+
+
+def known_providers_list() -> List[str]:
+    res = []
+    for name in known_providers_names():
+        res.append("%s: %s" % (name, _known_providers[name]))
+    return res
+
+
+def setup_parser():
     parser = argparse.ArgumentParser(
         prog="sewer",
         description="Sewer is an ACME client for getting certificates from Let's Encrypt",
+        allow_abbrev=False,
     )
     parser.add_argument(
         "--version",
@@ -31,22 +62,22 @@ def main():
         help="Filepath to existing certificate key to use.  Default is to create one.",
     )
     parser.add_argument(
+        "--provider",
         "--dns",
+        metavar="<name>",
+        dest="provider",
         required=True,
-        choices=[
-            "cloudflare",
-            "aurora",
-            "acmedns",
-            "aliyun",
-            "hurricane",
-            "rackspace",
-            "dnspod",
-            "duckdns",
-            "cloudns",
-            "powerdns",
-            "gandi",
-        ],
-        help="The name of the legacy dns provider to use.  (will be replaced by --provider in 0.9)",
+        choices=known_providers_names(),
+        help="Name of the challenge provider to use.  (--dns is OBSOLESCENT; prefer --provider)",
+    )
+    parser.add_argument(
+        "--p_opts", default=[], nargs="*", help="Option(s) to pass to provider, each is key=value"
+    )
+    parser.add_argument(
+        "--known_providers",
+        action="version",
+        version="Known Providers:\n    " + "\n    ".join(known_providers_list()),
+        help="Show a list of the known providers and exit.",
     )
     parser.add_argument(
         "--domain",
@@ -60,7 +91,7 @@ def main():
         help="Optional alternate (SAN) identities to be added to the CN on this certificate.",
     )
     parser.add_argument(
-        "--alias_domain", help="*** accepted but not implemented through drivers yet ***"
+        "--alias_domain", help="*** accepted but not implemented through most drivers yet ***"
     )
     parser.add_argument(
         "--bundle_name",
@@ -104,12 +135,22 @@ def main():
         "--prop_delay",
         type=int,
         default=0,
-        help="Add n second delay for propagation after setup before asking for validation checks",
+        help="Add n second delay for propagation between setup and asking for validation check",
     )
 
+    return parser
+
+
+def main():
+    "See docs/sewer-cli.md for docs & examples"
+
+    parser = setup_parser()
     args = parser.parse_args()
 
-    dns_provider = args.dns
+    loglevel = args.loglevel
+    logger = create_logger(None, loglevel)
+
+    provider_name = args.provider
     domain = args.domain
     alt_domains = args.alt_domains
     action = args.action
@@ -118,27 +159,30 @@ def main():
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
-    loglevel = args.loglevel
     out_dir = args.out_dir
 
+    ### FIX ME ### to keep special options --domain_alias & --prop-*, or use -p_opts instead?
+
     provider_kwargs = {}
+    if args.alias_domain:
+        provider_kwargs["alias"] = args.alias_domain
+        logger.warning(
+            "--alias_domain is OBSOLETE but accepted during PRE-0.8.3. Use --p_opt alias=... instead"
+        )
+    if args.prop_delay > 0:
+        provider_kwargs["prop_delay"] = args.prop_delay
+        logger.warning(
+            "--prop_delay is OBSOLETE but accepted during PRE-0.8.3. Use --p_opt prop_delay=... instead"
+        )
+
+    for p in args.p_opts:
+        parts = p.split("=")
+        if len(parts) == 2:
+            provider_kwargs[parts[0]] = parts[1]
 
     # Make sure the output dir user specified is writable
     if not os.access(out_dir, os.W_OK):
         raise OSError("The dir '{0}' is not writable".format(out_dir))
-
-    logger = create_logger(None, loglevel)
-
-    if args.alias_domain:
-        provider_kwargs["alias"] = args.alias_domain
-        logger.warning(
-            "--alias_domain is accepted but does not work with unmodified legacy dns providers."
-        )
-    if args.prop_delay > 0:
-        provider_kwargs["prop_delay"] = args.prop_delay
-
-    # if args.prop_delay:
-    # ...
 
     if account_key:
         account_key = account_key.read()
@@ -153,7 +197,7 @@ def main():
     else:
         ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_PRODUCTION
 
-    if dns_provider == "cloudflare":
+    if provider_name == "cloudflare":
         from .dns_providers.cloudflare import CloudFlareDns
 
         CLOUDFLARE_EMAIL = os.environ.get("CLOUDFLARE_EMAIL", None)
@@ -176,9 +220,9 @@ def main():
             logger.error(err)
             raise KeyError(err)
 
-        logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+        logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
 
-    elif dns_provider == "aurora":
+    elif provider_name == "aurora":
         from .dns_providers.auroradns import AuroraDns
 
         try:
@@ -190,12 +234,12 @@ def main():
                 AURORA_SECRET_KEY=AURORA_SECRET_KEY,
                 **provider_kwargs,
             )
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "acmedns":
+    elif provider_name == "acmedns":
         from .dns_providers.acmedns import AcmeDnsDns
 
         try:
@@ -209,12 +253,12 @@ def main():
                 ACME_DNS_API_BASE_URL=ACME_DNS_API_BASE_URL,
                 **provider_kwargs,
             )
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "aliyun":
+    elif provider_name == "aliyun":
         from .dns_providers.aliyundns import AliyunDns
 
         try:
@@ -222,93 +266,103 @@ def main():
             aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
             aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
             dns_class = AliyunDns(aliyun_ak, aliyun_secret, aliyun_endpoint, **provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "hurricane":
+    elif provider_name == "hurricane":
         from .dns_providers.hurricane import HurricaneDns
 
         try:
             he_username = os.environ["HURRICANE_USERNAME"]
             he_password = os.environ["HURRICANE_PASSWORD"]
             dns_class = HurricaneDns(he_username, he_password, **provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "rackspace":
+    elif provider_name == "rackspace":
         from .dns_providers.rackspace import RackspaceDns
 
         try:
             RACKSPACE_USERNAME = os.environ["RACKSPACE_USERNAME"]
             RACKSPACE_API_KEY = os.environ["RACKSPACE_API_KEY"]
             dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY, **provider_kwargs)
-            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "dnspod":
+    elif provider_name == "dnspod":
         from .dns_providers.dnspod import DNSPodDns
 
         try:
             DNSPOD_ID = os.environ["DNSPOD_ID"]
             DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
             dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY, **provider_kwargs)
-            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(dns_provider))
+            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "duckdns":
+    elif provider_name == "duckdns":
         from .dns_providers.duckdns import DuckDNSDns
 
         try:
             duckdns_token = os.environ["DUCKDNS_TOKEN"]
             dns_class = DuckDNSDns(duckdns_token=duckdns_token, **provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "cloudns":
+    elif provider_name == "cloudns":
         from .dns_providers.cloudns import ClouDNSDns
 
         try:
             dns_class = ClouDNSDns(**provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "powerdns":
+    elif provider_name == "powerdns":
         from .dns_providers.powerdns import PowerDNSDns
 
         try:
             powerdns_api_key = os.environ["POWERDNS_API_KEY"]
             powerdns_api_url = os.environ["POWERDNS_API_URL"]
             dns_class = PowerDNSDns(powerdns_api_key, powerdns_api_url, **provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
-    elif dns_provider == "gandi":
+    elif provider_name == "gandi":
         from .dns_providers.gandi import GandiDns
 
         try:
             gandi_api_key = os.environ["GANDI_API_KEY"]
             dns_class = GandiDns(GANDI_API_KEY=gandi_api_key, **provider_kwargs)
-            logger.info("chosen_dns_provider. Using {0} as dns provider.".format(dns_provider))
+            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
 
+    elif provider_name == "unbound_ssh":
+        from .dns_providers.unbound_ssh import UnboundSsh
+
+        # check & report, let calling protocol crash it.
+        if "ssh_des" not in provider_kwargs:
+            logger.error("ERROR: unbound_ssh REQUIRES ssh_des option.")
+
+        dns_class = UnboundSsh(**provider_kwargs)  # pylint: disable=E1125
+        logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
+
     else:
-        raise ValueError("The dns provider {0} is not recognised.".format(dns_provider))
+        raise ValueError("The dns provider {0} is not recognised.".format(provider_name))
 
     client = Client(
         provider=dns_class,

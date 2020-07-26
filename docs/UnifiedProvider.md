@@ -1,49 +1,34 @@
 ## DNS and HTTP challenges unified
 
-*DRAFT VERSION*  May 31st 2020 - prop_delay added.  Was: file name changed; stub challenge-specific
-bases added.
+_There's still a draft when the wind is blowing, but it's getting less._
+
+### Dedication
 
 It is indisputable that this is, in the first instance, Alec Troemel's fault,
 since he added support for http-01 challenges.
 Also indisputable is that the many changes to both code and overall design
 made in the process of unifying the two types of challenges,
-while influenced by Alec's code and our discussions,
-are entirely my fault.
+while influenced by Alec's code and our discussions, are entirely my fault.
 Alec cannot be blamed for my choices!
 
-_Because the word "provider" is so overloaded, I'm going to refer to the
+### A few words about words
+
+Because the word "provider" is so overloaded, I'm going to refer to the
 service-specific implementations as "drivers", except when I forget, or
-overlooked an old usage.  "Provider" is still used in the class names.  And
+missed changing an old use.  "Provider" is still used in the class names.  And
 then there are the "service providers", viz., DNS services or web hosts,
-etc._
+etc.
+
+### Overview (tl;dr)
 
 `ProviderBase` described here defines the interface the ACME engine uses
 with new-model drivers (all http-01 drivers, as there are no old ones).  New
-drivers should inherit from the `DNSProviderBase` or `HTTPProviderBase`
-classes in auth.py.  At this time the only functioanlity these add is
-setting up the `chal_types` parameter, and for DNS collecting the not yet
-implemented `alias` parameter.
+drivers normally should inherit from the `DNSProviderBase` or
+`HTTPProviderBase` classes in auth.py.
 
-> For the alias feature, there are several moving parts, some optional.
-I would like to support checking that the CNAMEs are provisioned.
-Currently that requires adding a dependency (probably dnspython?),
-but that may be necessary anyway for implementing unpropagated.
-The ~~engine~~ `DNSProviderBase` class can compose the names for the CNAME
-record as well as the alias record, and if doing the full checking it may need
-to do so, so I ~~am considering~~ have added `DNSProviderBase` with an
-optional `alias` parameter and simple methods to turn a challenge's domain
-into the fqdn of the CNAME (if there is one) and the target where the
-challenge response will be placed.  Brand new and subject to change...
-
-> Also just added `HTTPProviderBase` which hasn't acquired any interesting
-features yet, and may never do so, but it seems a tiny cost to prevent the
-disruption its absence could result in at some later date.
-
-All the existing DNS drivers were written to the legacy interface, and are
-supported through a shim class in dns_providers.common, `BaseDns`.  These
-legacy implementations will, hopefully, be migrated to the new-model
-interface.  The assistance of the authors and/or current users of each
-driver will be needed!
+`DNSProviderBase` has support for [aliasing](docs/Aliasing), though the
+individual drivers need to be created (or modified) to support it at this
+time.  _unbound_ssh is a quirky but working example that supports aliasing.`
 
 ### ProviderBase interface for ACME engine
 
@@ -51,6 +36,8 @@ The interface between the ACME protocol code and any driver implementation
 consists of three methods, `setup`, `unpropagated` and `clear`.  The first
 and last are not unlike methods used by the legacy drivers, but they accept
 a list of one or more challenges rather than one challenge at a time.
+
+--- most of this is in [unpropagated], or should be.  ToDo: reconcile
 
 The `unpropagated` method was added with DNS propagation delays in mind.  It
 should be possible for legacy drivers to implement this without a full
@@ -63,15 +50,15 @@ validated.  This should be more reliable than adding an ad-hoc delay before
 _responding_ to the ACME server as well as avoiding wasting time.
 
 The errata list returned by by all three methods has tuples for elements,
-where each tuple holds three values: the status, the msg, and the original,
-unmodified challenge item (dictionary).  _Recent change, may not have fixed
-all other ideas in code or docs yet._
+where each tuple holds three values: the status string, the msg string, and
+the original, unmodified challenge item (dictionary).  This is defined as
+types `ErrataItemType` and `ErrataListType` in auth.py
 
-> LE's ACME server, for one, implements neither automatic nor
-triggered retries, so it's important not to _respond_ to a challenge before
-the validation response is actually accessible.  And yes, the RFC's language
+> LE's ACME server, for one, implements neither automatic nor triggered
+retries, so it's important not to _respond_ to a challenge before the
+validation response is actually accessible.  And yes, the RFC's language
 does encourage confusing the respond-to-challenge API request with the
-validation response that the server has to get when it probes for it.
+challenge response (TXT) that the server has to find when it probes for it.
 
 > My thinking on this is that, while the ACME engine's code can know what
 names to check, in the really interesting case of widely distributed
@@ -81,6 +68,8 @@ API for checking some internal status that might be faster and/or more
 reliable than polling DNS servers.  For cases where all that can (or needs)
 to be done is some DNS lookups, well, that can be packaged as a function.
 
+--- end reconcile block
+
 This is the pattern which all three methods use: accept a list of challenges
 (each a dictionary) to process, and return an errata list containing the
 subset which have problems or are not ready.  So in all cases an empty list
@@ -88,39 +77,55 @@ returned means that all went well.
 
 ### `ProviderBase`
 
-Abstract base class for driver implementations to inherit from.  There is
-also a child class, `BaseDns` that the legacy drivers are based on which
-shims their old DNS-only interface.
+Abstract base class for driver implementations ultimately inherit from.
 
-#### `__init__(self, **kwargs: Any) -> None`
+#### ProviderBase __init__
 
-All native driver classes take only `**kwargs` parameters.  Derived classes
-MUST extract the parameters they recognize and process them, which includes
-raising an exception for missing required values, etc.  They MUST ignore
-names they don't recognize and pass them along to `super()__init__`.  They
-MAY add or modify parameters before passing the parameters to their
-parent's` __init__`.
+    __init__(self,
+        *,
+        chal_types: Sequence[str],
+        logger: Optional[LoggerType] = None,
+        LOG_LEVEL: Optional[str] = "INFO",
+        prop_delay: int = 0
+        prop_timeout: int = 0,
+        prop_sleep_times: Union[Sequence[int], int] = (1, 2, 4, 8)
+    ) -> None:
 
-`ProviderBase` differs only in that unrecognized parameters, viz., any that
-are left after its own known parameters are extracted, are reported as an
-error.  The parameters which `ProviderBase` will recognize are:
 
-| name |status | value type | description |
-| --- | --- | --- | --- |
-| chal_types | REQUIRED | `Sequence[str]` | The ACME challenge types the child class can satisfy. |
-| logger | REQ 1 of 2 | `str` | A configured logging object to use by the driver |
-| LOG_LEVEL | REQ 2 of 2 | `Union[str, int]` | Old way to setup logging. Only one of logger and LOG_LEVEL can be used |
-| prop_delay | OPTIONAL | int | If passed, then wait up to this long for unpropagated eratta list to clear.  Default is no delay. |
+The drivers' `__init__` methods accept only keyword arguments.  We can see
+that ProviderBase has become the final recipient of quite a few, mostly
+optional, arguments.  They ended up here because they are not specific to a
+subclass; a counterexample is the `alias` parameter, which is handled in
+`DNSProviderBase`.  The conventions for ProviderBase and its subclasses are:
+- keyword only arguments (other than self, of course)
+- Required arguments never have a default value
+- Optional arguments must have a default, of course
+- Everything not explicitly handled is left to kwargs
 
-> This morning's ah-ha moment was in two closely spaced parts.  Imprimis,
-that the wait time for propagation OUGHT to come from the driver, since
-that's where [DNS or other] service-specific info belongs.  Oh, and
-prop_delay is a good name for the driver attribute.  And default is None ->
-no delay -> no call to check.  Secundus, that this SHOULD be collected all
-the way at the top, in `ProviderBase` to insure there is always a prop_delay
-attribute because that delay is now an internal protocol parameter.  And
-even though I can't see why, now, it could be needed for other challenge
-types.
+Conveniently, ProviderBase's __init__ demonstrates all of these aside from
+the use of kwargs (because it is the final base class, so any unrecognized
+arguments would be in error):
+- chal_types is required, so it has no default value and will be diagnosed by
+  Python's calling mechanism if omitted.
+- logger/LOG_LEVEL are...  weird.  Without the legacy DNS providers I would
+  be inclined to just require logger, pushing the job of setting up logging
+  firmly back up the stack.  As it is, logger cannot be required (yet), so
+  both have defaults that work with the __init__ logic to setup logging as
+  sanely as possible.  Eventually LOG_LEVEL should get deprecated and then
+  dropped, and logger is just required...
+- the prop_* arguments are all optional, and receive default values that the
+  engine code is designed to deal with - by disabling the optional behavior
+  they control.  These are all parameters that were introduced for a
+  lower-level driver or driverBase class, but which have migrated up to
+  ProviderBase because they may apply to any sort of Provider.
+
+In all subclasses, kwargs is expected to catch parameters that may need to
+pass up the Provider classes, and so it must be passed to super()__init__. 
+It is allowed to add, change, or even remove items from kwargs if necessary
+
+--- see the intermediate *ProviderBase classes.
+
+--- (see where for args documentation?  DNS-Alias and DNS-Propagation & ???)
 
 #### `setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
@@ -186,21 +191,26 @@ _? should have a status word for "this one's hard failed, forget about it"?_
 
 ### `DNSProviderBase`
 
-Accepts the `alias` parameter and provides chal_types if not passed in. 
-Defines two methods that use the `alias` string (or its absence, the default
-condition) and a challenge dict to form the target_domain name (where the
-TXT with the challenge response data goes) and, if `alias` was specified, the
-cname_domain where the CNAME should be.
+The driver *interface* is the same for everything except legacy DNS drivers,
+but there are some differences which it makes no sense to push into
+`ProviderBase`.  `DNSProviderBase` provides a nice example of this:
 
-> This could allow a hypothetical library function to attempt to verify the
-propagation, and that might happen in the future.  It doesn't really address
-the problems of a really widespread (anycast, other names?) service provider
-where there may be no way to enumerate "the authoritative nameservers".
+`__init__(self, *, alias: str = "", **kwargs: Any) -> None`
 
-NB: `self.target_domain(chal)` SHOULD be used to form the DNS name for the
-TXT record unless you're doing something very strange.
+def cname_domain(self, chal: Dict[str, str]) -> Union[str, None]
+
+def target_domain(self, chal: Dict[str, str]) -> str
+
+The class's `__init__` handles the `alias` argument, and provides chal_types
+suitable for a DNS driver if they weren't already present.  Its value, if
+any, is stored locally for use by the helper methods.  `target_domain` is to
+be used in the driver to get the actual DNS name for the challenge TXT,
+handling both the aliasing and non-aliasing case.  `cname_domain` forms the
+DNS name for the CNAME that should exist in the aliasing case and returns it
+for the use of a hypothetical sanity check, or None when not aliasing.
 
 ### `HTTPProviderBase`
 
-Does nothing aside from setting up chal_types as `["http-01"]` if it's not
-already there.  They also serve who only redirect...
+This intermediate base class stands ready to handle any HTTP-specific
+options or helper methods.  No additions are expected until sewer has had
+some actual drivers added.  It also provides chal_types if needed.

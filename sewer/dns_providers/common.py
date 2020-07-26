@@ -1,10 +1,10 @@
 from typing import Any, Dict, Sequence
 
-from ..auth import ErrataItemType, ProviderBase
+from ..auth import ErrataItemType, DNSProviderBase
 from ..lib import dns_challenge
 
 
-class BaseDns(ProviderBase):
+class BaseDns(DNSProviderBase):
     """
     Shim for legacy DNS provider interface.
     """
