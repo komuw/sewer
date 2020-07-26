@@ -27,3 +27,4 @@ Contributors
 13. [alec T](https://github.com/AlecTroemel)
 14. [Don S](https://github.com/donspaulding)
 15. [Julien Demoor](https://github.com/jdkx)
+15. [@tkalus](https://github.com/tkalus)
