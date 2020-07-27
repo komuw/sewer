@@ -9,11 +9,9 @@
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-The current release is [0.8.2](https://komuw.github.io/sewer/0.8.2-notes).
-You can see notes for the forthcoming [0.8.3](https://komuw.github.io/sewer/0.8.3-notes)
-release.
-There is also the [CHANGELOG](https://github.com/komuw/sewer/blob/master/CHANGELOG.md).
-_(These should all be integrated soon as part of the move to Pages.)_
+- The current PRE-release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
+- Current stable release is [0.8.2](https://komuw.github.io/sewer/notes/0.8.2-notes).
+- More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
@@ -27,10 +25,10 @@ _(These should all be integrated soon as part of the move to Pages.)_
   - HTTP challenges are a new feature, no operational drivers in the tree
     yet.  [See usage and BYO-service notes](https://komuw.github.io/sewer/http-01)
 - sewer is both a [command-line program](https://komuw.github.io/sewer/sewer-cli)
-  and a [Python library](#usage) for custom use
+  and a [Python library](https://komuw.github.io/sewer/sewer-as-a-library) for custom use
 - Well written(if I have to say so myself):
   - [Good test coverage](https://codecov.io/gh/komuW/sewer)
-  - [Passing continous integration](https://circleci.com/gh/komuW/sewer)
+  - [Passing continuous integration](https://circleci.com/gh/komuW/sewer)
   - [High grade statically analyzed code](https://www.codacy.com/app/komuW/sewer/dashboard)
   - type hinting to support mypy verification is a recently begun WIP
 

@@ -5,7 +5,7 @@
 from typing import Any
 
 from ..auth import ChalListType, ErrataListType, ProviderBase
-from ..dns_providers.common import dns_challenge
+from ..lib import dns_challenge
 
 
 class ManualProvider(ProviderBase):
