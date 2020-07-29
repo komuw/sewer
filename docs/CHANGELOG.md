@@ -1,6 +1,36 @@
 ## `sewer` changelog:
 most recent version is listed first.   
 
+## **version:** 0.8.3
+STILL TO DO:
+- tests for unbound_ssh?!
+
+
+Features and Improvements:
+- added `--acme-timeout <seconds>` option to adjust timeout on queries to
+  the ACME server
+- `--action {run,renew}` has been doing nothing useful and is now deprecated.
+- added `--p_opt <name>=<value>` for passing kwargs to drivers
+- Added optional parameters accepted by base class for DNS drivers:
+  - `alias=<alias_domain>` specifies a separate domain for DNS challenges
+  - `prop_delay=<seconds>` gives a fixed delay (sleep) after challenge setup
+- gandi (legacy DNS driver) fixed internal bugs that broke common wildcard
+  use cases (eg., `*.domain.tld`) as well as the "wildcard plus" pattern
+- added unbound_ssh legacy-style DNS provider as a working demo of adding
+  new features to legacy drivers.  It does work in the right environment, and
+  could be useful to someone, maybe.
+
+Internals:
+- added `**kwargs` to all legacy providers to allow new options that are
+  handled in a parent class to pass through (for `alias`, `prop_delay`, etc.)
+- removed imports that were in `sewer/__init__` and
+  `sewer/dns_providers/__init__`; fixed all uses in cli.py and tests.
+- began cleanup/refactor of cli.py (there will be more to come and/or a new,
+  more config driven, alternative command (0.9?))
+- added `__main__.py` to support `python3 -m sewer` invocation of sewer-cli
+- fixed imports in client.py that didn't actually import the parts of
+  OpenSSL and cryptography that we use (worked because we import requests?)
+
 ## **version:** 0.8.2
 Feature additions:
 
@@ -15,6 +45,8 @@ Internals (features and/or annoying changes for sewer-as-a-library users)
 - use unitest.mock rather than external module
 - client no longer prepends`*.` to wildcards; remove spotty code in providers to strip it
 - begin addition of annotations, mostly opportunistically
+
+See also [release notes](notes/0.8.2-notes).
 
 ## **version:** 0.8.1
 - Fix bug where `sewer` was unable to delete wildcard names from clouflare: https://github.com/komuw/sewer/pull/139    

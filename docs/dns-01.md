@@ -1,11 +1,11 @@
-# sewer's DNS service support
+## sewer's DNS service support
 
 ACME's dns-01 authorization was sewer's original target.
 There are a number of DNS services supported in-tree,
 and implementations for other services are difficult to write only if the
 service's API is difficult.
 
-## DNS services supported
+### DNS services supported
 
 - [acme-dns](https://github.com/joohoi/acme-dns)
 - [Aliyun](https://help.aliyun.com/document_detail/29739.html)
@@ -20,7 +20,7 @@ service's API is difficult.
 - [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
 - [Rackspace](https://www.rackspace.com/cloud/dns)
 
-## Add a driver for your DNS service
+### Add a driver for your DNS service
 
 Most (?) of the DNS drivers came about because someone wanted to use sewer
 with their DNS service provider, but there wasn't a driver to use with the
@@ -37,20 +37,20 @@ and will be placed in sewer/providers/ if added to the project.
 
     # sketch of dns-01 provider, including alias support [which is NOT in 0.8.2]
 
-    from ..auth import DNSProviderBase
-    from ..lib import dns_challenge
+    from .. import auth
+    from .. import lib
 
-    class Provider(DNSProviderBase):
+    class Provider(auth.DNSProviderBase):
         def __init__(self, *, my_api_url, my_api_id, my_api_key, **kwargs):
-	    super().__init__(self, **kwargs)
+            super().__init__(self, **kwargs)
             self.api_url = my_api_url
             self.api_id = my_api_id
             self.api_key = my_api_key
 
         def setup(self, challenges):
-	    for challenge in challenges:
+            for challenge in challenges:
                 fqdn = self.target_domain(challenge)
-                txt_value = dns_challenge(challenge["key_auth"])
+                txt_value = lib.dns_challenge(challenge["key_auth"])
                 self.my_api_add_txt(fqdn, txt_value)
 
         def unpropagated(self, challenges):
@@ -66,18 +66,19 @@ and will be placed in sewer/providers/ if added to the project.
             # talk to DNS service to remove TXT
 
 Most of your work is in implementing the two methods (or one method, or
-inline code) which actually communicate with the DNS service.  This can be
+inline code, but inline makes testing without access to the service more
+difficult) which actually communicate with the DNS service.  This can be
 easy or very difficult, depending on the service provider's API (or lack of
 designed API if you have to use a mix of web scraping and HTTP request
 generation to operate a mechanism that was designed for interactive use).
 
 The above is bare-bones, not taking advantage of the batching of challenges
-which the new-model interface provides - that can be huge if you have to
-grovel the service's API (or web pages) to guide the construction of your
-commands to them.  It does show the use of target_domain to support
-[DNS aliasing](Aliasing).
+which the new-model interface provides - that can be a big win for large-SAN
+certificates if you have to grovel the service's API (or web pages) to guide
+the construction of your commands to them.  It does show the use of
+target_domain to support [DNS aliasing](Aliasing).
 
-## Legacy DNS drivers vs. $FEATURES
+### Legacy DNS drivers vs. $FEATURES
 
 Three features that have varying support in the Legacy drivers.
 
