@@ -13,6 +13,7 @@ Features and Improvements:
 - added `--p_opt <name>=<value>` for passing kwargs to drivers
 - Added optional parameters accepted by base class for DNS drivers:
   - `alias=<alias_domain>` specifies a separate domain for DNS challenges
+    (requires driver support, see [Aliasing](Aliasing))
   - `prop_delay=<seconds>` gives a fixed delay (sleep) after challenge setup
 - gandi (legacy DNS driver) fixed internal bugs that broke common wildcard
   use cases (eg., `*.domain.tld`) as well as the "wildcard plus" pattern
@@ -21,6 +22,12 @@ Features and Improvements:
   could be useful to someone, maybe.
 
 Internals:
+- added [catalog.py](catalog) to manage provider catalogs; includes
+  get_provider(name) method to replace `import ......{name.}ClassName`
+- replace __version__.py with sewer.json; setup.py converted; add sewer_about()
+  in lib.py; cli.py converted; client.py converted
+- added catalog.json defining known drivers and their interfaces; also
+  information about dependencies for setup.py
 - added `**kwargs` to all legacy providers to allow new options that are
   handled in a parent class to pass through (for `alias`, `prop_delay`, etc.)
 - removed imports that were in `sewer/__init__` and
@@ -30,6 +37,8 @@ Internals:
 - added `__main__.py` to support `python3 -m sewer` invocation of sewer-cli
 - fixed imports in client.py that didn't actually import the parts of
   OpenSSL and cryptography that we use (worked because we import requests?)
+
+See also [release notes](notes/0.8.3-notes).
 
 ## **version:** 0.8.2
 Feature additions:

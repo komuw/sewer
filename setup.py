@@ -1,57 +1,47 @@
-import os
+import codecs, json, os
 
 from setuptools import setup, find_packages
 
-# To use a consistent encoding
-import codecs
-
 here = os.path.abspath(os.path.dirname(__file__))
-about = {}
+
+### FIX ME ### endgoal is to have README.rst, linking to komuw.github.io/sewer for most of it
+### # # # #### "pandoc delanda est!"  <wink>
 
 try:
     import pypandoc
 
     long_description = pypandoc.convert("docs/README.md", "rst")
 except ImportError:
-    long_description = codecs.open("docs/README.md", encoding="utf8").read()
+    with codecs.open("docs/README.md", "r", encoding="utf8") as f:
+        long_description = f.read()
 
-with open(os.path.join(here, "sewer", "__version__.py"), "r") as f:
-    exec(f.read(), about)
 
-dns_provider_deps_map = {
-    "cloudflare": [""],
-    "aliyun": ["aliyun-python-sdk-core-v3", "aliyun-python-sdk-alidns"],
-    "hurricane": ["hurricanedns"],
-    "aurora": ["tldextract", "apache-libcloud"],
-    "acmedns": ["dnspython"],
-    "rackspace": ["tldextract"],
-    "dnspod": [""],
-    "duckdns": [""],
-    "cloudns": ["cloudns-api"],
-    "route53": ["boto3"],
-    "powerdns": [""],
-}
+with codecs.open(os.path.join(here, "sewer", "sewer.json"), "r", encoding="utf8") as f:
+    about = json.load(f)
 
-all_deps_of_all_dns_provider = []
-for _, vlist in dns_provider_deps_map.items():
-    all_deps_of_all_dns_provider += vlist
-all_deps_of_all_dns_provider = list(set(all_deps_of_all_dns_provider))
+with codecs.open(os.path.join(here, "sewer", "catalog.json"), "r", encoding="utf8") as f:
+    catalog = json.load(f)
+
+provider_deps_map = dict(dict((i["name"], i["deps"]) for i in catalog))
+
+all_deps_of_all_providers = list(set(sum((i["deps"] for i in catalog), [])))
+
 
 setup(
-    name=about["__title__"],
+    name=about["title"],
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=about["__version__"],
-    description=about["__description__"],
+    version=about["version"],
+    description=about["description"],
     long_description=long_description,
     # The project's main homepage.
-    url=about["__url__"],
+    url=about["url"],
     # Author details
-    author=about["__author__"],
-    author_email=about["__author_email__"],
+    author=about["author"],
+    author_email=about["author_email"],
     # Choose your license
-    license=about["__license__"],
+    license=about["license"],
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         # How mature is this project? Common values are
@@ -95,28 +85,19 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip3 install -e .[dev,test]
-    extras_require={
-        "dev": ["coverage", "pypandoc", "twine", "wheel"],
-        "test": ["pylint==2.3.1", "black==18.9b0"],
-        "cloudflare": dns_provider_deps_map["cloudflare"],
-        "aliyun": dns_provider_deps_map["aliyun"],
-        "hurricane": dns_provider_deps_map["hurricane"],
-        "aurora": dns_provider_deps_map["aurora"],
-        "acmedns": dns_provider_deps_map["acmedns"],
-        "rackspace": dns_provider_deps_map["rackspace"],
-        "dnspod": dns_provider_deps_map["dnspod"],
-        "duckdns": dns_provider_deps_map["duckdns"],
-        "cloudns": dns_provider_deps_map["cloudns"],
-        "route53": dns_provider_deps_map["route53"],
-        "powerdns": dns_provider_deps_map["powerdns"],
-        "alldns": all_deps_of_all_dns_provider,
-    },
+    extras_require=dict(
+        provider_deps_map,
+        dev=["coverage", "pypandoc", "twine", "wheel"],
+        test=["pylint==2.3.1", "black==18.9b0"],
+        alldns=all_deps_of_all_providers,
+    ),
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     # package_data={
     #     'sample': ['package_data.dat'],
     # },
+    package_data={"sewer": ["*.json"]},
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa

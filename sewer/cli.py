@@ -2,82 +2,55 @@ import os
 import argparse
 from typing import List
 
-from .client import Client
-from . import __version__ as sewer_version
-from .config import ACME_DIRECTORY_URL_STAGING, ACME_DIRECTORY_URL_PRODUCTION
-from .lib import create_logger
+from . import client, config, lib
+
+# from .lib import create_logger, sewer_about
+from .catalog import ProviderCatalog
 
 
-### this is a stand-in for the planned (and more disruptive) provider catalog
+def setup_parser(catalog):
+    """
+    return configured ArgumentParser - catalog-driven list of providers
+    """
 
-_known_providers = {
-    "cloudflare": "CloudFlare DNS service",
-    "aurora": "AururaDNS service",
-    "acmedns": "AcmeDNS service",
-    "aliyun": "Aliyun DNS service",
-    "hurricane": "Hurricane Electric DNS",
-    "rackspace": "RackSpace DNS service",
-    "dnspod": "DNSPod service",
-    "duckdns": "DuckDNS service",
-    "cloudns": "ClouDNS service",
-    "powerdns": "PowerDNS service",
-    "gandi": "Gandi DNS service",
-    "unbound_ssh": "Demonstrater to manage unbound through ssh",
-}
-
-
-def known_providers_names() -> List[str]:
-    names = [k for k in _known_providers]
-    names.sort()
-    return names
-
-
-def known_providers_list() -> List[str]:
-    res = []
-    for name in known_providers_names():
-        res.append("%s: %s" % (name, _known_providers[name]))
-    return res
-
-
-def setup_parser():
     parser = argparse.ArgumentParser(
         prog="sewer",
         description="Sewer is an ACME client for getting certificates from Let's Encrypt",
         allow_abbrev=False,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
+
+    ### immediate action "options"
+
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=sewer_version.__version__),
+        version="%(prog)s {version}".format(version=lib.sewer_about("version")),
         help="The currently installed sewer version.",
-    )
-    parser.add_argument(
-        "--account_key",
-        type=argparse.FileType("r"),
-        help="Filepath of existing ACME account key to use.  Default is to create one.",
-    )
-    parser.add_argument(
-        "--certificate_key",
-        type=argparse.FileType("r"),
-        help="Filepath to existing certificate key to use.  Default is to create one.",
-    )
-    parser.add_argument(
-        "--provider",
-        "--dns",
-        metavar="<name>",
-        dest="provider",
-        required=True,
-        choices=known_providers_names(),
-        help="Name of the challenge provider to use.  (--dns is OBSOLESCENT; prefer --provider)",
-    )
-    parser.add_argument(
-        "--p_opts", default=[], nargs="*", help="Option(s) to pass to provider, each is key=value"
     )
     parser.add_argument(
         "--known_providers",
         action="version",
-        version="Known Providers:\n    " + "\n    ".join(known_providers_list()),
+        version="Known Providers:\n    "
+        + "\n    ".join("%s  %s" % (i.name, i.desc) for i in catalog.get_item_list()),
         help="Show a list of the known providers and exit.",
+    )
+
+    ### ACME account options
+
+    parser.add_argument(
+        "--account_key",
+        type=argparse.FileType("r"),
+        help="Filepath to read to get registered ACME account.  Default is to create one.",
+    )
+    parser.add_argument("--email", help="Email to be used for registration of an ACME account.")
+
+    ### certificate options
+
+    parser.add_argument(
+        "--certificate_key",
+        type=argparse.FileType("r"),
+        help="Filepath to read to get certificate key.  Default is to create one.",
     )
     parser.add_argument(
         "--domain",
@@ -91,33 +64,47 @@ def setup_parser():
         help="Optional alternate (SAN) identities to be added to the CN on this certificate.",
     )
     parser.add_argument(
-        "--alias_domain", help="*** accepted but not implemented through most drivers yet ***"
-    )
-    parser.add_argument(
         "--bundle_name",
         help="The basename for the output files.  Default is the CN given by --domain.",
     )
+    parser.add_argument(
+        "--out_dir",
+        default=os.getcwd(),
+        help="Directory that stores certificate and keys files; current dir is default.",
+    )
+
+    ### challenge provider options
+
+    parser.add_argument(
+        "--provider",
+        "--dns",
+        metavar="<name>",
+        dest="provider",
+        required=True,
+        choices=[i.name for i in catalog.get_item_list()],
+        help="Name of the challenge provider to use.  (--dns is OBSOLESCENT; prefer --provider)",
+    )
+    parser.add_argument(
+        "--p_opts", default=[], nargs="*", help="Option(s) to pass to provider, each is key=value"
+    )
+
+    ### protocol options
+
     parser.add_argument(
         "--endpoint",
         default="production",
         choices=["production", "staging"],
         help="Select between Let's Encrypt's endpoints.  Default is production.",
     )
-    parser.add_argument("--email", help="Email to be used for registration of an ACME account.")
     parser.add_argument(
-        "--action",
-        choices=["run", "renew"],
-        default="renew",
-        help="The action that you want to perform. [Obsolescent?  Changes nothing but message.]",
+        "--acme_timeout",
+        type=int,
+        default=7,
+        help="The maximum time the client will wait for a network call (HTTPS request to ACME server) to complete.  Default is 7",
     )
-    parser.add_argument(
-        "--out_dir",
-        default=os.getcwd(),
-        help="""The dir where the certificate and keys file will be stored.
-            default:  The directory you run sewer command.
-            eg: --out_dir /data/ssl/
-            """,
-    )
+
+    ### sewer command options
+
     parser.add_argument(
         "--loglevel",
         default="INFO",
@@ -126,76 +113,19 @@ def setup_parser():
         eg: --loglevel DEBUG",
     )
     parser.add_argument(
-        "--acme_timeout",
-        type=int,
-        default=7,
-        help="The maximum time the client will wait for a network call (HTTPS request to ACME server) to complete.  Default is 7",
-    )
-    parser.add_argument(
-        "--prop_delay",
-        type=int,
-        default=0,
-        help="Add n second delay for propagation between setup and asking for validation check",
+        "--action",
+        choices=["run", "renew"],
+        default="none",
+        help="[DEPRECATED] The action that you want to perform (has never done anything).",
     )
 
     return parser
 
 
-def main():
-    "See docs/sewer-cli.md for docs & examples"
-
-    parser = setup_parser()
-    args = parser.parse_args()
-
-    loglevel = args.loglevel
-    logger = create_logger(None, loglevel)
-
-    provider_name = args.provider
-    domain = args.domain
-    alt_domains = args.alt_domains
-    action = args.action
-    account_key = args.account_key
-    certificate_key = args.certificate_key
-    bundle_name = args.bundle_name
-    endpoint = args.endpoint
-    email = args.email
-    out_dir = args.out_dir
-
-    ### FIX ME ### to keep special options --domain_alias & --prop-*, or use -p_opts instead?
-
-    provider_kwargs = {}
-    if args.alias_domain:
-        provider_kwargs["alias"] = args.alias_domain
-        logger.warning(
-            "--alias_domain is OBSOLETE but accepted during PRE-0.8.3. Use --p_opt alias=... instead"
-        )
-    if args.prop_delay > 0:
-        provider_kwargs["prop_delay"] = args.prop_delay
-        logger.warning(
-            "--prop_delay is OBSOLETE but accepted during PRE-0.8.3. Use --p_opt prop_delay=... instead"
-        )
-
-    for p in args.p_opts:
-        parts = p.split("=")
-        if len(parts) == 2:
-            provider_kwargs[parts[0]] = parts[1]
-
-    # Make sure the output dir user specified is writable
-    if not os.access(out_dir, os.W_OK):
-        raise OSError("The dir '{0}' is not writable".format(out_dir))
-
-    if account_key:
-        account_key = account_key.read()
-    if certificate_key:
-        certificate_key = certificate_key.read()
-    if bundle_name:
-        file_name = bundle_name
-    else:
-        file_name = "{0}".format(domain)
-    if endpoint == "staging":
-        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_STAGING
-    else:
-        ACME_DIRECTORY_URL = ACME_DIRECTORY_URL_PRODUCTION
+def get_provider(provider_name, provider_kwargs, catalog, logger):
+    """
+    return class (or callable) that will return the Provider instance to use
+    """
 
     if provider_name == "cloudflare":
         from .dns_providers.cloudflare import CloudFlareDns
@@ -361,10 +291,67 @@ def main():
         dns_class = UnboundSsh(**provider_kwargs)  # pylint: disable=E1125
         logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
 
+    elif provider_name == "route53":
+        raise ValueError("route53 driver can only be used programmatically at this time, sorry")
+
     else:
         raise ValueError("The dns provider {0} is not recognised.".format(provider_name))
 
-    client = Client(
+    return dns_class
+
+
+def main():
+    "See docs/sewer-cli.md for docs & examples"
+
+    catalog = ProviderCatalog()
+
+    parser = setup_parser(catalog)
+    args = parser.parse_args()
+
+    loglevel = args.loglevel
+    logger = lib.create_logger(None, loglevel)
+
+    provider_name = args.provider
+    domain = args.domain
+    alt_domains = args.alt_domains
+    if args.action != "none":
+        logger.warning("DEPRECATION WARNING: --action option is obsolete and will be dropped soon")
+    account_key = args.account_key
+    certificate_key = args.certificate_key
+    bundle_name = args.bundle_name
+    endpoint = args.endpoint
+    email = args.email
+    out_dir = args.out_dir
+
+    ### FIX ME ### to keep special options --domain_alias & --prop-*, or use -p_opts instead?
+
+    provider_kwargs = {}
+
+    for p in args.p_opts:
+        parts = p.split("=")
+        if len(parts) == 2:
+            provider_kwargs[parts[0]] = parts[1]
+
+    # Make sure the output dir user specified is writable
+    if not os.access(out_dir, os.W_OK):
+        raise OSError("The dir '{0}' is not writable".format(out_dir))
+
+    if account_key:
+        account_key = account_key.read()
+    if certificate_key:
+        certificate_key = certificate_key.read()
+    if bundle_name:
+        file_name = bundle_name
+    else:
+        file_name = "{0}".format(domain)
+    if endpoint == "staging":
+        ACME_DIRECTORY_URL = config.ACME_DIRECTORY_URL_STAGING
+    else:
+        ACME_DIRECTORY_URL = config.ACME_DIRECTORY_URL_PRODUCTION
+
+    dns_class = get_provider(provider_name, provider_kwargs, catalog, logger)
+
+    acme_client = client.Client(
         provider=dns_class,
         domain_name=domain,
         domain_alt_names=alt_domains,
@@ -375,8 +362,8 @@ def main():
         LOG_LEVEL=loglevel,
         ACME_REQUEST_TIMEOUT=args.acme_timeout,
     )
-    certificate_key = client.certificate_key
-    account_key = client.account_key
+    certificate_key = acme_client.certificate_key
+    account_key = acme_client.account_key
 
     # prepare file path
     account_key_file_path = os.path.join(out_dir, "{0}.account.key".format(file_name))
@@ -388,12 +375,7 @@ def main():
         account_file.write(account_key)
     logger.info("account key succesfully written to {0}.".format(account_key_file_path))
 
-    if action == "renew":
-        message = "Certificate Succesfully renewed. The certificate, certificate key and account key have been saved in the current directory"
-        certificate = client.renew()
-    else:
-        message = "Certificate Succesfully issued. The certificate, certificate key and account key have been saved in the current directory"
-        certificate = client.cert()
+    certificate = acme_client.cert()
 
     # write out certificate and certificate key in out_dir directory
     with open(crt_file_path, "w") as certificate_file:
@@ -403,5 +385,3 @@ def main():
 
     logger.info("certificate succesfully written to {0}.".format(crt_file_path))
     logger.info("certificate key succesfully written to {0}.".format(crt_key_file_path))
-
-    logger.info("the_end. {0}".format(message))

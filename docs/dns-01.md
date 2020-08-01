@@ -19,6 +19,7 @@ service's API is difficult.
 - [Hurricane Electric DNS](https://dns.he.net/)
 - [PowerDNS](https://doc.powerdns.com/authoritative/http-api/index.html)
 - [Rackspace](https://www.rackspace.com/cloud/dns)
+- [unbound_ssh]
 
 ### Add a driver for your DNS service
 
@@ -95,8 +96,11 @@ Three features that have varying support in the Legacy drivers.
 | hurricane | ? | no | no | test coverage 70% |
 | powerdns | NO | no | no | apparently not in 0.8.2; bug #195 |
 | rackspace | ? | no | no | test coverage 69% | 
-| route53 | OK | no | no | wildcard since pre-0.8.2 |
+| route53 (1) | OK | no | no | wildcard since pre-0.8.2 |
 | unbound_ssh | OK | yes | no | Working demonstrator model |
+
+> (1) route53 was never setup to be used from `sewer-cli`.  That will change,
+maybe for 0.8.3, but does anyone care?  No complaints have been heard...
 
 _wildcard_ is NOT the older issue - since 0.8.2, all drivers should be able
 to support creating certificates for simple `*.domain.tld` requests.
