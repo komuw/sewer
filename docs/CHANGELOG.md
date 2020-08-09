@@ -2,9 +2,6 @@
 most recent version is listed first.   
 
 ## **version:** 0.8.3
-STILL TO DO:
-- tests for unbound_ssh?!
-
 
 Features and Improvements:
 - added `--acme-timeout <seconds>` option to adjust timeout on queries to
@@ -19,12 +16,12 @@ Features and Improvements:
   use cases (eg., `*.domain.tld`) as well as the "wildcard plus" pattern
 - added unbound_ssh legacy-style DNS provider as a working demo of adding
   new features to legacy drivers.  It does work in the right environment, and
-  could be useful to someone, maybe.
+  could be useful to someone other than myself (mm).
 
 Internals:
 - added [catalog.py](catalog) to manage provider catalogs; includes
   get_provider(name) method to replace `import ......{name.}ClassName`
-- replace __version__.py with sewer.json; setup.py converted; add sewer_about()
+- replace __version__.py with meta.json; setup.py converted; add sewer_meta()
   in lib.py; cli.py converted; client.py converted
 - added catalog.json defining known drivers and their interfaces; also
   information about dependencies for setup.py
@@ -34,7 +31,7 @@ Internals:
   `sewer/dns_providers/__init__`; fixed all uses in cli.py and tests.
 - began cleanup/refactor of cli.py (there will be more to come and/or a new,
   more config driven, alternative command (0.9?))
-- added `__main__.py` to support `python3 -m sewer` invocation of sewer-cli
+- added `__main__.py` to support `python -m sewer` invocation of `sewer-cli`
 - fixed imports in client.py that didn't actually import the parts of
   OpenSSL and cryptography that we use (worked because we import requests?)
 

@@ -1,17 +1,21 @@
 [
-  { "name": "acmedns",
+  {
+    "name": "acmedns",
     "desc": "AcmeDns DNS provider",
     "chals": ["dns-01"],
     "args": [
-      { "name": "api_user",
+      {
+        "name": "api_user",
         "req": 1,
         "old_param": "ACME_DNS_API_USER"
       },
-      { "name": "api_key",
+      {
+        "name": "api_key",
         "req": 1,
         "old_param": "ACME_DNS_API_KEY"
       },
-      { "name": "api_base_url",
+      {
+        "name": "api_base_url",
         "req": 1,
         "old_param": "ACME_DNS_API_BASE_URL"
       }
@@ -20,21 +24,25 @@
     "cls": "AcmeDnsDns",
     "deps": ["dnspython"]
     },
-  { "name": "aliyun",
+  {
+    "name": "aliyun",
     "desc": "Alibaba Cloud DNS service",
     "chals": ["dns-01"],
     "args": [
-      { "name": "ak",
+      {
+        "name": "ak",
         "req": 1,
         "old_param": "aliyun_ak",
         "old_envvar": "ALIYUN_AK_ID"
       },
-      { "name": "secret",
+      {
+        "name": "secret",
         "req": 1,
         "old_param": "aliyun_secret",
         "old_envvar": "ALIYUN_AK_SECRET"
       },
-      { "name": "endpoint",
+      {
+        "name": "endpoint",
         "old_param": "aliyun_endpoint",
         "old_envvar": "ALIYUN_ENDPOINT"
       }
@@ -44,14 +52,17 @@
     "deps": ["aliyun-python-sdk-core-v3", "aliyun-python-sdk-alidns"],
     "memo": "default value of endpoint in ad-hoc cli.py code - add default to args?"
   },
-  { "name": "aurora",
+  {
+    "name": "aurora",
     "desc": "Aurora DNS service from pcextreme hosting",
     "chals": ["dns-01"],
     "args": [
-      { "name": "api_key",
+      {
+        "name": "api_key",
         "req": 1
       },
-      { "name": "secret_key",
+      {
+        "name": "secret_key",
         "req": 1
       }
     ],
@@ -59,21 +70,31 @@
     "cls": "AuroraDns",
     "deps": ["tldextract", "apache-libcloud"]
     },
-  { "name": "cloudflare",
+  {
+    "name": "cloudflare",
     "desc": "Cloudflare DNS using either email & key or just a token",
     "chals": ["dns-01"],
     "args": [
-      { "name": "email"},
-      { "name": "api_key"},
-      { "name": "api_base_url"},
-      { "name": "token"}
+      {
+        "name": "email"
+      },
+      {
+        "name": "api_key"
+      },
+      {
+        "name": "api_base_url"
+      },
+      {
+        "name": "token"
+      }
     ],
     "path": "sewer.dns_providers.cloudflare",
     "cls": "CloudFlareDns",
     "deps": [],
-    "memo": "accepts EITHER token OR both email & key; drive MUST sanity check"
+    "memo": "accepts EITHER token OR both email & key; driver MUST sanity check"
     },
-  { "name": "cloudns",
+  {
+    "name": "cloudns",
     "desc": "ClouDNS service",
     "chals": ["dns-01"],
     "args": [
@@ -83,29 +104,41 @@
     "deps": ["cloudns-api"],
     "memo": "API library grovels the environment for its access parameters directly"
   },
-  { "name": "dnspod",
+  {
+    "name": "dnspod",
     "desc": "DNSPod DNS provider",
     "chals": ["dns-01"],
     "args": [
-      { "name": "id", "req": 1},
-      { "name": "api_key", "req": 1},
-      { "name": "api_base_url"}
+      {
+        "name": "id",
+        "req": 1
+      },
+      {
+        "name": "api_key",
+        "req": 1
+      },
+      {
+        "name": "api_base_url"
+      }
     ],
     "path": "sewer.dns_providers.dnspod",
     "cls": "DNSPodDns",
     "deps": [],
     "memo": "api_base_url not usually used?  [VERIFY]"
     },
-  { "name": "duckdns",
+  {
+    "name": "duckdns",
     "desc": "DuckDNS DNS provider",
     "chals": ["dns-01"],
     "args": [
-      { "name": "token",
+      {
+        "name": "token",
         "req": 1,
         "old_param": "duckdns_token",
         "old_envvar": "DUCKDNS_TOKEN"
       },
-      { "name": "api_base_url",
+      {
+        "name": "api_base_url",
         "old_param": "DUCKDNS_API_BASE_URL",
         "old_envvar": ""
       }
@@ -115,11 +148,13 @@
     "deps": [],
     "memo": "as-is code does not look for envvar for base_url; maybe for testing only?"
     },
-  { "name": "gandi",
+  {
+    "name": "gandi",
     "desc": "Gandi DNS service",
     "chals": ["dns-01"],
     "args": [
-      { "name": "api_key",
+      {
+        "name": "api_key",
         "req": 1,
         "old_param": "GANDI_API_KEY"
       }
@@ -128,15 +163,18 @@
     "cls": "GandiDns",
     "deps": []
   },
-  { "name": "hurricane",
+  {
+    "name": "hurricane",
     "desc": "Hurricane Electric DNS service",
     "chals": ["dns-01"],
     "args": [
-      { "name": "username",
+      {
+        "name": "username",
         "req": 1,
         "old_param": "he_username"
       },
-      { "name": "password",
+      {
+        "name": "password",
         "req": 1,
         "old_param": "he_password"
       }
@@ -145,16 +183,19 @@
     "cls": "HurricaneDns",
     "deps": ["hurricanedns"]
   },
-  { "name": "powerdns",
+  {
+    "name": "powerdns",
     "desc": "PowerDNS DNS provider",
     "chals": ["dns-01"],
     "args": [
-      { "name": "api_key",
+      {
+        "name": "api_key",
         "req": 1,
         "old_param": "powerdns_api_key",
         "old_envvar": "POWERDNS_API_KEY"
       },
-      { "name": "api_url",
+      {
+        "name": "api_url",
         "req": 1,
         "old_param": "powerdns_api_url",
         "old_envvar": "POWERDNS_API_URL"
@@ -165,34 +206,55 @@
     "deps": [],
     "memo": "could drop old_envvar if prediction ignored old_param?"
     },
-  { "name": "rackspace",
+  {
+    "name": "rackspace",
     "desc": "Rackspace DNS service",
     "chals": ["dns-01"],
     "args": [
-      { "name": "username", "req": 1},
-      { "name": "api_key", "req": 1}
+      {
+        "name": "username",
+        "req": 1
+      },
+      {
+        "name": "api_key",
+        "req": 1
+      }
     ],
     "path": "sewer.dns_providers.rackspace",
     "cls": "RackspaceDns",
     "deps": ["tldextract"]
     },
-  { "name": "route53",
+  {
+    "name": "route53",
     "desc": "Amazon cloud DNS service",
     "chals": ["dns-01"],
     "args": [
-      { "name": "id", "req": 1, "old_param": "access_key_id"},
-      { "name": "key", "req": 1, "old_param": "secret_access_key"}
+      {
+        "name": "id",
+        "req": 1,
+        "old_param": "access_key_id"
+      },
+      {
+        "name": "key",
+        "req": 1,
+        "old_param": "secret_access_key"
+      }
     ],
     "path": "sewer.dns_providers.route53",
     "cls": "Route53Dns",
     "deps": ["boto3"],
     "memo": "DUMMY LISTING: route53 has never been integrated into cli.py, so this DOESN'T WORK yet"
   },
-  { "name": "unbound_ssh",
+  {
+    "name": "unbound_ssh",
     "desc": "Working demonstrater of legacy DNS adopting new features",
     "chals": ["dns-01"],
     "args": [
-      { "name": "ssh_des", "req": 1, "envvar": "" }
+      {
+        "name": "ssh_des",
+        "req": 1,
+        "envvar": ""
+      }
     ],
     "path": "sewer.dns_providers.unbound_ssh",
     "cls": "UnboundSsh",

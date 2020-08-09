@@ -36,6 +36,6 @@ class TestLib(unittest.TestCase):
         res = lib.dns_challenge("a most spurious and unlikely key auth string")
         self.assertEqual(res, "lNNwvD6ceN7n6Iugd3m3k6HQD8Wk6ytGvKkwhHAV_Hw")
 
-    def test41_sewer_about_okay(self):
-        res = lib.sewer_about("license")
+    def test41_sewer_meta_okay(self):
+        res = lib.sewer_meta("license")
         self.assertEqual(res, "MIT")

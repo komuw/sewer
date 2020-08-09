@@ -1,9 +1,11 @@
 {
-  "title": "sewer",
+  "name": "sewer",
   "description": "Sewer is a programmatic Lets Encrypt(ACME) client",
   "url": "https://github.com/komuw/sewer",
-  "version": "0.8.3-beta",
+  "version": "0.8.3",
   "author": "komuW",
   "author_email": "komuw05@gmail.com",
-  "license": "MIT"
+  "license": "MIT",
+  "maintainer": "mmaney",
+  "keywords": "letsencrypt,ACME,dns-01,http-01,RFC8555"
 }

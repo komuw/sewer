@@ -9,9 +9,16 @@
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- The current PRE-release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
-- Current stable release is [0.8.2](https://komuw.github.io/sewer/notes/0.8.2-notes).
+- The current release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
+
+> **NB:** sewer is mostly compatible with CPython back to 3.5, but f-strings
+in particular keep trying to creep in.  As of 0.8.3 none of the core code
+nor included drivers require f-strings, but they've been showing up in
+recent contributions and are already in a fair bit of test code.  _Expect to
+need at least 3.6+ for sewer 0.9._ I would prefer to maintain 3.5
+compatibility until then, but it's not currently tested in CI.  I will be
+happy to accept patches for any issues that show up.  — @mmaney
 
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
@@ -82,15 +89,9 @@ pip install sewer==0.3.0
 Sewer is in active development and it's API ~~may~~ will change in backward incompatible ways.
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
-
 ## Development setup
 
 See the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)
-
-## TODO
-- docs (WIP)
-- support more DNS providers
-- https://github.com/komuw/sewer/milestone/1
 
 ## FAQ
 - Why another ACME client?          
