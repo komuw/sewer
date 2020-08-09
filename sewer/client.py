@@ -4,7 +4,7 @@ import json
 from hashlib import sha256
 import binascii
 import platform
-from typing import Dict, Sequence, Tuple, Union, cast
+from typing import Optional, Dict, Sequence, Tuple, Union, cast
 
 import requests
 import OpenSSL.crypto
@@ -13,105 +13,38 @@ import OpenSSL.crypto
 import cryptography.hazmat.primitives.serialization
 import cryptography.hazmat.backends
 
-from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-from .auth import ChalListType, ErrataListType
-from .lib import create_logger, log_response, safe_base64
+from .auth import ChalListType, ErrataListType, ProviderBase
+from .lib import create_logger, log_response, safe_base64, sewer_about
 
 
 class Client:
     """
-    todo: improve documentation.
-
-    usage:
-        import sewer
-        provider = sewer.CloudFlareDns(
-            CLOUDFLARE_EMAIL='example@example.com',
-            CLOUDFLARE_API_KEY='nsa-grade-api-key'
-        )
-
-        ### to create a new certificate.
-        client = sewer.Client(
-            domain_name='example.com', provider=provider
-        )
-        certificate = client.cert()
-        certificate_key = client.certificate_key
-        account_key = client.account_key
-
-        with open('certificate.crt', 'w') as certificate_file:
-            certificate_file.write(certificate)
-
-        with open('certificate.key', 'w') as certificate_key_file:
-            certificate_key_file.write(certificate_key)
-
-        ### to renew a certificate:
-        with open('account_key.key', 'r') as account_key_file:
-            account_key = account_key_file.read()
-
-        client = sewer.Client(
-            domain_name='example.com', provider=provider,
-            account_key=account_key
-        )
-        certificate = client.renew()
-        certificate_key = client.certificate_key
-
-    todo: handle more exceptions
+    refer to docs/sewer-as-a-library for usage, etc.
     """
 
     def __init__(
         self,
-        domain_name,
-        dns_class=None,
-        domain_alt_names=None,
-        contact_email=None,
-        account_key=None,
-        certificate_key=None,
-        bits=2048,
-        digest="sha256",
-        provider=None,
-        ACME_REQUEST_TIMEOUT=7,
-        ACME_AUTH_STATUS_WAIT_PERIOD=8,
-        ACME_AUTH_STATUS_MAX_CHECKS=3,
-        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_PRODUCTION,
-        ACME_VERIFY=True,
-        LOG_LEVEL="INFO",
+        domain_name: str,
+        dns_class: ProviderBase = None,
+        domain_alt_names: Sequence[str] = None,
+        contact_email: str = None,
+        account_key: str = None,
+        certificate_key: str = None,
+        bits: int = 2048,
+        digest: str = "sha256",
+        provider: ProviderBase = None,
+        ACME_REQUEST_TIMEOUT: int = 7,
+        ACME_AUTH_STATUS_WAIT_PERIOD: int = 8,
+        ACME_AUTH_STATUS_MAX_CHECKS: int = 3,
+        ACME_DIRECTORY_URL: str = ACME_DIRECTORY_URL_PRODUCTION,
+        ACME_VERIFY: bool = True,
+        LOG_LEVEL: str = "INFO",
     ):
-        """
-        :param domain_name:                  (required) [string]
-            the name that you want to acquire/renew certificate for. wildcards are allowed.
-        :param dns_class:                    (required) [class]
-            (DEPRECATED) a subclass of BaseDns which will be called to create/delete DNS TXT records.
-            do not pass this parameter if also passing provider.
-        :param provider:                (required) [class]
-            a subclass of ProviderBase which will be called to create/delete auth records.
-            do not pass this parameter if also passing dns_class
-        :param domain_alt_names:             (optional) [list]
-            list of alternative names that you want to be bundled into the same certificate as domain_name.
-        :param contact_email:                (optional) [string]
-            a contact email address
-        :param account_key:                  (optional) [string]
-            a string whose contents is an ssl certificate that identifies your account on the acme server.
-            if you do not provide one, this client will issue a new certificate else will renew.
-        :param certificate_key:              (optional) [string]
-            a string whose contents is a private key that will be incorporated into your new certificate.
-            if you do not provide one, this client will issue a new certificate else will renew.
-        :param bits:                         (optional) [integer]
-            number of bits that will be used to create your certificates' private key.
-        :param digest:                       (optional) [string]
-            the ssl digest type to be used in signing the certificate signing request(csr)
-        :param ACME_REQUEST_TIMEOUT:         (optional) [integer]
-            the max time that the client will wait for a network call to complete.
-        :param ACME_AUTH_STATUS_WAIT_PERIOD: (optional) [integer]
-            the interval between two consecutive client polls on the acme server to check on authorization status
-        :param ACME_AUTH_STATUS_MAX_CHECKS:  (optional) [integer]
-            the max number of times the client will poll the acme server to check on authorization status
-        :param ACME_DIRECTORY_URL:           (optional) [string]
-            the url of the acme servers' directory endpoint
-        :param ACME_VERIFY:                  (optional) [bool]
-            suppress verification of SSL cert when set to False (for pebble); hint: -Wignore
-        :param LOG_LEVEL:                    (optional) [string]
-            the level to output log messages at. one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
-        """
+
+        ### do some type checking of some parameters
+
+        ### FIX ME ### spotty and not always complete; also, should raise TypeError, not ValueError
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
@@ -150,12 +83,19 @@ class Client:
                 "passed both the DEPRECATED 'dns_class' parameter as well as 'provider'."
             )
 
+        ### setup Client's global variables
+
         self.domain_name = domain_name
-        self.provider = provider if provider is not None else dns_class
+
+        # long winded is both stricter check as well as giving mypy a clear enough hint
+        if isinstance(provider, ProviderBase):
+            self.provider = provider
+        elif isinstance(dns_class, ProviderBase):
+            self.provider = dns_class
+
         if not domain_alt_names:
             domain_alt_names = []
-        self.domain_alt_names = domain_alt_names
-        self.domain_alt_names = list(set(self.domain_alt_names))
+        self.domain_alt_names = list(set(domain_alt_names))
         self.contact_email = contact_email
         self.bits = bits
         self.digest = digest
@@ -205,7 +145,7 @@ class Client:
 
             self.logger.info(
                 "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
-                    sewer_version.__version__,
+                    sewer_about("version"),
                     self.all_domain_names,
                     self.ACME_DIRECTORY_URL[:20] + "...",
                 )
@@ -217,7 +157,7 @@ class Client:
             self.logger.error("Unable to intialise Client. error={0}".format(str(e)[:100]))
             raise e
 
-    def GET(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
+    def GET(self, url: str) -> requests.Response:
         """
         wrap requests.get (and post and head, below) to allow:
           * injection of e.g. UserAgent header in one place rather than all over
@@ -225,32 +165,34 @@ class Client:
           * paves the way to inject the verify option, required to use pebble
         """
 
-        return self._request("GET", url, **kwargs)
+        return self._request("GET", url)
 
-    def HEAD(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
-        return self._request("HEAD", url, **kwargs)
+    # HEAD is still waiting for the test rewrite to let it be used... very low priority :-(
+    def HEAD(self, url: str) -> requests.Response:
+        return self._request("HEAD", url)
 
-    def POST(self, url: str, **kwargs: Union[str, Dict[str, str], bool]) -> requests.Response:
-        return self._request("POST", url, **kwargs)
+    def POST(
+        self, url: str, *, data: bytes = None, headers: Dict[str, str] = None
+    ) -> requests.Response:
+        return self._request("POST", url, data=data, headers=headers)
 
     def _request(
-        self, method: str, url: str, **kwargs: Union[str, Dict[str, str], bool]
+        self, method: str, url: str, *, data: bytes = None, headers: Dict[str, str] = None
     ) -> requests.Response:
         """
         shared implementation for GET, POST and HEAD
-        * injects standard request options unless they are already given in kwargs
+        * injects standard request options unless they are already given in headers
           * header:UserAgent, timeout
           * verify - this is a hack to make sewer accept pebble's intentionally bogus cert
         """
 
-        # if there's no UserAgent header in args, inject it
-        headers = cast(Dict[str, str], kwargs.setdefault("headers", {}))
+        if headers is None:
+            headers = {}
+
         if "UserAgent" not in headers:
             headers["UserAgent"] = self.User_Agent
 
-        # add standard timeout if there's none already present
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = self.ACME_REQUEST_TIMEOUT
+        kwargs: Dict[str, Union[str, int]] = {"timeout": self.ACME_REQUEST_TIMEOUT}
 
         ### FIX ME ### can get current bogus cert from pebble, figure out how to use it here?
 
@@ -258,16 +200,17 @@ class Client:
         if not self.ACME_VERIFY:
             kwargs["verify"] = False
 
+        # this is what we'd do if damn near every test didn't mock requests.{get,post}
+        # response = requests.request(method, url, headers=headers, **kwargs)
+
         # awkward implementation to maintain compatibility with current mocked tests
         if method == "GET":
-            ### Incredibly stupid hack to reconcile mypy to requests' API
-            response = requests.get(url, None, **kwargs)
+            # mypy seems to be confused if params isn't explicitly passed, wtf?
+            response = requests.get(url, params=None, headers=headers, **kwargs)
         elif method == "HEAD":
-            response = requests.head(url, **kwargs)
+            response = requests.head(url, headers=headers, **kwargs)
         elif method == "POST":
-            ### Incredibly stupid hack to reconcile mypy to requests' API
-            data_hack = cast(Union[Dict[str, str], None], kwargs.pop("data", None))
-            response = requests.post(url, data_hack, **kwargs)
+            response = requests.post(url, data, headers=headers, **kwargs)
 
         return response
 
@@ -277,8 +220,8 @@ class Client:
             requests_version=requests.__version__,
             system=platform.system(),
             machine=platform.machine(),
-            sewer_version=sewer_version.__version__,
-            sewer_url=sewer_version.__url__,
+            sewer_version=sewer_about("version"),
+            sewer_url=sewer_about("url"),
         )
 
     def get_acme_endpoints(self):

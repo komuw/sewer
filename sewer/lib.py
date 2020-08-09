@@ -1,11 +1,11 @@
-import base64, logging
+import base64, codecs, json, logging, os
 from hashlib import sha256
 from typing import Any, Union
 
 LoggerType = logging.Logger
 
 
-### FIX ME ### can be more specific about response's type... somehow
+### FIX ME ### can be more specific about response arg's type... somehow
 
 
 def log_response(response: Any) -> str:
@@ -47,3 +47,20 @@ def dns_challenge(key_auth: str) -> str:
     "return the ACME challenge response for a DNS TXT record"
 
     return safe_base64(sha256(key_auth.encode("utf8")).digest())
+
+
+_sewer_about = None
+
+
+def sewer_about(name: str) -> str:
+    """
+    returns the named attribute from lazily-loaded  sewer.json (replaces __version__.py)
+    """
+
+    global _sewer_about
+
+    if _sewer_about is None:
+        here = os.path.abspath(os.path.dirname(__file__))
+        with codecs.open(os.path.join(here, "sewer.json"), "r", encoding="utf8") as f:
+            _sewer_about = json.load(f)
+    return _sewer_about[name]
