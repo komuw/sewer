@@ -34,6 +34,7 @@ class Client:
         bits: int = 2048,
         digest: str = "sha256",
         provider: ProviderBase = None,
+        kid: str = None,
         ACME_REQUEST_TIMEOUT: int = 7,
         ACME_AUTH_STATUS_WAIT_PERIOD: int = 8,
         ACME_AUTH_STATUS_MAX_CHECKS: int = 3,
@@ -69,6 +70,13 @@ class Client:
             raise ValueError(
                 """certificate_key should be of type:: None or str. You entered {0}.
                 More specifically, certificate_key should be the result of reading an ssl certificate""".format(
+                    type(certificate_key)
+                )
+            )
+        elif not isinstance(kid, (type(None), str)):
+            raise ValueError(
+                """kid should be of type:: None or str. You entered {0}.
+                More specifically, kid should be the "kid" value in the acme header from a previous rergister request""".format(
                     type(certificate_key)
                 )
             )
@@ -126,7 +134,7 @@ class Client:
 
             # unique account identifier
             # https://tools.ietf.org/html/draft-ietf-acme-acme#section-6.2
-            self.kid = None
+            self.kid = kid
 
             self.certificate_key = certificate_key or self.create_certificate_key()
             self.csr = self.create_csr()
@@ -649,34 +657,40 @@ class Client:
         response = self.POST(url, data=data.encode("utf8"), headers=headers)
         return response
 
+    def create_authorization_challenges(self):
+        challenges = []
+
+        self.acme_register()
+        authorizations, finalize_url = self.apply_for_cert_issuance()
+
+        for auth_url in authorizations:
+            identifier_auth = self.get_identifier_authorization(auth_url)
+            token = identifier_auth["token"]
+            challenge = {
+                "ident_value": identifier_auth["domain"],
+                "token": token,
+                "key_auth": self.get_keyauthorization(token),  # responder acme_keyauth..
+                "wildcard": identifier_auth["wildcard"],
+                "auth_url": auth_url,  # responder auth.._url
+                "chal_url": identifier_auth["challenge_url"],  # responder challenge_url
+            }
+            challenges.append(challenge)
+
+        # any errors in setup are fatal (here - they are all necessary for same cert)
+        failures = self.provider.setup(challenges)
+        if failures:
+            raise RuntimeError("get_certificate: challenge setup failed for %s" % failures)
+
+        return challenges, finalize_url
+
     def get_certificate(self):
         self.logger.debug("get_certificate")
         challenges = []
 
         try:
-            self.acme_register()
-            authorizations, finalize_url = self.apply_for_cert_issuance()
-
-            for auth_url in authorizations:
-                identifier_auth = self.get_identifier_authorization(auth_url)
-                token = identifier_auth["token"]
-                challenge = {
-                    "ident_value": identifier_auth["domain"],
-                    "token": token,
-                    "key_auth": self.get_keyauthorization(token),  # responder acme_keyauth..
-                    "wildcard": identifier_auth["wildcard"],
-                    "auth_url": auth_url,  # responder auth.._url
-                    "chal_url": identifier_auth["challenge_url"],  # responder challenge_url
-                }
-                challenges.append(challenge)
-
-            # any errors in setup are fatal (here - they are all necessary for same cert)
-            failures = self.provider.setup(challenges)
-            if failures:
-                raise RuntimeError("get_certificate: challenge setup failed for %s" % failures)
+            challenges, finalize_url = self.create_authorization_challenges()
 
             ### FIX ME ### should abort cert and try to clear on error
-
             error, errata_list = self.propagation_delay(challenges)
 
             # for a case where you want certificates for *.example.com and example.com
