@@ -43,6 +43,12 @@ class TestClient(TestCase):
             self.client = sewer.client.Client(
                 domain_name=self.domain_name, provider=self.provider, **usual_ACME
             )
+            self.client_ec = sewer.client.Client(
+                domain_name=self.domain_name,
+                provider=self.provider,
+                curves="secp256r1",
+                **usual_ACME,
+            )
 
     def tearDown(self):
         pass
@@ -78,16 +84,19 @@ class TestClient(TestCase):
             "requests.get", return_value=test_utils.MockResponse()
         ):
 
-            certificate_key = self.client.certificate_key
-
-            certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                certificate_key.encode(),
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend(),
-            )
-            self.assertIsInstance(
-                certificate_key_private_key, cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey
-            )
+            for certificate_key in [self.client.certificate_key, self.client_ec.certificate_key]:
+                certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                    certificate_key.encode(),
+                    password=None,
+                    backend=cryptography.hazmat.backends.default_backend(),
+                )
+                self.assertIsInstance(
+                    certificate_key_private_key,
+                    (
+                        cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey,
+                        cryptography.hazmat.backends.openssl.ec._EllipticCurvePrivateKey,
+                    ),
+                )
 
     def test_account_key_is_generated(self):
         with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
