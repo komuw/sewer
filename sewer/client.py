@@ -25,23 +25,23 @@ class Client:
     """
 
     def __init__(
-            self,
-            domain_name: str,
-            dns_class: ProviderBase = None,
-            domain_alt_names: Sequence[str] = None,
-            contact_email: str = None,
-            account_key: str = None,
-            certificate_key: str = None,
-            bits: int = 2048,
-            digest: str = "sha256",
-            provider: ProviderBase = None,
-            curves: str = None,
-            ACME_REQUEST_TIMEOUT: int = 7,
-            ACME_AUTH_STATUS_WAIT_PERIOD: int = 8,
-            ACME_AUTH_STATUS_MAX_CHECKS: int = 3,
-            ACME_DIRECTORY_URL: str = ACME_DIRECTORY_URL_PRODUCTION,
-            ACME_VERIFY: bool = True,
-            LOG_LEVEL: str = "INFO",
+        self,
+        domain_name: str,
+        dns_class: ProviderBase = None,
+        domain_alt_names: Sequence[str] = None,
+        contact_email: str = None,
+        account_key: str = None,
+        certificate_key: str = None,
+        bits: int = 2048,
+        digest: str = "sha256",
+        provider: ProviderBase = None,
+        curves: str = None,
+        ACME_REQUEST_TIMEOUT: int = 7,
+        ACME_AUTH_STATUS_WAIT_PERIOD: int = 8,
+        ACME_AUTH_STATUS_MAX_CHECKS: int = 3,
+        ACME_DIRECTORY_URL: str = ACME_DIRECTORY_URL_PRODUCTION,
+        ACME_VERIFY: bool = True,
+        LOG_LEVEL: str = "INFO",
     ):
 
         ### do some type checking of some parameters
@@ -74,7 +74,11 @@ class Client:
                     type(certificate_key)
                 )
             )
-        elif isinstance(curves, str) and not curves.lower() in ["secp256r1", "secp384r1", "secp521r1"]:
+        elif isinstance(curves, str) and not curves.lower() in [
+            "secp256r1",
+            "secp384r1",
+            "secp521r1",
+        ]:
             raise ValueError(
                 """curves should be one of; 'None', 'secp256r1', 'secp384r1', 'secp521r1'"""
             )
@@ -180,12 +184,12 @@ class Client:
         return self._request("HEAD", url)
 
     def POST(
-            self, url: str, *, data: bytes = None, headers: Dict[str, str] = None
+        self, url: str, *, data: bytes = None, headers: Dict[str, str] = None
     ) -> requests.Response:
         return self._request("POST", url, data=data, headers=headers)
 
     def _request(
-            self, method: str, url: str, *, data: bytes = None, headers: Dict[str, str] = None
+        self, method: str, url: str, *, data: bytes = None, headers: Dict[str, str] = None
     ) -> requests.Response:
         """
         shared implementation for GET, POST and HEAD
@@ -253,11 +257,14 @@ class Client:
 
     def create_ecdsa_key(self):
         _curve = getattr(cryptography.hazmat.primitives.asymmetric.ec, self.curves.upper())()
-        key = cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(_curve, cryptography.hazmat.backends.default_backend())
-        return key.private_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM,
-                                 cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-                                 cryptography.hazmat.primitives.serialization.NoEncryption()
-                                 ).decode()
+        key = cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(
+            _curve, cryptography.hazmat.backends.default_backend()
+        )
+        return key.private_bytes(
+            cryptography.hazmat.primitives.serialization.Encoding.PEM,
+            cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+            cryptography.hazmat.primitives.serialization.NoEncryption(),
+        ).decode()
 
     def create_account_key(self):
         self.logger.debug("create_account_key")
