@@ -73,6 +73,11 @@ def setup_parser(catalog):
         help="Directory that stores certificate and keys files; current dir is default.",
     )
 
+    parser.add_argument(
+        "--curves",
+        help="EC curves to support. Supported values are secp256r1, secp384r1 secp521r1.",
+    )
+
     ### challenge provider options
 
     parser.add_argument(
@@ -318,6 +323,7 @@ def main():
         logger.warning("DEPRECATION WARNING: --action option is obsolete and will be dropped soon")
     account_key = args.account_key
     certificate_key = args.certificate_key
+    curves = args.curves
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
@@ -361,6 +367,7 @@ def main():
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
         ACME_REQUEST_TIMEOUT=args.acme_timeout,
+        curves=curves,
     )
     certificate_key = acme_client.certificate_key
     account_key = acme_client.account_key
