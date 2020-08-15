@@ -49,18 +49,18 @@ def dns_challenge(key_auth: str) -> str:
     return safe_base64(sha256(key_auth.encode("utf8")).digest())
 
 
-_sewer_about = None
+_sewer_meta = None
 
 
-def sewer_about(name: str) -> str:
+def sewer_meta(name: str) -> str:
     """
-    returns the named attribute from lazily-loaded  sewer.json (replaces __version__.py)
+    returns the named attribute from lazily-loaded  meta.json (replaces __version__.py)
     """
 
-    global _sewer_about
+    global _sewer_meta
 
-    if _sewer_about is None:
+    if _sewer_meta is None:
         here = os.path.abspath(os.path.dirname(__file__))
-        with codecs.open(os.path.join(here, "sewer.json"), "r", encoding="utf8") as f:
-            _sewer_about = json.load(f)
-    return _sewer_about[name]
+        with codecs.open(os.path.join(here, "meta.json"), "r", encoding="utf8") as f:
+            _sewer_meta = json.load(f)
+    return _sewer_meta[name]

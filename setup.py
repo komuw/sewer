@@ -1,55 +1,34 @@
 import codecs, json, os
-
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
+# long description comes from README.md
+with codecs.open(os.path.join("docs", "README.md"), "r", encoding="utf8") as f:
+    long_description = f.read()
+ldct = "text/markdown"
 
-### FIX ME ### endgoal is to have README.rst, linking to komuw.github.io/sewer for most of it
-### # # # #### "pandoc delanda est!"  <wink>
+# version and other fields in about, with envvar override
+with codecs.open(os.path.join("sewer", "meta.json"), "r", encoding="utf8") as f:
+    meta = json.load(f)
 
-try:
-    import pypandoc
+for k in meta:
+    if "SETUP_" + k in os.environ:
+        meta[k] = os.environ["SETUP_" + k]
 
-    long_description = pypandoc.convert("docs/README.md", "rst")
-except ImportError:
-    with codecs.open("docs/README.md", "r", encoding="utf8") as f:
-        long_description = f.read()
-
-
-with codecs.open(os.path.join(here, "sewer", "sewer.json"), "r", encoding="utf8") as f:
-    about = json.load(f)
-
-with codecs.open(os.path.join(here, "sewer", "catalog.json"), "r", encoding="utf8") as f:
+# provider catalog, used to construct the list of extras and their deps, and all their deps
+with codecs.open(os.path.join("sewer", "catalog.json"), "r", encoding="utf8") as f:
     catalog = json.load(f)
 
-provider_deps_map = dict(dict((i["name"], i["deps"]) for i in catalog))
+provider_deps_map = dict((i["name"], i["deps"]) for i in catalog)
 
 all_deps_of_all_providers = list(set(sum((i["deps"] for i in catalog), [])))
 
 
 setup(
-    name=about["title"],
-    # Versions should comply with PEP440.  For a discussion on single-sourcing
-    # the version across setup.py and the project code, see
-    # https://packaging.python.org/en/latest/single_source_version.html
-    version=about["version"],
-    description=about["description"],
     long_description=long_description,
-    # The project's main homepage.
-    url=about["url"],
-    # Author details
-    author=about["author"],
-    author_email=about["author_email"],
-    # Choose your license
-    license=about["license"],
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    long_description_content_type=ldct,
     classifiers=[
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
         "Development Status :: 4 - Beta",
-        # Indicate who your project is intended for
+        "Environment :: Console",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Internet :: WWW/HTTP",
@@ -58,7 +37,6 @@ setup(
         "Topic :: System :: Networking",
         "Topic :: System :: Systems Administration",
         "Topic :: Utilities",
-        # Pick your license as you wish (should match "license" above)
         "License :: OSI Approved :: MIT License",
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -66,43 +44,19 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    # What does your project relate to?
-    keywords="letsencrypt",
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
-    # packages=['sewer'],
     packages=find_packages(exclude=["docs", "*tests*"]),
-    # Alternatively, if you want to distribute just a my_module.py, uncomment
-    # this:
-    #   py_modules=["my_module"],
-    # List run-time dependencies here.  These will be installed by pip when
-    # your project is installed. For an analysis of "install_requires" vs pip's
-    # requirements files see:
-    # https://packaging.python.org/en/latest/requirements.html
     install_requires=["requests", "pyopenssl", "cryptography"],
-    # List additional groups of dependencies here (e.g. development
-    # dependencies). You can install these using the following syntax,
-    # for example:
-    # $ pip3 install -e .[dev,test]
     extras_require=dict(
         provider_deps_map,
-        dev=["coverage", "pypandoc", "twine", "wheel"],
+        dev=["coverage", "twine", "wheel"],
         test=["pylint==2.3.1", "black==18.9b0"],
         alldns=all_deps_of_all_providers,
     ),
-    # If there are data files included in your packages that need to be
-    # installed, specify them here.  If using Python 2.6 or less, then these
-    # have to be included in MANIFEST.in as well.
-    # package_data={
-    #     'sample': ['package_data.dat'],
-    # },
+    # data files to be placed in project directory, not zip safe but zips suck anyway
     package_data={"sewer": ["*.json"]},
-    # Although 'package_data' is the preferred approach, in some case you may
-    # need to place data files outside of your packages. See:
-    # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa
-    # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    # data_files=[('my_data', ['data/data_file'])],
+    zip_safe=False,
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
@@ -112,17 +66,5 @@ setup(
     #     ],
     # },
     entry_points={"console_scripts": ["sewer=sewer.cli:main", "sewer-cli=sewer.cli:main"]},
+    **meta,
 )
-
-# python packaging documentation:
-# 1. https://python-packaging.readthedocs.io/en/latest/index.html
-# 2. https://python-packaging-user-guide.readthedocs.io/tutorials/distributing-packages
-# a) pip3 install wheel twine
-# b) pip3 install -e .
-# c) python setup.py sdist
-# d) python setup.py bdist_wheel
-# e) DONT use python setup.py register and python setup.py upload. They use http
-# f) twine upload dist/* -r testpypi
-# g) pip3 install -i https://testpypi.python.org/pypi <package name>
-# h) twine upload dist/*   # prod pypi
-# i) pip3 install <package name>

@@ -21,6 +21,8 @@ service's API is difficult.
 - [Rackspace](https://www.rackspace.com/cloud/dns)
 - [unbound_ssh]
 
+_ToDo: combine this list with the features table below, I think._
+
 ### Add a driver for your DNS service
 
 Most (?) of the DNS drivers came about because someone wanted to use sewer
