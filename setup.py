@@ -51,7 +51,7 @@ setup(
     extras_require=dict(
         provider_deps_map,
         dev=["coverage", "twine", "wheel"],
-        test=["pylint==2.3.1", "black==18.9b0"],
+        test=["pylint==2.3.1", "black==19.10b0"],
         alldns=all_deps_of_all_providers,
     ),
     # data files to be placed in project directory, not zip safe but zips suck anyway

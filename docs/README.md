@@ -5,20 +5,23 @@
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
-
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
 - The current release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
-> **NB:** sewer is mostly compatible with CPython back to 3.5, but f-strings
-in particular keep trying to creep in.  As of 0.8.3 none of the core code
-nor included drivers require f-strings, but they've been showing up in
-recent contributions and are already in a fair bit of test code.  _Expect to
-need at least 3.6+ for sewer 0.9._ I would prefer to maintain 3.5
-compatibility until then, but it's not currently tested in CI.  I will be
-happy to accept patches for any issues that show up.  — @mmaney
+> Note that with 0.8.3, the promise made elsewhere about stuff changing is
+starting to come true.  `--action` is still accepted but deprecated, and
+will be dropped soon.  Likewise `--dns`, replaced by `--provider`.  Some new
+options have been added, and more of both additional features and breaking
+changes lie ahead.
+
+PYTHON compatibility: 3.5 is nominally still supported, though a couple
+things keep trying to sneak in (f-strings and trailing commas on certain
+argument lists) that will cause 3.5 to error.  Adding multiple Python
+versions to the CI is on the ToDo list, but it may take a while.  For now,
+please report issues and they'll be dealt with as moles are.  <wink>
 
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
@@ -81,12 +84,14 @@ pip3 install sewer
 # pip3 install sewer[powerdns]
 ```
 
-sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
+sewer(since version 0.5.0) is now python3 only.  To install the (now
+unsupported) python2 version:
 
 ```shell
 pip install sewer==0.3.0
 ```
-Sewer is in active development and it's API ~~may~~ will change in backward incompatible ways.
+
+Sewer is in active development and it's API will change in backward incompatible ways.
 [https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
 ## Development setup

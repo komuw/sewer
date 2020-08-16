@@ -40,7 +40,7 @@ jobs:
       - run:
           name: run static analyzers
           command: |
-            black --line-length=100 --check . ||  { printf "\\n\\t please use black to format your code."; exit 77; }
+            black -l 100 -t py35 --check . ||  { printf "\\n\\t please use black to format your code."; exit 77; }
             pylint --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
 
       - run:

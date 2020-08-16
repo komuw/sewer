@@ -18,15 +18,16 @@ works and derivative works of any Contribution, under the MIT License.
 - open an issue on this repo. In your issue, outline what it is you want to add and why.
 - install pre-requiste software:
 ```shell
-apt-get -y install pandoc && pip3 install -e .[dev,test]
+pip3 install -e .[dev,test]
 ```
 - make the changes you want on your fork.
 - your changes should have backward compatibility in mind unless it is impossible to do so.
 - add your name and contact(optional) to CONTRIBUTORS.md
 - add tests
-- format your code using [black](https://github.com/ambv/black):
+- format your code using [black](https://github.com/ambv/black) *NB:*
+requires black 19.3.b0 or newer (19.10b0 is used by the CI):
 ```shell
-black --line-length=100 .
+black -l 100 -t py35 .
 ```
 - run [pylint](https://pypi.python.org/pypi/pylint) on the code and fix any issues:
 ```shell
