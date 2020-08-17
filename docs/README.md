@@ -17,11 +17,11 @@ will be dropped soon.  Likewise `--dns`, replaced by `--provider`.  Some new
 options have been added, and more of both additional features and breaking
 changes lie ahead.
 
-PYTHON compatibility: 3.5 is nominally still supported, though a couple
-things keep trying to sneak in (f-strings and trailing commas on certain
-argument lists) that will cause 3.5 to error.  Adding multiple Python
-versions to the CI is on the ToDo list, but it may take a while.  For now,
-please report issues and they'll be dealt with as moles are.  <wink>
+PYTHON compatibility: 3.5 is nominally still supported, and with assistance
+from Github's multi-version Python linting I've caught a couple things.  I
+believe that the main code is 3.5 clean, but there are a few legacy DNS
+drivers that may not run under 3.5.  For 0.8.3 I will fix any reported 3.5
+issues, but I suspect this will be the last release to promies that.
 
 sewer maintainer @mmaney can often be found on freenode in ##sewer for those
 who remember IRC.  Don't ask to ask!

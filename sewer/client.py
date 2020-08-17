@@ -182,7 +182,7 @@ class Client:
         if "UserAgent" not in headers:
             headers["UserAgent"] = self.User_Agent
 
-        kwargs: Dict[str, Union[str, int]] = {"timeout": self.ACME_REQUEST_TIMEOUT}
+        kwargs = {"timeout": self.ACME_REQUEST_TIMEOUT}  # type: Dict[str, Union[str, int]]
 
         ### FIX ME ### can get current bogus cert from pebble, figure out how to use it here?
 
