@@ -1,7 +1,4 @@
-import logging
-import unittest
 from unittest import mock, TestCase
-
 
 from .. import unbound_ssh
 
@@ -34,7 +31,7 @@ def patch_subprocess_run(returncode, **kwargs):
 ####### TESTS #######
 
 
-class TestLib(unittest.TestCase):
+class TestLib(TestCase):
 
     # __init__ requires & accepts args, fails on missing
 

@@ -1,5 +1,4 @@
 import argparse, os
-from typing import List
 
 from .catalog import ProviderCatalog
 from . import client, config, lib

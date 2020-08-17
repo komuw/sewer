@@ -1,4 +1,4 @@
-import codecs, importlib, json, os, sys
+import codecs, importlib, json, os
 from typing import Dict, List, Sequence
 
 from .auth import ProviderBase

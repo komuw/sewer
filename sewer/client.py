@@ -1,6 +1,6 @@
 import binascii, json, time, platform
 from hashlib import sha256
-from typing import Optional, Dict, Sequence, Tuple, Union, cast
+from typing import Dict, Sequence, Tuple, Union, cast
 
 # used to just import cryptography, which worked only because other modules did more :-(
 import cryptography.hazmat.primitives.serialization
