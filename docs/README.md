@@ -23,6 +23,9 @@ argument lists) that will cause 3.5 to error.  Adding multiple Python
 versions to the CI is on the ToDo list, but it may take a while.  For now,
 please report issues and they'll be dealt with as moles are.  <wink>
 
+sewer maintainer @mmaney can often be found on freenode in ##sewer for those
+who remember IRC.  Don't ask to ask!
+
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
 - Supports acme version 2 (current RFC including post-as-get).
