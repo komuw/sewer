@@ -583,25 +583,25 @@ class Client:
         nonce = response.headers["Replay-Nonce"]
         return nonce
 
-    def get_jwk(self):
+    def get_jwk(self) -> Dict[str, str]:
         """
         calculate the JSON Web Key (jwk) from self.account_key
         """
+
+        def val_to_bin(val):
+            numbytes = (val.bit_length() + 7) // 8
+            return val.to_bytes(numbytes, "big")
+
         private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
             self.account_key.encode(),
             password=None,
             backend=cryptography.hazmat.backends.default_backend(),
         )
-        public_key_public_numbers = private_key.public_key().public_numbers()
-        # private key public exponent in hex format
-        exponent = "{0:x}".format(public_key_public_numbers.e)
-        exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
-        # private key modulus in hex format
-        modulus = "{0:x}".format(public_key_public_numbers.n)
+        pubnums = private_key.public_key().public_numbers()
         jwk = {
             "kty": "RSA",
-            "e": safe_base64(binascii.unhexlify(exponent)),
-            "n": safe_base64(binascii.unhexlify(modulus)),
+            "e": safe_base64(val_to_bin(pubnums.e)),
+            "n": safe_base64(val_to_bin(pubnums.n)),
         }
         return jwk
 

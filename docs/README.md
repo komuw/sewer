@@ -1,4 +1,7 @@
-## Sewer          
+## Sewer **0.8.4 development branch**
+
+Change happens, including `push --force` or rebase.  This will become more
+stable after I get the backlog of PRs/bugs cleared up.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
