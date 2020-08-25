@@ -1,4 +1,4 @@
-import codecs, importlib, json, os, sys
+import codecs, importlib, json, os
 from typing import Dict, List, Sequence
 
 from .auth import ProviderBase
@@ -51,7 +51,7 @@ class ProviderCatalog:
         with codecs.open(filepath, "r", encoding="utf8") as f:
             raw_catalog = json.load(f)
 
-        items: Dict[str, ProviderDescriptor] = {}
+        items = {}  # type: Dict[str, ProviderDescriptor]
         for item in raw_catalog:
             k = item["name"]
             if k in items:

@@ -5,13 +5,26 @@
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
-
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- The current PRE-release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
-- Current stable release is [0.8.2](https://komuw.github.io/sewer/notes/0.8.2-notes).
+- The current release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
+
+> Note that with 0.8.3, the promise made elsewhere about stuff changing is
+starting to come true.  `--action` is still accepted but deprecated, and
+will be dropped soon.  Likewise `--dns`, replaced by `--provider`.  Some new
+options have been added, and more of both additional features and breaking
+changes lie ahead.
+
+PYTHON compatibility: 3.5 is nominally still supported, and with assistance
+from Github's multi-version Python linting I've caught a couple things.  I
+believe that the main code is 3.5 clean, but there are a few legacy DNS
+drivers that may not run under 3.5.  For 0.8.3 I will fix any reported 3.5
+issues, but I suspect this will be the last release to promies that.
+
+sewer maintainer @mmaney can often be found on freenode in ##sewer for those
+who remember IRC.  Don't ask to ask!
 
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)
@@ -74,23 +87,19 @@ pip3 install sewer
 # pip3 install sewer[powerdns]
 ```
 
-sewer(since version 0.5.0) is now python3 only. To install the (now unsupported) python2 version, run;
+sewer(since version 0.5.0) is now python3 only.  To install the (now
+unsupported) python2 version:
 
 ```shell
 pip install sewer==0.3.0
 ```
-Sewer is in active development and it's API ~~may~~ will change in backward incompatible ways.
-[https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
+Sewer is in active development and it's API will change in backward incompatible ways.
+[https://pypi.python.org/pypi/sewer](https://pypi.python.org/pypi/sewer)
 
 ## Development setup
 
 See the how to contribute [documentation](https://github.com/komuw/sewer/blob/master/.github/CONTRIBUTING.md)
-
-## TODO
-- docs (WIP)
-- support more DNS providers
-- https://github.com/komuw/sewer/milestone/1
 
 ## FAQ
 - Why another ACME client?          

@@ -1,11 +1,7 @@
-import os
-import argparse
-from typing import List
+import argparse, os
 
-from . import client, config, lib
-
-# from .lib import create_logger, sewer_about
 from .catalog import ProviderCatalog
+from . import client, config, lib
 
 
 def setup_parser(catalog):
@@ -25,7 +21,7 @@ def setup_parser(catalog):
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=lib.sewer_about("version")),
+        version="%(prog)s {version}".format(version=lib.sewer_meta("version")),
         help="The currently installed sewer version.",
     )
     parser.add_argument(
@@ -127,6 +123,8 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
     return class (or callable) that will return the Provider instance to use
     """
 
+    ### FIX ME ### part of catalog's motivation is to replace all this ad hoc copypasta.  TODO
+
     if provider_name == "cloudflare":
         from .dns_providers.cloudflare import CloudFlareDns
 
@@ -150,8 +148,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             logger.error(err)
             raise KeyError(err)
 
-        logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
-
     elif provider_name == "aurora":
         from .dns_providers.auroradns import AuroraDns
 
@@ -164,7 +160,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
                 AURORA_SECRET_KEY=AURORA_SECRET_KEY,
                 **provider_kwargs,
             )
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -183,7 +178,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
                 ACME_DNS_API_BASE_URL=ACME_DNS_API_BASE_URL,
                 **provider_kwargs,
             )
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -196,7 +190,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             aliyun_secret = os.environ["ALIYUN_AK_SECRET"]
             aliyun_endpoint = os.environ.get("ALIYUN_ENDPOINT", "cn-beijing")
             dns_class = AliyunDns(aliyun_ak, aliyun_secret, aliyun_endpoint, **provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -208,7 +201,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             he_username = os.environ["HURRICANE_USERNAME"]
             he_password = os.environ["HURRICANE_PASSWORD"]
             dns_class = HurricaneDns(he_username, he_password, **provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -220,7 +212,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             RACKSPACE_USERNAME = os.environ["RACKSPACE_USERNAME"]
             RACKSPACE_API_KEY = os.environ["RACKSPACE_API_KEY"]
             dns_class = RackspaceDns(RACKSPACE_USERNAME, RACKSPACE_API_KEY, **provider_kwargs)
-            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -232,7 +223,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             DNSPOD_ID = os.environ["DNSPOD_ID"]
             DNSPOD_API_KEY = os.environ["DNSPOD_API_KEY"]
             dns_class = DNSPodDns(DNSPOD_ID, DNSPOD_API_KEY, **provider_kwargs)
-            logger.info("chosen_dns_prover. Using {0} as dns provider. ".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -243,7 +233,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
         try:
             duckdns_token = os.environ["DUCKDNS_TOKEN"]
             dns_class = DuckDNSDns(duckdns_token=duckdns_token, **provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -253,7 +242,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
 
         try:
             dns_class = ClouDNSDns(**provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -265,7 +253,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
             powerdns_api_key = os.environ["POWERDNS_API_KEY"]
             powerdns_api_url = os.environ["POWERDNS_API_URL"]
             dns_class = PowerDNSDns(powerdns_api_key, powerdns_api_url, **provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -276,7 +263,6 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
         try:
             gandi_api_key = os.environ["GANDI_API_KEY"]
             dns_class = GandiDns(GANDI_API_KEY=gandi_api_key, **provider_kwargs)
-            logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
         except KeyError as e:
             logger.error("ERROR:: Please supply {0} as an environment variable.".format(str(e)))
             raise
@@ -287,9 +273,7 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
         # check & report, let calling protocol crash it.
         if "ssh_des" not in provider_kwargs:
             logger.error("ERROR: unbound_ssh REQUIRES ssh_des option.")
-
         dns_class = UnboundSsh(**provider_kwargs)  # pylint: disable=E1125
-        logger.info("chosen_provider_name. Using {0} as dns provider.".format(provider_name))
 
     elif provider_name == "route53":
         raise ValueError("route53 driver can only be used programmatically at this time, sorry")
@@ -297,6 +281,7 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
     else:
         raise ValueError("The dns provider {0} is not recognised.".format(provider_name))
 
+    logger.info("Using %s as registered provider.", provider_name)
     return dns_class
 
 

@@ -1,21 +1,16 @@
-import time
-import copy
-import json
+import binascii, json, time, platform
 from hashlib import sha256
-import binascii
-import platform
-from typing import Optional, Dict, Sequence, Tuple, Union, cast
-
-import requests
-import OpenSSL.crypto
+from typing import Dict, Sequence, Tuple, Union, cast
 
 # used to just import cryptography, which worked only because other modules did more :-(
 import cryptography.hazmat.primitives.serialization
 import cryptography.hazmat.backends
+import OpenSSL.crypto
+import requests
 
-from .config import ACME_DIRECTORY_URL_PRODUCTION
 from .auth import ChalListType, ErrataListType, ProviderBase
-from .lib import create_logger, log_response, safe_base64, sewer_about
+from .config import ACME_DIRECTORY_URL_PRODUCTION
+from .lib import create_logger, log_response, safe_base64, sewer_meta
 
 
 class Client:
@@ -117,12 +112,7 @@ class Client:
         self.logger = create_logger(__name__, LOG_LEVEL)
 
         try:
-            self.all_domain_names = copy.copy(self.domain_alt_names)
-            self.all_domain_names.insert(0, self.domain_name)
-
-            ### FIX ME ### is this a dangling duplicate, or was it s'posed to be all_domain_names?
-            self.domain_alt_names = list(set(self.domain_alt_names))
-
+            self.all_domain_names = [self.domain_name] + self.domain_alt_names
             self.User_Agent = self.get_user_agent()
             acme_endpoints = self.get_acme_endpoints().json()
             self.ACME_GET_NONCE_URL = acme_endpoints["newNonce"]
@@ -153,7 +143,7 @@ class Client:
 
             self.logger.info(
                 "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
-                    sewer_about("version"),
+                    sewer_meta("version"),
                     self.all_domain_names,
                     self.ACME_DIRECTORY_URL[:20] + "...",
                 )
@@ -200,7 +190,7 @@ class Client:
         if "UserAgent" not in headers:
             headers["UserAgent"] = self.User_Agent
 
-        kwargs: Dict[str, Union[str, int]] = {"timeout": self.ACME_REQUEST_TIMEOUT}
+        kwargs = {"timeout": self.ACME_REQUEST_TIMEOUT}  # type: Dict[str, Union[str, int]]
 
         ### FIX ME ### can get current bogus cert from pebble, figure out how to use it here?
 
@@ -228,8 +218,8 @@ class Client:
             requests_version=requests.__version__,
             system=platform.system(),
             machine=platform.machine(),
-            sewer_version=sewer_about("version"),
-            sewer_url=sewer_about("url"),
+            sewer_version=sewer_meta("version"),
+            sewer_url=sewer_meta("url"),
         )
 
     def get_acme_endpoints(self):
