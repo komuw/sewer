@@ -96,7 +96,7 @@ def setup_parser(catalog):
         "--acme_timeout",
         type=int,
         default=7,
-        help="The maximum time the client will wait for a network call (HTTPS request to ACME server) to complete.  Default is 7",
+        help="Timeout (maximum wait) for all requests to the ACME service.  Default is 7",
     )
 
     ### sewer command options
@@ -123,7 +123,7 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
     return class (or callable) that will return the Provider instance to use
     """
 
-    ### FIX ME ### part of catalog's motivation is to replace all this ad hoc copypasta.  TODO
+    ### TODO ### part of catalog's motivation is to replace all this ad hoc copypasta.
 
     if provider_name == "cloudflare":
         from .dns_providers.cloudflare import CloudFlareDns

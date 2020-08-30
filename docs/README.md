@@ -1,7 +1,4 @@
-## Sewer **0.8.4 development branch**
-
-Change happens, including `push --force` or rebase.  This will become more
-stable after I get the backlog of PRs/bugs cleared up.
+## Sewer
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
@@ -11,23 +8,27 @@ stable after I get the backlog of PRs/bugs cleared up.
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- The current release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
+- This is the trunk, moving towards a 0.8.4 release.  No notes yet.
+- The stable release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
-> Note that with 0.8.3, the promise made elsewhere about stuff changing is
-starting to come true.  `--action` is still accepted but deprecated, and
-will be dropped soon.  Likewise `--dns`, replaced by `--provider`.  Some new
-options have been added, and more of both additional features and breaking
-changes lie ahead.
+> 0.8.4 will bring more changes, especially if you use sewer's Client class
+directly.  The command line offers more opportunities to hide internal
+changes.
+
+> CLI changes from 0.8.3: `--action` is still accepted but deprecated. 
+Likewise `--dns`, replaced by `--provider`.  Some new options have been
+added.
 
 PYTHON compatibility: 3.5 is nominally still supported, and with assistance
-from Github's multi-version Python linting I've caught a couple things.  I
-believe that the main code is 3.5 clean, but there are a few legacy DNS
-drivers that may not run under 3.5.  For 0.8.3 I will fix any reported 3.5
-issues, but I suspect this will be the last release to promies that.
+from Github's multi-version Python linting I've repaired some issues.  Even
+with the GH multi-version testing, there are parts of the drivers,
+especially, which I simply can't test (with 3.5) because the actual service
+provider interaction has to be mocked.  Such issues will be fixed on a
+best-effort basis when reported for the life of 0.8.
 
-sewer maintainer @mmaney can often be found on freenode in ##sewer for those
-who remember IRC.  Don't ask to ask!
+I (maintainer @mmaney) loiter in channel ##sewer (on irc.freenode.net) for
+those who remember IRC.  Don't ask to ask!
 
 ## Features
 - Obtain or renew SSL/TLS certificates from [Let's Encrypt](https://letsencrypt.org)

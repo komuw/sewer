@@ -1,6 +1,6 @@
-import binascii, json, time, platform
+import json, time, platform
 from hashlib import sha256
-from typing import Dict, Sequence, Tuple, Union, cast
+from typing import Dict, Sequence, Tuple, Union
 
 # used to just import cryptography, which worked only because other modules did more :-(
 import cryptography.hazmat.primitives.serialization
@@ -759,16 +759,9 @@ class Client:
         return ("", [])
 
     def cert(self):
-        """
-        convenience method to get a certificate without much hassle
-        """
+        self.logger.warning("DEPRECATED: Client.cert is deprecated as of 0.8.4")
         return self.get_certificate()
 
     def renew(self):
-        """
-        renews a certificate.
-        A renewal is actually just getting a new certificate.
-        An issuance request counts as a renewal if it contains the exact same set of hostnames as a previously issued certificate.
-            https://letsencrypt.org/docs/rate-limits/
-        """
+        self.logger.warning("DEPRECATED: Client.renew is deprecated as of 0.8.4")
         return self.cert()

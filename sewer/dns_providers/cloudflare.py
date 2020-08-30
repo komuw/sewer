@@ -65,10 +65,11 @@ class CloudFlareDns(common.BaseDns):
                 setattr(self, "CLOUDFLARE_DNS_ZONE_ID", i["id"])
         if isinstance(self.CLOUDFLARE_DNS_ZONE_ID, type(None)):
             raise ValueError(
-                "Error unable to get DNS zone for domain_name={domain_name}: status_code={status_code} response={response}".format(
-                    domain_name=domain_name,
-                    status_code=find_dns_zone_response.status_code,
-                    response=log_response(find_dns_zone_response),
+                "No DNS zone for %s: status = %s, response=%s"
+                % (
+                    domain_name,
+                    find_dns_zone_response.status_code,
+                    log_response(find_dns_zone_response),
                 )
             )
 
