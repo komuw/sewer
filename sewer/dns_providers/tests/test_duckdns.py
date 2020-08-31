@@ -1,16 +1,11 @@
-from unittest import mock
 import json
-from unittest import TestCase
-
-from sewer.dns_providers.duckdns import DuckDNSDns
+from unittest import mock, TestCase
 
 from . import test_utils
+from ..duckdns import DuckDNSDns
 
-# TO BE TESTED
+
 class TestDuckDNS(TestCase):
-    """
-    """
-
     def setUp(self):
         self.domain_name = "example.com"
         self.domain_dns_value = "mock-domain_dns_value"

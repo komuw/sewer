@@ -57,7 +57,7 @@ class TestHEDNS(TestCase):
                 self.dns_class.create_dns_record(
                     domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
                 )
-            except Exception as e:
+            except Exception:
                 pass
 
             self.assertFalse(mock_requests_post.called)
@@ -72,6 +72,6 @@ class TestHEDNS(TestCase):
                 self.dns_class.delete_dns_record(
                     domain_name=self.domain_name, domain_dns_value=self.domain_dns_value
                 )
-            except Exception as e:
+            except Exception:
                 pass
             self.assertFalse(mock_requests_post.called)

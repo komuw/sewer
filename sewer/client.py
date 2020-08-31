@@ -1,6 +1,6 @@
-import binascii, json, time, platform
+import json, time, platform
 from hashlib import sha256
-from typing import Dict, Sequence, Tuple, Union, cast
+from typing import Dict, Sequence, Tuple, Union
 
 # used to just import cryptography, which worked only because other modules did more :-(
 import cryptography.hazmat.primitives.serialization
@@ -583,25 +583,25 @@ class Client:
         nonce = response.headers["Replay-Nonce"]
         return nonce
 
-    def get_jwk(self):
+    def get_jwk(self) -> Dict[str, str]:
         """
         calculate the JSON Web Key (jwk) from self.account_key
         """
+
+        def val_to_bin(val):
+            numbytes = (val.bit_length() + 7) // 8
+            return val.to_bytes(numbytes, "big")
+
         private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
             self.account_key.encode(),
             password=None,
             backend=cryptography.hazmat.backends.default_backend(),
         )
-        public_key_public_numbers = private_key.public_key().public_numbers()
-        # private key public exponent in hex format
-        exponent = "{0:x}".format(public_key_public_numbers.e)
-        exponent = "0{0}".format(exponent) if len(exponent) % 2 else exponent
-        # private key modulus in hex format
-        modulus = "{0:x}".format(public_key_public_numbers.n)
+        pubnums = private_key.public_key().public_numbers()
         jwk = {
             "kty": "RSA",
-            "e": safe_base64(binascii.unhexlify(exponent)),
-            "n": safe_base64(binascii.unhexlify(modulus)),
+            "e": safe_base64(val_to_bin(pubnums.e)),
+            "n": safe_base64(val_to_bin(pubnums.n)),
         }
         return jwk
 
@@ -759,16 +759,9 @@ class Client:
         return ("", [])
 
     def cert(self):
-        """
-        convenience method to get a certificate without much hassle
-        """
+        self.logger.warning("DEPRECATED: Client.cert is deprecated as of 0.8.4")
         return self.get_certificate()
 
     def renew(self):
-        """
-        renews a certificate.
-        A renewal is actually just getting a new certificate.
-        An issuance request counts as a renewal if it contains the exact same set of hostnames as a previously issued certificate.
-            https://letsencrypt.org/docs/rate-limits/
-        """
+        self.logger.warning("DEPRECATED: Client.renew is deprecated as of 0.8.4")
         return self.cert()
