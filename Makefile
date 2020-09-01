@@ -60,6 +60,9 @@ uploadprod_tag:
 # you can run single testcase as;
 # 1. python -m unittest sewer.tests.test_Client.TestClient.test_something
 # 2. python -m unittest discover -k test_find_dns_zone_id
+
+.PHONY: test testdata rsatestkeys secptestkeys
+
 test:
 	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
 	@printf "\n coverage erase::\n" && ${coverage} erase
@@ -67,3 +70,16 @@ test:
 	@printf "\n coverage report::\n" && ${coverage} report --show-missing --fail-under=85
 	@printf "\n run black::\n" && ${black} --line-length=100 --py36 .
 	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+
+
+testdata: rsatestkeys secptestkeys
+
+rsatestkeys:
+	openssl genrsa -out test/rsa2048.pem 2048
+	openssl genrsa -out test/rsa3072.pem 3072
+	openssl genrsa -out test/rsa4096.pem 4096
+
+secptestkeys:
+	openssl ecparam -out test/secp256r1.pem -name secp256r1 -genkey
+	openssl ecparam -out test/secp384r1.pem -name secp384r1 -genkey
+	openssl ecparam -out test/secp521r1.pem -name secp521r1 -genkey

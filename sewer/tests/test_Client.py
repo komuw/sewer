@@ -2,6 +2,16 @@
 # not to pollute the global namespace.
 # see: https://python-packaging.readthedocs.io/en/latest/testing.html
 
+# Have had to sprinkle the pylint pragma "disable=E1125" in the TestCase
+# classes because pylint just won't shut up about missing required keywords
+# that are passed as **kwargs.  If I had time to piss away on it the pragma
+# could be added to individual calls.  Not!
+
+# Also, you can't write out the pragma in a comment like the above without
+# having pylint notice it - and in this case give an error for it at module
+# scope.  So reminiscent of the bad side of ol' lint.
+
+
 from unittest import mock
 import cryptography
 from unittest import TestCase
@@ -10,8 +20,11 @@ import sewer.client
 from sewer.config import ACME_DIRECTORY_URL_STAGING
 
 from . import test_utils
+from ..crypto import AcmeKey
 
 LOG_LEVEL = "CRITICAL"
+
+keys_for_ACME = {"acct_key": AcmeKey.create("rsa2048"), "cert_key": AcmeKey.create("rsa2048")}
 
 usual_ACME = {
     "ACME_REQUEST_TIMEOUT": 1,
@@ -19,6 +32,7 @@ usual_ACME = {
     "ACME_DIRECTORY_URL": ACME_DIRECTORY_URL_STAGING,
     "LOG_LEVEL": LOG_LEVEL,
 }
+usual_ACME.update(keys_for_ACME)
 
 
 class TestClient(TestCase):
@@ -32,6 +46,8 @@ class TestClient(TestCase):
             eg test_get_identifier_authorization_is_called and test_get_identifier_authorization_is_not_called
             should be in different testClasses
     """
+
+    # pylint: disable=E1125
 
     def setUp(self):
         self.domain_name = "example.com"
@@ -58,6 +74,7 @@ class TestClient(TestCase):
                     provider=test_utils.ExmpleHttpProvider(),
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                     LOG_LEVEL=LOG_LEVEL,
+                    **keys_for_ACME,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -72,38 +89,6 @@ class TestClient(TestCase):
 
             for i in ["python-requests", "sewer", "https://github.com/komuw/sewer"]:
                 self.assertIn(i, self.client.User_Agent)
-
-    def test_certificate_key_is_generated(self):
-        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
-            "requests.get", return_value=test_utils.MockResponse()
-        ):
-
-            certificate_key = self.client.certificate_key
-
-            certificate_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                certificate_key.encode(),
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend(),
-            )
-            self.assertIsInstance(
-                certificate_key_private_key, cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey
-            )
-
-    def test_account_key_is_generated(self):
-        with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
-            "requests.get", return_value=test_utils.MockResponse()
-        ):
-
-            account_key = self.client.account_key
-
-            account_key_private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                account_key.encode(),
-                password=None,
-                backend=cryptography.hazmat.backends.default_backend(),
-            )
-            self.assertIsInstance(
-                account_key_private_key, cryptography.hazmat.backends.openssl.rsa._RSAPrivateKey
-            )
 
     def test_acme_registration_is_done(self):
         with mock.patch("requests.post", return_value=test_utils.MockResponse()), mock.patch(
@@ -273,6 +258,8 @@ class TestClientForSAN(TestClient):
     Test Acme client for SAN certificates.
     """
 
+    # pylint: disable=E1125
+
     def setUp(self):
         self.domain_alt_names = [
             "blog.exampleSAN.com",
@@ -299,6 +286,8 @@ class TestClientForWildcard(TestClient):
     """
     Test Acme client for wildard certificates.
     """
+
+    # pylint: disable=E1125
 
     def setUp(self):
         self.domain_alt_names = [
@@ -328,6 +317,8 @@ class TestClientDnsApiCompatibility(TestCase):
     Test Acme client support with the deprecated dns_class parameter.
     """
 
+    # pylint: disable=E1125
+
     def setUp(self):
         self.domain_name = "example.com"
         with mock.patch("requests.post") as mock_requests_post, mock.patch(
@@ -352,6 +343,7 @@ class TestClientDnsApiCompatibility(TestCase):
                     dns_class=test_utils.ExmpleDnsProvider(),  # NOTE: dns_class used here
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                     LOG_LEVEL=LOG_LEVEL,
+                    **keys_for_ACME,
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -398,9 +390,13 @@ class TestClientDnsApiCompatibility(TestCase):
 
 
 class TestClientUnits(TestCase):
+
+    # pylint: disable=E1125
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mock_args = {"domain_name": "example.com", "LOG_LEVEL": LOG_LEVEL}
+        self.mock_args.update(keys_for_ACME)
         self.mock_challenges = [{"ident_value": "example.com", "key_auth": "abcdefgh12345678"}]
 
     def mock_sewer(self, provider):
