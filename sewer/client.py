@@ -37,30 +37,28 @@ class Client:
 
         ### do some type checking of some parameters
 
-        ### FIX ME ### spotty and not always complete; also, should raise TypeError, not ValueError
+        ### FIX ME ### spotty and not always complete; some should raise TypeError, not ValueError
 
         if not isinstance(domain_alt_names, (type(None), list)):
             raise ValueError(
-                """domain_alt_names should be of type:: None or list. You entered {0}""".format(
-                    type(domain_alt_names)
-                )
+                "domain_alt_names should be None or a list of strings, not %s" % domain_alt_names
             )
-        elif not isinstance(contact_email, (type(None), str)):
+
+        if not isinstance(contact_email, (type(None), str)):
+            raise ValueError("contact_email should be None or a string, not %s" % contact_email)
+
+        if LOG_LEVEL.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             raise ValueError(
-                """contact_email should be of type:: None or str. You entered {0}""".format(
-                    type(contact_email)
-                )
+                "LOG_LEVEL must be one of 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'"
             )
-        elif LOG_LEVEL.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+
+        if dns_class is not None and provider is not None:
             raise ValueError(
-                """LOG_LEVEL should be one of; 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. not {0}""".format(
-                    LOG_LEVEL
-                )
+                "Client was passed both the DEPRECATED dns_class argument and provider."
             )
-        elif dns_class is not None and provider is not None:
-            raise ValueError(
-                "passed both the DEPRECATED 'dns_class' parameter as well as 'provider'."
-            )
+
+        if not isinstance(acct_key, AcmeKey) or not isinstance(cert_key, AcmeKey):
+            raise TypeError("Arguments acct_key and cert_key MUST be instances of crypto.AcmeKey.")
 
         ### setup Client's global variables
 
@@ -212,7 +210,7 @@ class Client:
         with "not self.is_new_acct".  But further work is needed - I don't think a
         409 result is part of the protocol any more, for one thing.
         """
-        self.logger.info("acme_register (newAccount)")
+        self.logger.info("acme_register%s" % " (is new account)" if self.is_new_acct else "")
         if not self.is_new_acct:
             payload = {"onlyReturnExisting": True}
         elif self.contact_email:
@@ -510,12 +508,13 @@ class Client:
         - "url"
         """
         self.logger.debug("get_acme_header")
-        header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
+        header = {"alg": self.acct_key.jws_alg, "nonce": self.get_nonce(), "url": url}
 
         if needs_jwk:
             header["jwk"] = self.acct_key.jwk()
         else:
             header["kid"] = self.acct_key.kid
+
         return header
 
     def make_signed_acme_request(self, url, payload, needs_jwk=False):

@@ -16,7 +16,7 @@ class ProviderDescriptor:
         path: str = None,
         cls: str = None,
         features: Sequence[str] = None,
-        memo: str = None
+        memo: str = None,
     ) -> None:
         "initialize a driver descriptor from one item in the catalog"
 

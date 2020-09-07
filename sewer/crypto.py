@@ -1,7 +1,7 @@
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa, utils
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     Encoding,
@@ -24,7 +24,7 @@ from .lib import safe_base64
 # AcmeKeyType = Union[RsaKeyType, EcKeyType]
 
 # and why does this [seem] to work?
-AcmeKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey]
+PrivateKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey]
 
 
 class AcmeKey:
@@ -37,19 +37,19 @@ class AcmeKey:
     See new_ACME_key and load_ACME_key factory functions below.
     """
 
-    pk: AcmeKeyType
-
-    private_format: Any = None
-    jwk_const: Dict[str, str]
-    jwk_attr: Dict[str, str]
-
-    def __init__(self, pk: AcmeKeyType) -> None:
+    def __init__(self, pk: PrivateKeyType) -> None:
         self.pk = pk
+        # subclass dependent, assigned there
+        self.private_format: Any
+        self.jwk_const: Dict[str, str]
+        self.jwk_attr: Dict[str, str]
+        self.jws_alg: str
+        # shared fields
         self.kid: Optional[str] = None
         self._jwk: Optional[Dict[str, str]] = None
 
     @staticmethod
-    def create(key_type: str) -> AcmeKeyType:
+    def create(key_type: str) -> "AcmeKey":
         """
         Factory method to create a new key of key_type, returned as an AcmeKey.
         """
@@ -58,17 +58,10 @@ class AcmeKey:
             raise ValueError("AcmeKey.create: unrecognized key_type: %s" % key_type)
         Cls, arg = key_type_map[key_type]
 
-        # ? # I suppose this could be inverted to keep the key type specifics in Cls
-
-        if Cls is AcmeRsaKey:
-            return Cls(rsa.generate_private_key(65537, arg, default_backend()))
-        if Cls is AcmeEcKey:
-            return Cls(ec.generate_private_key(arg, default_backend()))
-
-        raise ValueError("AcmeKey.create: got bad class from type_map")
+        return Cls(Cls.create_pk(arg))
 
     @staticmethod
-    def from_bytes(pem_data: bytes) -> AcmeKeyType:
+    def from_bytes(pem_data: bytes) -> "AcmeKey":
         """
         load a key from the PEM-format bytes, return an AcmeKey
 
@@ -85,7 +78,7 @@ class AcmeKey:
         raise ValueError("AcmeKey.from_bytes: unrecognized key type: %s" % pk)
 
     @staticmethod
-    def from_file(filename: str) -> AcmeKeyType:
+    def from_file(filename: str) -> "AcmeKey":
         "convenience method to load a PEM-format key; returns the AcmeKey"
 
         with open(filename, "rb") as f:
@@ -132,7 +125,7 @@ class AcmeKey:
             jwk = dict(self.jwk_const)  # pylint: disable=E1101
             for name, attr_name in self.jwk_attr.items():  # pylint: disable=E1101
                 val = getattr(pubnums, attr_name)
-                numbytes = (val.bit_length() + 7) // 8
+                numbytes = getattr(self, "jwk_num_bytes", (val.bit_length() + 7) // 8)
                 jwk[name] = safe_base64(val.to_bytes(numbytes, "big"))
             self._jwk = jwk
         return self._jwk
@@ -145,44 +138,79 @@ class AcmeKey:
 
 
 class AcmeRsaKey(AcmeKey):
+    def __init__(self, pk: PrivateKeyType) -> None:
+        super().__init__(pk)
+        self.private_format = PrivateFormat.PKCS8
+        self.jwk_const = {"kty": "RSA"}
+        self.jwk_attr = {"e": "e", "n": "n"}
+        self.jws_alg = "RS256"
 
-    # maybe TraditionalOpenSSL to come out the same as testdata keys?
-    private_format = PrivateFormat.PKCS8
-    jwk_const = {"kty": "RSA"}
-    jwk_attr = {"e": "e", "n": "n"}
+    @staticmethod
+    def create_pk(key_size: int) -> PrivateKeyType:
+        return rsa.generate_private_key(65537, key_size, default_backend())
 
     def sign_message(self, message: bytes) -> bytes:
         signature = self.pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
         return signature
 
 
+class EcCurve:
+    "data class to hold EX info that's not readily inferred from the secp### tag"
+
+    def __init__(self, curve: Any, alg: str, hash_type: Any, nbytes: int) -> None:
+        self.curve = curve
+        self.alg = alg
+        self.hash_type = hash_type
+        self.nbytes = nbytes
+
+
+known_curves: Dict[int, EcCurve] = {
+    256: EcCurve(ec.SECP256R1, "ES256", hashes.SHA256, 32),
+    384: EcCurve(ec.SECP384R1, "ES384", hashes.SHA384, 48),
+    #
+    # I thought LE accepted P-521 for account keys, but while chasing an intermitent bug
+    # 'detail': 'ECDSA curve P-521 not allowed'
+    #
+    #    521: EcCurve(ec.SECP521R1, "ES512", hashes.SHA512, 66),
+}
+
+
 class AcmeEcKey(AcmeKey):
-
-    private_format = PrivateFormat.TraditionalOpenSSL
-    # jwk_const has to be set based on the key size
-    jwk_attr = {"x": "x", "y": "y"}
-
-    def __init__(self, pk: AcmeKeyType) -> None:
-        self.jwk_const = {"kty": "EC", "crv": "P-%s" % pk.curve.key_size}
+    def __init__(self, pk: PrivateKeyType) -> None:
+        key_size = pk.curve.key_size
+        info = known_curves[key_size]
         super().__init__(pk)
+        self.private_format = PrivateFormat.PKCS8
+        self.jwk_const = {"kty": "EC", "crv": "P-%s" % key_size}
+        self.jwk_attr = {"x": "x", "y": "y"}
+        self.jws_alg = info.alg
+
+        self.jkw_num_bytes = info.nbytes
+
+    @staticmethod
+    def create_pk(key_size: int) -> PrivateKeyType:
+        info = known_curves[key_size]
+        return ec.generate_private_key(info.curve, default_backend())
 
     def sign_message(self, message: bytes) -> bytes:
-        signature = self.pk.sign(message, ec.ECDSA(hashes.SHA256()))
+        info = known_curves[self.pk.curve.key_size]
+        # EC.sign returns ASN.1 encoded values for some inane reason
+        r, s = utils.decode_dss_signature(self.pk.sign(message, ec.ECDSA(info.hash_type())))
+        signature = r.to_bytes(info.nbytes, "big") + s.to_bytes(info.nbytes, "big")
+
         return signature
 
 
-# Key Type Registry
-#
-# key_type_map - maps key type name to the AcmeKey subclass that handles it and
-# some magic values that are arguments needed for creating a new key.
+# key_type_map
+# map known key type names to (concrete_class, key_size)
 
-key_type_map: Dict[str, Tuple[Any, ...]] = {
+key_type_map: Dict[str, Tuple[Any, int]] = {
     "rsa2048": (AcmeRsaKey, 2048),
     "rsa3072": (AcmeRsaKey, 3072),
     "rsa4096": (AcmeRsaKey, 4096),
-    "secp256r1": (AcmeEcKey, ec.SECP256R1),
-    "secp384r1": (AcmeEcKey, ec.SECP384R1),
-    "secp521r1": (AcmeEcKey, ec.SECP521R1),
+    "secp256r1": (AcmeEcKey, 256),
+    "secp384r1": (AcmeEcKey, 384),
+    "secp521r1": (AcmeEcKey, 521),
 }
 
 # extract just the names for option choice lists, etc.
@@ -201,7 +229,7 @@ class AcmeCsr:
         csrb = x509.CertificateSigningRequestBuilder()
         csrb = csrb.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, cn)]))
         all_names = list(set([cn] + san))
-        SAN: List = [x509.DNSName(name) for name in all_names]
+        SAN: List[x509.GeneralName] = [x509.DNSName(name) for name in all_names]
         csrb = csrb.add_extension(x509.SubjectAlternativeName(SAN), critical=False)
         self.csr = csrb.sign(key.pk, hashes.SHA256(), default_backend())
 

@@ -68,18 +68,19 @@ test:
 	@printf "\n coverage erase::\n" && ${coverage} erase
 	@printf "\n coverage run::\n" && ${coverage} run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*" -m unittest discover
 	@printf "\n coverage report::\n" && ${coverage} report --show-missing --fail-under=85
-	@printf "\n run black::\n" && ${black} --line-length=100 --py36 .
+	@printf "\n run black::\n" && ${black} --line-length=100 --target-version py35 .
 	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
 
 
 testdata: rsatestkeys secptestkeys
 
 rsatestkeys:
-	openssl genrsa -out test/rsa2048.pem 2048
-	openssl genrsa -out test/rsa3072.pem 3072
-	openssl genrsa -out test/rsa4096.pem 4096
+	openssl genpkey -out test/rsa2048.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+	openssl genpkey -out test/rsa3072.pem -algorithm RSA -pkeyopt rsa_keygen_bits:3072
+	openssl genpkey -out test/rsa4096.pem -algorithm RSA -pkeyopt rsa_keygen_bits:4096
 
 secptestkeys:
-	openssl ecparam -out test/secp256r1.pem -name secp256r1 -genkey
-	openssl ecparam -out test/secp384r1.pem -name secp384r1 -genkey
-	openssl ecparam -out test/secp521r1.pem -name secp521r1 -genkey
+	openssl genpkey -out test/secp256r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-256
+	openssl genpkey -out test/secp384r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-384
+# not actually useful with LE at this time
+#	openssl genpkey -out test/secp521r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-521

@@ -15,6 +15,7 @@ out of client.py
 - CLI options have changed a bit, mostly to add new features (ECDSA keys!)
   + acct_key/cert_key added, preferred over account_key/certificate_key
   + acct_key_type/cert_key_type allow selection of RSA or EC key generation
+  + is_new_account added to support registering your own account key
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
@@ -24,7 +25,7 @@ out of client.py
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- This is the trunk, moving towards a 0.8.4 release.  No notes yet.
+- This is crypto work, intended for the 0.8.4 release.  No notes yet.
 - The stable release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 

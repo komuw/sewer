@@ -1,8 +1,8 @@
-## DNS and HTTP challenges unified
+# DNS and HTTP challenges unified
 
 _There's still a draft when the wind is blowing, but it's getting less._
 
-### Dedication
+## Dedication
 
 It is indisputable that this is, in the first instance, Alec Troemel's fault,
 since he added support for http-01 challenges.
@@ -11,7 +11,7 @@ made in the process of unifying the two types of challenges,
 while influenced by Alec's code and our discussions, are entirely my fault.
 Alec cannot be blamed for my choices!
 
-### A few words about words
+## A few words about words
 
 Because the word "provider" is so overloaded, I'm going to refer to the
 service-specific implementations as "drivers", except when I forget, or
@@ -19,7 +19,7 @@ missed changing an old use.  "Provider" is still used in the class names.  And
 then there are the "service providers", viz., DNS services or web hosts,
 etc.
 
-### Overview (tl;dr)
+## Overview (tl;dr)
 
 `ProviderBase` described here defines the interface the ACME engine uses
 with new-model drivers (all http-01 drivers, as there are no old ones).  New
@@ -30,7 +30,7 @@ drivers normally should inherit from the `DNSProviderBase` or
 individual drivers need to be created (or modified) to support it at this
 time.  _unbound_ssh is a quirky but working example that supports aliasing.`
 
-### ProviderBase interface for ACME engine
+## ProviderBase interface for ACME engine
 
 The interface between the ACME protocol code and any driver implementation
 consists of three methods, `setup`, `unpropagated` and `clear`.  The first
@@ -75,11 +75,11 @@ This is the pattern which all three methods use: accept a list of challenges
 subset which have problems or are not ready.  So in all cases an empty list
 returned means that all went well.
 
-### `ProviderBase`
+## `ProviderBase`
 
 Abstract base class for driver implementations ultimately inherit from.
 
-#### ProviderBase __init__
+### ProviderBase __init__
 
     __init__(self,
         *,
@@ -127,7 +127,7 @@ It is allowed to add, change, or even remove items from kwargs if necessary
 
 --- (see where for args documentation?  DNS-Alias and DNS-Propagation & ???)
 
-#### `setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+### `setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
 The `setup` method is called to publish one or more challenges.  Each item
 in the list describes one challenge.
@@ -171,7 +171,7 @@ defined values:
 | "skipped" | setup | may skip challenges after one has a hard failure |
 | "unready" | unpropagated | soft fail: record not deployed to authoritative server(s).  If a non-recoverable error is detected, then use _failed_. |
 
-#### `unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+### `unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
 This method is expected to be needed mostly for DNS challenges, but it
 should be used whenever a service provider has a relatively slow or
@@ -180,7 +180,7 @@ challenge data being visible to the world.  When there's no expectation of
 such lag, or no way to reliably check that the challenge has propagated,
 this may as well just return an empty list, and we'll all hope for the best.
 
-#### `clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+### `clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
 `clear`, unlike `setup`, SHOULD NOT stop processing challenges after hitting
 an error.  It's possible that any reported errors will be treated as
@@ -189,7 +189,7 @@ challenges).
 
 _? should have a status word for "this one's hard failed, forget about it"?_
 
-### `DNSProviderBase`
+## `DNSProviderBase`
 
 The driver *interface* is the same for everything except legacy DNS drivers,
 but there are some differences which it makes no sense to push into
@@ -209,7 +209,7 @@ handling both the aliasing and non-aliasing case.  `cname_domain` forms the
 DNS name for the CNAME that should exist in the aliasing case and returns it
 for the use of a hypothetical sanity check, or None when not aliasing.
 
-### `HTTPProviderBase`
+## `HTTPProviderBase`
 
 This intermediate base class stands ready to handle any HTTP-specific
 options or helper methods.  No additions are expected until sewer has had

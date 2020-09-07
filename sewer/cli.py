@@ -6,6 +6,9 @@ from .catalog import ProviderCatalog
 from .crypto import AcmeKey, key_type_choices
 
 
+DEFAULT_KEY_TYPE = "rsa3072"
+
+
 def setup_parser(catalog):
     """
     return configured ArgumentParser - catalog-driven list of providers
@@ -41,15 +44,25 @@ def setup_parser(catalog):
         "--account_key",
         dest="acct_key_file",
         type=argparse.FileType("rb"),
-        help="Filepath to read to get registered ACME account.  Default is to create one.",
+        help="File to load registered ACME account key from.  Default is to create one.",
     )
-    parser.add_argument("--email", help="Email to be used for registration of an ACME account.")
 
     parser.add_argument(
         "--acct_key_type",
         choices=key_type_choices,
-        default="rsa2048",
-        help="Select type of account key to generate if not loading per --acct_key. Default rsa2048.",
+        default=DEFAULT_KEY_TYPE,
+        help=(
+            "Type of acct key to generate if not loaded by --acct_key.  Default %s."
+            % DEFAULT_KEY_TYPE
+        ),
+    ),
+
+    parser.add_argument("--email", help="Email to be used for registration of an ACME account.")
+
+    parser.add_argument(
+        "--is_new_acct",
+        action="store_true",
+        help="Register the key (from --acct_key) rather than assuming it's already registered.",
     ),
 
     ### certificate options
@@ -59,13 +72,17 @@ def setup_parser(catalog):
         "--certificate_key",
         dest="cert_key_file",
         type=argparse.FileType("rb"),
-        help="Filepath to read to get certificate key.  Default is to create one.",
+        help="File to load existing certificate key from.  Default is to create key.",
     )
+
     parser.add_argument(
         "--cert_key_type",
-        choices=key_type_choices,
-        default="rsa2048",
-        help="Select type of certificate key to generate if not loading per --cert_key. Default rsa2048.",
+        choices=[kt for kt in key_type_choices if kt != "secp521r1"],
+        default=DEFAULT_KEY_TYPE,
+        help=(
+            "Type of cert key to generate if not loaded by --cert_key.  Default %s."
+            % DEFAULT_KEY_TYPE
+        ),
     ),
 
     parser.add_argument(
@@ -344,7 +361,7 @@ def main():
 
     if args.acct_key_file:
         acct_key = AcmeKey.from_bytes(args.acct_key_file.read())
-        is_new_acct = False
+        is_new_acct = args.is_new_acct
     else:
         acct_key = AcmeKey.create(args.acct_key_type)
         is_new_acct = True
@@ -388,7 +405,7 @@ def main():
     acct_key.to_file(account_key_file_path)
     logger.info("account key succesfully written to {0}.".format(account_key_file_path))
 
-    certificate = acme_client.cert()
+    certificate = acme_client.get_certificate()
 
     # write out certificate and certificate key in out_dir directory
     with open(crt_file_path, "w") as certificate_file:

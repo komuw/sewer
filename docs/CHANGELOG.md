@@ -1,6 +1,38 @@
 ## `sewer` changelog:
 most recent version is listed first.   
 
+## **version:** 0.8.4 [unreleased]
+
+- add support for ECDSA keys
+
+CLI changes:
+
+- `--account_key` & `--certificate_key` supported only for compatibility:
+  use `--acct_key` and `--cert_key` to avoid future deprecation.
+
+- add `--acct_key_type` & `--cert_key_type` to allow choice of RSA or EC
+  keys and sizes.
+
+- changed default for generated keys to 3072 bit RSA (had been 2048 bit)
+
+- add `--is_new_key` to allow for first-time registration of your own
+  account key (using `--acct_key`) generated outside of sewer.
+
+Internal changes:
+
+- Client methods cert() and renew() are deprecated; just call
+  get_certificate() directly instead.
+
+- crytographic refactoring
+
+  - AcmeKey & AcmeCsr in crypto.py; uses only cryptography library
+
+  - dropped `account_key` and `certificate_key` optional arguments
+
+  - added `acct_key` and `cert_key` REQUIRED arguments taking AcmeKey objects
+
+  - dropped `bits` argument because Client no longer generates keys!
+
 ## **version:** 0.8.3
 
 Features and Improvements:

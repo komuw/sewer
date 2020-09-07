@@ -248,9 +248,7 @@ class TestClient(TestCase):
 
         with self.assertRaises(ValueError) as raised_exception:
             mock_instantiate_client()
-        self.assertIn(
-            "domain_alt_names should be of type:: None or list", str(raised_exception.exception)
-        )
+        self.assertIn("None or a list of strings", str(raised_exception.exception))
 
 
 class TestClientForSAN(TestClient):
@@ -384,9 +382,7 @@ class TestClientDnsApiCompatibility(TestCase):
 
         with self.assertRaises(ValueError) as raised_exception:
             mock_instantiate_client()
-        self.assertIn(
-            "domain_alt_names should be of type:: None or list", str(raised_exception.exception)
-        )
+        self.assertIn("None or a list of strings", str(raised_exception.exception))
 
 
 class TestClientUnits(TestCase):
