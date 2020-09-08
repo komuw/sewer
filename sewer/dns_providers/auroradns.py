@@ -37,7 +37,7 @@ class AuroraDns(common.BaseDns):
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + "." + extractedDomain.suffix
 
-        if extractedDomain.subdomain is "":
+        if extractedDomain.subdomain == "":
             subDomain = "_acme-challenge"
         else:
             subDomain = "_acme-challenge." + extractedDomain.subdomain
@@ -56,7 +56,7 @@ class AuroraDns(common.BaseDns):
         extractedDomain = tldextract.extract(domain_name)
         domainSuffix = extractedDomain.domain + "." + extractedDomain.suffix
 
-        if extractedDomain.subdomain is "":
+        if extractedDomain.subdomain == "":
             subDomain = "_acme-challenge"
         else:
             subDomain = "_acme-challenge." + extractedDomain.subdomain
