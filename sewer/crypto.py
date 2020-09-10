@@ -17,7 +17,7 @@ from .lib import safe_base64
 
 ### types for things defined here
 
-### FIX ME ### what can we use for XxxKeyType?
+### FIX ME ### what can we use for XxxKeyType?  [[ not vital, just tightens up typing ]]
 
 # RsaKeyType = openssl.rsa._RSAPrivateKey
 # EcKeyType = openssl.ec._EllipticCurvePrivateKey
@@ -108,6 +108,8 @@ class AcmeKey:
         with open(filename, "wb") as f:
             f.write(self.private_bytes())
 
+    ### TODO ### store & load file format with kid, PK, timestamp registered, ?
+
     def sign_message(self, message: bytes) -> bytes:
         raise NotImplementedError("subclass must implement sign_message")
 
@@ -150,6 +152,11 @@ class AcmeRsaKey(AcmeKey):
         return rsa.generate_private_key(65537, key_size, default_backend())
 
     def sign_message(self, message: bytes) -> bytes:
+        """
+        Yes, SHA256 is hardwired.  As of Sep 2020, LE only accepts that hash
+        for RSA keys: "expected one of RS256, ES256, ES384 or ES512".
+        """
+
         signature = self.pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
         return signature
 
@@ -210,7 +217,6 @@ key_type_map: Dict[str, Tuple[Any, int]] = {
     "rsa4096": (AcmeRsaKey, 4096),
     "secp256r1": (AcmeEcKey, 256),
     "secp384r1": (AcmeEcKey, 384),
-    "secp521r1": (AcmeEcKey, 521),
 }
 
 # extract just the names for option choice lists, etc.
@@ -224,6 +230,11 @@ class AcmeCsr:
     def __init__(self, *, cn: str, san: List[str], key: AcmeKey) -> None:
         """
         temporary "just like Client.create_csr", more or less
+
+        TODO: "must staple" extension; NOT elaborating subject name, since LE
+        suggests that even CN may be replaced by a meaningless number in some
+        vague future version of the server.  I guess they're right that
+        browsers ignore the CN already (aside from displaying it if asked).
         """
 
         csrb = x509.CertificateSigningRequestBuilder()
