@@ -453,14 +453,12 @@ class Client:
         """
         self.logger.info("check_authorization_status")
         desired_status = desired_status or ["pending", "valid"]
-        number_of_checks = 0
-        while True:
+        for _ in range(self.ACME_AUTH_STATUS_MAX_CHECKS):
             time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
             check_authorization_status_response = self.make_signed_acme_request(
                 authorization_url, payload=""
             )
             authorization_status = check_authorization_status_response.json()["status"]
-            number_of_checks = number_of_checks + 1
             self.logger.debug(
                 "check_authorization_status_response. status_code={0}. response={1}".format(
                     check_authorization_status_response.status_code,
@@ -469,14 +467,12 @@ class Client:
             )
             if authorization_status in desired_status:
                 break
-            if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
-                raise StopIteration(
-                    "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds.".format(
-                        number_of_checks,
-                        self.ACME_AUTH_STATUS_MAX_CHECKS,
-                        self.ACME_AUTH_STATUS_WAIT_PERIOD,
-                    )
+        else:
+            raise StopIteration(
+                "Checks done={0}. Max checks allowed={0}. Interval between checks={1}seconds.".format(
+                    self.ACME_AUTH_STATUS_MAX_CHECKS, self.ACME_AUTH_STATUS_WAIT_PERIOD
                 )
+            )
 
         self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
