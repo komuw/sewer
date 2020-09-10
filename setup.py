@@ -2,7 +2,7 @@ import codecs, json, os
 from setuptools import setup, find_packages
 
 # long description comes from README.md
-with codecs.open(os.path.join("docs", "README.md"), "r", encoding="utf8") as f:
+with codecs.open("README.md", "r", encoding="utf8") as f:
     long_description = f.read()
 ldct = "text/markdown"
 
