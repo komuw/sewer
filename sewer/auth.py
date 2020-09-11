@@ -20,7 +20,7 @@ class ProviderBase:
         LOG_LEVEL: str = "INFO",
         prop_delay: int = 0,
         prop_timeout: int = 0,
-        prop_sleep_times: Union[Sequence[int], int] = (1, 2, 4, 8)
+        prop_sleep_times: Union[Sequence[int], int] = (1, 2, 4, 8),
     ) -> None:
 
         # TypeError if missing, still check that it's a sequencey value; non-str vals, meh

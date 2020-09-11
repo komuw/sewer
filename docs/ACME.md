@@ -1,4 +1,4 @@
-## ACME, RFCs, and confusion, oh my!
+# ACME, RFCs, and confusion, oh my!
 
 ACME grew out of early, ad-hoc procedures designed to let CAs issue large
 numbers of certificates with low overhead.  As described in RFC855, these
@@ -40,9 +40,9 @@ make out, often-shifting schedule for various partial transitions, but I'm
 not going to try to make sense of them.  As of the beginning of 2020, the
 only immediate effect on sewer was that one could no longer run it against
 the *staging* server.  The next big change is when that same restriction is
-rolled out on LE's *production* server late in the year.  Since sewer
+rolled out on LE's *production* server later in the year.  Since sewer
 v0.8.2, which implemented the final RFC8555 protocol at least well enough to
 work with LE's server implementation, our tl;dr is just this:
 
 > If you get a failure running an older version of sewer, get v0.8.2 or
-> later.  This is a known problem: v0.8.2 is the fix.
+  later.  This is a known problem: v0.8.2 or later is the fix.

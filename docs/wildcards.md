@@ -1,4 +1,4 @@
-## Wildcard Certificates
+# Wildcard Certificates
 
 Since 0.8.2, sewer should be able to request and receive simple wildcard
 certificates using any of the DNS drivers.  In earlier versions there was an
@@ -6,7 +6,7 @@ eccentric re-naming of wildcard targets in the core logic which the drivers
 would, sometimes unreliably, remove.  _tl;dr: before 0.8.2 it depended on the
 driver._
 
-### One issue remains in 0.8.3
+## One issue remains in 0.8.3
 
 Certificates with a wildcard CN name, eg., `domain=*.example.com`, are valid
 for all and only the immediate sub domains of example.com.  They do NOT

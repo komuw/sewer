@@ -1,4 +1,4 @@
-## Waiting for Mr. DNS or Someone Like Him
+# Waiting for Mr. DNS or Someone Like Him
 
 Q: How long does it take after you've setup the challenge response TXT records
 until they're actually accessible to the ACME server?
@@ -8,14 +8,17 @@ A: Good Question!
 According to [Let's Encrypt](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge)
 it can take up to an hour.  Depends on the DNS service.  Some provide a way
 to check that your changes are fully propagated to all their servers.  With
-many, however, you just have to wait.
+many, however, you just have to wait.  But be sure you wait long enough,
+because Let's Encrypt DOES NOT implement automatic or triggered retry of a
+failed authorization - you have to restart the [same] order or else start
+all over again.
 
 Sewer provides a flexible _delay until actually published_ mechanism through
 three optional driver parameters, `prop_delay`, `prop_timeout`,
 `prop_sleep_times`, and the [`unpropagated` method](unpropagated).
 Let's see how they're used in various circumstances.
 
-### No API support, no reliable way to check: just delay
+## No API support, no reliable way to check: just delay
 
 If you can't check that the TXT records are fully published, then all you
 can do is delay for a while.  Perhaps the DNS service will suggest a safe
@@ -27,9 +30,9 @@ and sewer's engine will add that many seconds of delay after the challenge
 setup returns before it signals the ACME server to validate those
 challenges.
 
-**CLI option --p_opt prop_delay=... is available for all providers as of 0.8.3**
+**CLI option --p_opt prop_delay=... is available for all drivers since 0.8.3**
 
-### API support or can check: use a timeout
+## API support or can check: use a timeout
 
 If the DNS service gives you a way to check that the propagation is
 complete, or if there are not too many authoritative servers (viz., not an
@@ -43,9 +46,9 @@ before it starts checking.  And there's a delay between checks that has a
 hopefully sensible default, but which you can adjust if necessary through
 the `prop_sleep_times` parameter.
 
-**legacy providers do not implement `unpropagated` as of 0.8.3**
+**no drivers implement `unpropagated` as of 0.8.3**
 
-### You probably don't need to change `prop_sleep_times`
+## You probably don't need to change `prop_sleep_times`
 
 Unless you do, but if it's not obvious, just leave it.
 
@@ -77,7 +80,7 @@ ready.  So the timeout isn't a hard maximum time, but it's bounded to be no
 more than one sleep interval (plus actual time to run `unpropagated`, of
 course) over `prop_timeout`.
 
-### Other Notes and Advanced Use
+## Other Notes and Advanced Use
 
 These values are setup through the Provider on the reasonable assumption
 that they will vary most directly with the choice of service provider, so
@@ -95,10 +98,10 @@ on the Provider instance.  This is solidly in the categories of don't do it
 unless you're sure you need to, and be prepared to own both the pieces if
 you break it!
 
-### Could this be used with non-DNS Providers?
+## Could this be used with non-DNS drivers?
 
 Yes!  I have no experience with http-01 in any setting where such a delay
 might be needed, but the mechanism is implemented in sewer's engine, and all
 that needs be done is to setup the parameters (and implement unpropagated in
 the driver if using more than just `prop_delay`) as described above and
-there you are!
+there you go!

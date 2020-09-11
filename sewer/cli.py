@@ -1,7 +1,12 @@
 import argparse, os
 
-from .catalog import ProviderCatalog
 from . import client, config, lib
+
+from .catalog import ProviderCatalog
+from .crypto import AcmeKey, key_type_choices
+
+
+DEFAULT_KEY_TYPE = "rsa3072"
 
 
 def setup_parser(catalog):
@@ -35,34 +40,69 @@ def setup_parser(catalog):
     ### ACME account options
 
     parser.add_argument(
+        "--acct_key",
         "--account_key",
-        type=argparse.FileType("r"),
-        help="Filepath to read to get registered ACME account.  Default is to create one.",
+        dest="acct_key_file",
+        type=argparse.FileType("rb"),
+        help="File to load registered ACME account key from.  Default is to create one.",
     )
+
+    parser.add_argument(
+        "--acct_key_type",
+        choices=key_type_choices,
+        default=DEFAULT_KEY_TYPE,
+        help=(
+            "Type of acct key to generate if not loaded by --acct_key.  Default %s."
+            % DEFAULT_KEY_TYPE
+        ),
+    ),
+
     parser.add_argument("--email", help="Email to be used for registration of an ACME account.")
+
+    parser.add_argument(
+        "--is_new_acct",
+        action="store_true",
+        help="Register the key (from --acct_key) rather than assuming it's already registered.",
+    ),
 
     ### certificate options
 
     parser.add_argument(
+        "--cert_key",
         "--certificate_key",
-        type=argparse.FileType("r"),
-        help="Filepath to read to get certificate key.  Default is to create one.",
+        dest="cert_key_file",
+        type=argparse.FileType("rb"),
+        help="File to load existing certificate key from.  Default is to create key.",
     )
+
+    parser.add_argument(
+        "--cert_key_type",
+        choices=[kt for kt in key_type_choices if kt != "secp521r1"],
+        default=DEFAULT_KEY_TYPE,
+        help=(
+            "Type of cert key to generate if not loaded by --cert_key.  Default %s."
+            % DEFAULT_KEY_TYPE
+        ),
+    ),
+
     parser.add_argument(
         "--domain",
         required=True,
         help="The DNS identity which will be the certificate's Common Name.  May be a wildcard.",
     )
+
     parser.add_argument(
         "--alt_domains",
         default=[],
         nargs="*",
         help="Optional alternate (SAN) identities to be added to the CN on this certificate.",
     )
+
     parser.add_argument(
         "--bundle_name",
         help="The basename for the output files.  Default is the CN given by --domain.",
     )
+
     parser.add_argument(
         "--out_dir",
         default=os.getcwd(),
@@ -301,8 +341,6 @@ def main():
     alt_domains = args.alt_domains
     if args.action != "none":
         logger.warning("DEPRECATION WARNING: --action option is obsolete and will be dropped soon")
-    account_key = args.account_key
-    certificate_key = args.certificate_key
     bundle_name = args.bundle_name
     endpoint = args.endpoint
     email = args.email
@@ -321,14 +359,23 @@ def main():
     if not os.access(out_dir, os.W_OK):
         raise OSError("The dir '{0}' is not writable".format(out_dir))
 
-    if account_key:
-        account_key = account_key.read()
-    if certificate_key:
-        certificate_key = certificate_key.read()
+    if args.acct_key_file:
+        acct_key = AcmeKey.from_bytes(args.acct_key_file.read())
+        is_new_acct = args.is_new_acct
+    else:
+        acct_key = AcmeKey.create(args.acct_key_type)
+        is_new_acct = True
+
+    if args.cert_key_file:
+        cert_key = AcmeKey.from_bytes(args.cert_key.read())
+    else:
+        cert_key = AcmeKey.create(args.cert_key_type)
+
     if bundle_name:
         file_name = bundle_name
     else:
         file_name = "{0}".format(domain)
+
     if endpoint == "staging":
         ACME_DIRECTORY_URL = config.ACME_DIRECTORY_URL_STAGING
     else:
@@ -341,14 +388,13 @@ def main():
         domain_name=domain,
         domain_alt_names=alt_domains,
         contact_email=email,
-        account_key=account_key,
-        certificate_key=certificate_key,
+        acct_key=acct_key,
+        is_new_acct=is_new_acct,
+        cert_key=cert_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
         LOG_LEVEL=loglevel,
         ACME_REQUEST_TIMEOUT=args.acme_timeout,
     )
-    certificate_key = acme_client.certificate_key
-    account_key = acme_client.account_key
 
     # prepare file path
     account_key_file_path = os.path.join(out_dir, "{0}.account.key".format(file_name))
@@ -356,17 +402,15 @@ def main():
     crt_key_file_path = os.path.join(out_dir, "{0}.key".format(file_name))
 
     # write out account_key in out_dir directory
-    with open(account_key_file_path, "w") as account_file:
-        account_file.write(account_key)
+    acct_key.to_file(account_key_file_path)
     logger.info("account key succesfully written to {0}.".format(account_key_file_path))
 
-    certificate = acme_client.cert()
+    certificate = acme_client.get_certificate()
 
     # write out certificate and certificate key in out_dir directory
     with open(crt_file_path, "w") as certificate_file:
         certificate_file.write(certificate)
-    with open(crt_key_file_path, "w") as certificate_key_file:
-        certificate_key_file.write(certificate_key)
-
     logger.info("certificate succesfully written to {0}.".format(crt_file_path))
+
+    cert_key.to_file(crt_key_file_path)
     logger.info("certificate key succesfully written to {0}.".format(crt_key_file_path))

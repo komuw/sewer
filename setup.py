@@ -47,7 +47,7 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     packages=find_packages(exclude=["docs", "*tests*"]),
-    install_requires=["requests", "pyopenssl", "cryptography"],
+    install_requires=["requests", "cryptography"],
     extras_require=dict(
         provider_deps_map,
         dev=["coverage", "twine", "wheel"],

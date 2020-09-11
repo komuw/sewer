@@ -28,6 +28,8 @@ jobs:
       - run:
           name: run tests
           command: |
+            mkdir test
+            make testdata
             find . -type f -name *.pyc -delete | echo
             coverage erase
             coverage run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover && bash <(curl -s https://codecov.io/bash)

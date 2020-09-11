@@ -1,4 +1,4 @@
-## Driver Catalog
+# The Catalog of Drivers
 
 The driver catalog, `sewer/catalog.json`, replaces scattered facilities that
 were used to stitch things together.  The import farms in `sewer.__init__`
@@ -15,7 +15,7 @@ facilities - it's all lists & dicts (see eg. setup.py which loads the
 catalog this way to avoid potential issues with trying to call into the
 package's code before it's installed).
 
-### Catalog structure
+## Catalog structure
 
 The catalog resides in a JSON file that loads as an array of dictionaries,
 one element for each registered driver.  The per-driver record contains the
@@ -40,7 +40,7 @@ following items (some optional):
 - **memo** Additional text/comments about the driver, the descriptor, etc.
 - **deps** list of additional projects this driver requires (for setup)
 
-### args - parameter desciptors
+## args - parameter desciptors
 
 This is a bit of a mess due to legacy drivers that ignored the established
 conventions.  To be fair to them, those conventions weren't clearly
@@ -102,7 +102,7 @@ so both the parameter and envvar name must be given explicitly.  There is
 also an optional parameter that has never had an associated envvar that the
 implementation used.
 
-### driver parameter and environment variable names
+## driver parameter and environment variable names
 
 The convention is that the envvar name (if any) SHOULD be formed from the
 driver name and the individual args' names (see the first envvar rule
@@ -117,12 +117,12 @@ Obviously the drivers and envvar names are not so consistent among the
 legacy DNS drivers.  Therefore the descriptor has both `param` and `envvar`
 values, along with a set of rules for resolving the names to be used.
 
-#### parameter name rules
+### parameter name rules
 
 1. `descriptor.args[n].name` is the "modern" name for the nth parameter
 2. if `param` is given, it overrides the "modern" name
 
-#### environment name rules
+### environment name rules
 
 1. f"{descriptor.name}_{descriptor.args[n].name}".upper() is the default
 2. if `envvar` is given, it overrides the default
@@ -136,7 +136,7 @@ Two guidelines for the use of envvars:
 2. If `envvar` is set to the empty string, then catalog using code will not
    look for a matching envvar at all.
 
-### catalog representation in Python
+## catalog representation in Python
 
 For now, see the brief implementation in sewer/catalog.py for the way the
 JSON structure is mapped into a ProviderDescriptor instance.
