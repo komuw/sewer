@@ -202,15 +202,16 @@ class Client:
             )
         return get_acme_endpoints
 
-    def acme_register(self):
-        """
-        RFC8555 has some changes in behavior.
+    ### FIX ME ### this is a kludge to fix Alec's needs until there's time to do the Acme* refactor
 
-        For now,leaving the behavior unchanged except replacing "self.PRIOR_REGISTERED"
-        with "not self.is_new_acct".  But further work is needed - I don't think a
-        409 result is part of the protocol any more, for one thing.
-        """
+    def acme_register(self):
+
         self.logger.info("acme_register%s" % " (is new account)" if self.is_new_acct else "")
+
+        if self.acct_key.kid:
+            self.logger.info("acme_register: key was already registered")
+            return None
+
         if not self.is_new_acct:
             payload = {"onlyReturnExisting": True}
         elif self.contact_email:
@@ -222,27 +223,26 @@ class Client:
             payload = {"termsOfServiceAgreed": True}
 
         url = self.ACME_NEW_ACCOUNT_URL
-        acme_register_response = self.make_signed_acme_request(
+        response = self.make_signed_acme_request(
             url=url, payload=json.dumps(payload), needs_jwk=True
         )
         self.logger.debug(
-            "acme_register_response. status_code={0}. response={1}".format(
-                acme_register_response.status_code, log_response(acme_register_response)
+            "response. status_code={0}. response={1}".format(
+                response.status_code, log_response(response)
             )
         )
 
-        if acme_register_response.status_code not in [201, 200, 409]:
+        if response.status_code not in [201, 200, 409]:
             raise ValueError(
                 "Error while registering: status_code={status_code} response={response}".format(
-                    status_code=acme_register_response.status_code,
-                    response=log_response(acme_register_response),
+                    status_code=response.status_code, response=log_response(response),
                 )
             )
 
-        self.acct_key.set_kid(acme_register_response.headers["Location"])
+        self.acct_key.set_kid(response.headers["Location"])
 
         self.logger.info("acme_register_success")
-        return acme_register_response
+        return response
 
     def apply_for_cert_issuance(self):
         """

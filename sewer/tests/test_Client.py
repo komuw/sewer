@@ -24,15 +24,23 @@ from ..crypto import AcmeKey
 
 LOG_LEVEL = "CRITICAL"
 
-keys_for_ACME = {"acct_key": AcmeKey.create("rsa2048"), "cert_key": AcmeKey.create("rsa2048")}
+### FIX ME ### even with making the keys new each time, some tests manage to re-register!
+# luckily it's working anyway, but it's a good thing most of this will have to be scrapped soon
 
-usual_ACME = {
-    "ACME_REQUEST_TIMEOUT": 1,
-    "ACME_AUTH_STATUS_WAIT_PERIOD": 0,
-    "ACME_DIRECTORY_URL": ACME_DIRECTORY_URL_STAGING,
-    "LOG_LEVEL": LOG_LEVEL,
-}
-usual_ACME.update(keys_for_ACME)
+
+def keys_for_ACME():
+    return {"acct_key": AcmeKey.create("secp256r1"), "cert_key": AcmeKey.create("secp256r1")}
+
+
+def usual_ACME():
+    res = {
+        "ACME_REQUEST_TIMEOUT": 1,
+        "ACME_AUTH_STATUS_WAIT_PERIOD": 0,
+        "ACME_DIRECTORY_URL": ACME_DIRECTORY_URL_STAGING,
+        "LOG_LEVEL": LOG_LEVEL,
+    }
+    res.update(keys_for_ACME())
+    return res
 
 
 class TestClient(TestCase):
@@ -57,7 +65,7 @@ class TestClient(TestCase):
 
             self.provider = test_utils.ExmpleHttpProvider()
             self.client = sewer.client.Client(
-                domain_name=self.domain_name, provider=self.provider, **usual_ACME
+                domain_name=self.domain_name, provider=self.provider, **usual_ACME()
             )
 
     def tearDown(self):
@@ -74,7 +82,7 @@ class TestClient(TestCase):
                     provider=test_utils.ExmpleHttpProvider(),
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                     LOG_LEVEL=LOG_LEVEL,
-                    **keys_for_ACME,
+                    **keys_for_ACME(),
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -243,7 +251,7 @@ class TestClient(TestCase):
                 domain_name=self.domain_name,
                 provider=self.provider,
                 domain_alt_names="domain_alt_names",
-                **usual_ACME,
+                **usual_ACME(),
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -275,7 +283,7 @@ class TestClientForSAN(TestClient):
                 domain_name="exampleSAN.com",
                 dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
-                **usual_ACME,
+                **usual_ACME(),
             )
         super(TestClientForSAN, self).setUp()
 
@@ -305,7 +313,7 @@ class TestClientForWildcard(TestClient):
                 dns_class=self.dns_class,
                 domain_alt_names=self.domain_alt_names,
                 ACME_AUTH_STATUS_MAX_CHECKS=1,
-                **usual_ACME,
+                **usual_ACME(),
             )
         super(TestClientForWildcard, self).setUp()
 
@@ -327,7 +335,7 @@ class TestClientDnsApiCompatibility(TestCase):
 
             self.dns_class = test_utils.ExmpleDnsProvider()
             self.client = sewer.client.Client(
-                domain_name=self.domain_name, dns_class=self.dns_class, **usual_ACME
+                domain_name=self.domain_name, dns_class=self.dns_class, **usual_ACME()
             )
 
     def test_get_get_acme_endpoints_failure_results_in_exception_with(self):
@@ -341,7 +349,7 @@ class TestClientDnsApiCompatibility(TestCase):
                     dns_class=test_utils.ExmpleDnsProvider(),  # NOTE: dns_class used here
                     ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_STAGING,
                     LOG_LEVEL=LOG_LEVEL,
-                    **keys_for_ACME,
+                    **keys_for_ACME(),
                 )
 
             self.assertRaises(ValueError, mock_create_acme_client)
@@ -377,7 +385,7 @@ class TestClientDnsApiCompatibility(TestCase):
                 domain_name=self.domain_name,
                 dns_class=self.dns_class,  # NOTE: dns_class used here
                 domain_alt_names="domain_alt_names",
-                **usual_ACME,
+                **usual_ACME(),
             )
 
         with self.assertRaises(ValueError) as raised_exception:
@@ -392,7 +400,7 @@ class TestClientUnits(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mock_args = {"domain_name": "example.com", "LOG_LEVEL": LOG_LEVEL}
-        self.mock_args.update(keys_for_ACME)
+        self.mock_args.update(keys_for_ACME())
         self.mock_challenges = [{"ident_value": "example.com", "key_auth": "abcdefgh12345678"}]
 
     def mock_sewer(self, provider):
