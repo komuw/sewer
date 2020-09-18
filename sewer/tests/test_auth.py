@@ -46,7 +46,8 @@ class TestAuth01(unittest.TestCase):
     def test07_accepts_log_level(self):
         self.assertTrue(pbj(LOG_LEVEL="INFO"))
 
-    @unittest.skip("current implementation allows both")
+    # current implementation allows both parameters :-(
+    @unittest.expectedFailure
     def test08_rejects_logger_and_log_level(self):
         with self.assertRaises(ValueError):
             pbj(logger=lib.create_logger("", "INFO"), LOG_LEVEL="INFO")

@@ -1,3 +1,5 @@
+import time
+
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
@@ -10,9 +12,24 @@ from cryptography.hazmat.primitives.serialization import (
 )
 from cryptography.hazmat.backends import default_backend, openssl
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from .lib import safe_base64
+from .lib import AcmeError, safe_base64
+
+
+### Exceptions specific to ACME crypto operations
+
+
+class AcmeKeyError(AcmeError):
+    pass
+
+
+class AcmeKeyTypeError(AcmeError):
+    pass
+
+
+class AcmeKidError(AcmeKeyError):
+    pass
 
 
 ### types for things defined here
@@ -27,41 +44,172 @@ from .lib import safe_base64
 PrivateKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey]
 
 
+### low level key type table
+
+
+class KeyDesc:
+    def __init__(
+        self,
+        type_name: str,
+        generate: Callable,
+        gen_arg,
+        pk_type,
+        sign: Callable,
+        sign_kwargs: Dict[str, Any],
+        jwk: Dict[str, Any],
+    ) -> None:
+        self.type_name = type_name
+        self.generate = generate
+        self.gen_arg = gen_arg
+        self.pk_type = pk_type
+        self.sign = sign
+        self.sign_kwargs = sign_kwargs
+        self.jwk = jwk
+
+    def _size(self) -> int:
+        if isinstance(self.gen_arg, int):
+            return self.gen_arg
+        # else gen_arg is ec.SECP###R1
+        return self.gen_arg.key_size
+
+    def match(self, pk: PrivateKeyType) -> bool:
+        if isinstance(pk, self.pk_type) and pk.key_size == self._size():
+            return True
+        return False
+
+
+def rsa_gen(key_size: int) -> PrivateKeyType:
+    return rsa.generate_private_key(65537, key_size, default_backend())
+
+
+def ec_gen(curve) -> PrivateKeyType:
+    return ec.generate_private_key(curve, default_backend())
+
+
+def rsa_sign(pk, message: bytes) -> bytes:
+    "Yes, SHA256 is hardwired.  As of Sep 2020, LE rejects other hashes for RSA"
+
+    return pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
+
+
+def ec_sign(pk, message: bytes, *, hash_type, nbytes: int) -> bytes:
+    # EC sign method returns ASN.1 encoded values for some inane reason
+    r, s = utils.decode_dss_signature(pk.sign(message, ec.ECDSA(hash_type())))
+    return r.to_bytes(nbytes, "big") + s.to_bytes(nbytes, "big")
+
+
+key_table = [
+    KeyDesc(
+        "rsa2048",
+        rsa_gen,
+        2048,
+        rsa.RSAPrivateKey,
+        rsa_sign,
+        {},
+        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
+    ),
+    KeyDesc(
+        "rsa3072",
+        rsa_gen,
+        3072,
+        rsa.RSAPrivateKey,
+        rsa_sign,
+        {},
+        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
+    ),
+    KeyDesc(
+        "rsa4096",
+        rsa_gen,
+        4096,
+        rsa.RSAPrivateKey,
+        rsa_sign,
+        {},
+        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
+    ),
+    KeyDesc(
+        "secp256r1",
+        ec_gen,
+        ec.SECP256R1,
+        ec.EllipticCurvePrivateKey,
+        ec_sign,
+        {"hash_type": hashes.SHA256, "nbytes": 32},
+        {
+            "const": {"kty": "EC", "crv": "P-256"},
+            "attrib": {"x": "x", "y": "y"},
+            "alg": "ES256",
+            "nbytes": 32,
+        },
+    ),
+    KeyDesc(
+        "secp384r1",
+        ec_gen,
+        ec.SECP384R1,
+        ec.EllipticCurvePrivateKey,
+        ec_sign,
+        {"hash_type": hashes.SHA384, "nbytes": 48},
+        {
+            "const": {"kty": "EC", "crv": "P-384"},
+            "attrib": {"x": "x", "y": "y"},
+            "alg": "ES384",
+            "nbytes": 48,
+        },
+    ),
+]
+
+# extract just the names for option choice lists, etc.
+key_type_choices = [kd.type_name for kd in key_table]
+
+
+### AcmeKey, finally!
+
+
 class AcmeKey:
     """
-    AcmeKey is the base class for the actual type-specific classes.  It implements
-    some common methods, usually in terms of class values or methods that only
-    exist in the specific subclasses.
+    AcmeKey is a parameterized wrapper around the private key type that are
+    useful with ACME services.  Key creation, loading and storing, message
+    signing, and generating the key's JWK are all provided.  Only key creation
+    needs to be told the kind or size of key, and other differences in these
+    operations are hidden away.
 
-    NB: these are all wrappers and do NOT include key creation or loading.
-    See new_ACME_key and load_ACME_key factory functions below.
+    See the key_table (or key_type_choices if you just want a list of the
+    valid type names for the create method ( eg., sewer's cli program).
+
+    These are based on what Let's Encrypt's servers accept as of Sep 2020:
+    RSA with SHA256, P-256 with SHA256, and P-384 with SHA384.  LE doubtless
+    accepts many other key sizes than our simple list-based setup provides,
+    but these are the ones sewer has actually tested (which is how we found
+    out that RSA was SHA256 only, and P-521 wasn't available at all).  Of
+    course this can change, which is much of the reason for the table-driven
+    approach used here.
     """
 
-    def __init__(self, pk: PrivateKeyType) -> None:
+    def __init__(self, pk: PrivateKeyType, key_desc: KeyDesc) -> None:
         self.pk = pk
-        # subclass dependent, assigned there
-        self.private_format: Any
-        self.jwk_const: Dict[str, str]
-        self.jwk_attr: Dict[str, str]
-        self.jws_alg: str
-        # shared fields
-        self.kid: Optional[str] = None
+        self.key_desc = key_desc
+        #
         self._jwk: Optional[Dict[str, str]] = None
 
-    @staticmethod
-    def create(key_type: str) -> "AcmeKey":
+    ### Key Constructors
+
+    @classmethod
+    def create(cls, key_type: str) -> "AcmeKey":
         """
         Factory method to create a new key of key_type, returned as an AcmeKey.
         """
 
-        if key_type not in key_type_map:
-            raise ValueError("AcmeKey.create: unrecognized key_type: %s" % key_type)
-        Cls, arg = key_type_map[key_type]
+        kdl = [kd for kd in key_table if kd.type_name == key_type]
+        if not kdl:
+            raise AcmeKeyTypeError("Unknown key_type: %s" % key_type)
+        if len(kdl) != 1:
+            raise AcmeKeyError(
+                "Internal error: key_type %s matches %s entries!" % (key_type, len(kdl))
+            )
+        kd = kdl[0]
 
-        return Cls(Cls.create_pk(arg))
+        return cls(kd.generate(kd.gen_arg), kd)
 
-    @staticmethod
-    def from_bytes(pem_data: bytes) -> "AcmeKey":
+    @classmethod
+    def from_pem(cls, pem_data: bytes) -> "AcmeKey":
         """
         load a key from the PEM-format bytes, return an AcmeKey
 
@@ -69,158 +217,116 @@ class AcmeKey:
         """
 
         pk = load_pem_private_key(pem_data, None, default_backend())
+        kdl = [kd for kd in key_table if kd.match(pk)]
+        if not kdl:
+            raise AcmeKeyTypeError("Unknown pk type: %s", type(pk))
+        if len(kdl) != 1:
+            raise AcmeKeyError(
+                "Internal error: key of type %s matches %s entries!" % (type(pk), len(kdl))
+            )
+        kd = kdl[0]
 
-        if isinstance(pk, rsa.RSAPrivateKey):
-            return AcmeRsaKey(pk)
-        if isinstance(pk, ec.EllipticCurvePrivateKey):
-            return AcmeEcKey(pk)
+        return cls(pk, kd)
 
-        raise ValueError("AcmeKey.from_bytes: unrecognized key type: %s" % pk)
-
-    @staticmethod
-    def from_file(filename: str) -> "AcmeKey":
+    @classmethod
+    def read_pem(cls, filename: str) -> "AcmeKey":
         "convenience method to load a PEM-format key; returns the AcmeKey"
 
         with open(filename, "rb") as f:
-            return AcmeKey.from_bytes(f.read())
+            return cls.from_pem(f.read())
 
-    def set_kid(self, kid: str) -> None:
-        """
-        The kid is received when registering the key with the ACME service
-        """
-        self.kid = kid
+    ### shared methods
 
-    def private_bytes(self) -> bytes:
-        """
-        return pk's serialized (PEM) form
-
-        USES ConcreteClass.private_format
-        """
+    def to_pem(self) -> bytes:
+        "return private key's serialized (PEM) form"
 
         pem_data = self.pk.private_bytes(
-            encoding=Encoding.PEM, format=self.private_format, encryption_algorithm=NoEncryption()
+            encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
         )
         return pem_data
 
-    def to_file(self, filename: str) -> None:
+    def write_pem(self, filename: str) -> None:
         "convenience method to write out the key in PEM form"
 
         with open(filename, "wb") as f:
-            f.write(self.private_bytes())
-
-    ### TODO ### store & load file format with kid, PK, timestamp registered, ?
+            f.write(self.to_pem())
 
     def sign_message(self, message: bytes) -> bytes:
-        raise NotImplementedError("subclass must implement sign_message")
+        return self.key_desc.sign(self.pk, message, **self.key_desc.sign_kwargs)
+
+
+### An ACME account is identified by a key.  When registered there is a Key ID as well.
+
+
+class AcmeAccount(AcmeKey):
+    """
+    Only an account key needs (or has) a Key ID associated with it.
+    """
+
+    def __init__(self, pk: PrivateKeyType, key_desc: KeyDesc) -> None:
+        super().__init__(pk, key_desc)
+        self.__kid: Optional[str] = None
+        self.__timestamp: Optional[int] = None
+        self.__jwk: Optional[Dict[str, str]] = None
+
+    ### kid's descriptor methods
+
+    def get_kid(self) -> str:
+        if self.__kid is None:
+            raise AcmeKidError("Attempt to access a Key ID that hasn't been set.  Register key?")
+        return self.__kid
+
+    def set_kid(self, kid: str, timestamp: float = None) -> None:
+        "The kid can be set only once, but we overlook exact duplicate set calls"
+
+        if self.__kid and self.__kid != kid:
+            raise AcmeKidError("Cannot alter a key's kid")
+        self.__kid = kid
+        self.__timestamp = timestamp if timestamp is not None else time.time()
+
+    def del_kid(self) -> None:
+        "Doesn't actually del the hidden attribute, just resets the value to None (empty)"
+        self.__kid = None
+
+    kid = property(get_kid, set_kid, del_kid)
+
+    def has_kid(self) -> bool:
+        "need a non-exploding test for the presence of a Key ID"
+        return not self.__kid is None
+
+    ### extend AcmeKey with new methods
 
     def jwk(self) -> Dict[str, str]:
         """
         Returns the key's JWK as a dictionary
 
         CACHES result in _jwk
-
-        USES ConcreteClass.{jwk_const, jwk_attr}
         """
 
-        if not self._jwk:
+        if not self.__jwk:
             pubnums = self.pk.public_key().public_numbers()
-            jwk = dict(self.jwk_const)  # pylint: disable=E1101
-            for name, attr_name in self.jwk_attr.items():  # pylint: disable=E1101
+            jwk = dict(self.key_desc.jwk["const"])
+            for name, attr_name in self.key_desc.jwk["attrib"].items():
                 val = getattr(pubnums, attr_name)
-                numbytes = getattr(self, "jwk_num_bytes", (val.bit_length() + 7) // 8)
+                numbytes = self.key_desc.jwk["nbytes"]
+                if numbytes == 0:
+                    numbytes = (val.bit_length() + 7) // 8
                 jwk[name] = safe_base64(val.to_bytes(numbytes, "big"))
-            self._jwk = jwk
-        return self._jwk
+            self.__jwk = jwk
+        return self.__jwk
 
-
-### Concrete AcmeXxxKey classes
-
-# NB: when adding a new key type, or extending one, remember to update key_type_map
-# to match (below)
-
-
-class AcmeRsaKey(AcmeKey):
-    def __init__(self, pk: PrivateKeyType) -> None:
-        super().__init__(pk)
-        self.private_format = PrivateFormat.PKCS8
-        self.jwk_const = {"kty": "RSA"}
-        self.jwk_attr = {"e": "e", "n": "n"}
-        self.jws_alg = "RS256"
-
-    @staticmethod
-    def create_pk(key_size: int) -> PrivateKeyType:
-        return rsa.generate_private_key(65537, key_size, default_backend())
-
-    def sign_message(self, message: bytes) -> bytes:
-        """
-        Yes, SHA256 is hardwired.  As of Sep 2020, LE only accepts that hash
-        for RSA keys: "expected one of RS256, ES256, ES384 or ES512".
-        """
-
-        signature = self.pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
-        return signature
-
-
-class EcCurve:
-    "data class to hold EX info that's not readily inferred from the secp### tag"
-
-    def __init__(self, curve: Any, alg: str, hash_type: Any, nbytes: int) -> None:
-        self.curve = curve
-        self.alg = alg
-        self.hash_type = hash_type
-        self.nbytes = nbytes
-
-
-known_curves: Dict[int, EcCurve] = {
-    256: EcCurve(ec.SECP256R1, "ES256", hashes.SHA256, 32),
-    384: EcCurve(ec.SECP384R1, "ES384", hashes.SHA384, 48),
+    ### TODO ### store & load file format with kid, timestamp and pk.
     #
-    # I thought LE accepted P-521 for account keys, but while chasing an intermitent bug
-    # 'detail': 'ECDSA curve P-521 not allowed'
+    # The PEM RFC says that at least most implementations accept prefixed
+    # attributes which would give us something like
     #
-    #    521: EcCurve(ec.SECP521R1, "ES512", hashes.SHA512, 66),
-}
-
-
-class AcmeEcKey(AcmeKey):
-    def __init__(self, pk: PrivateKeyType) -> None:
-        key_size = pk.curve.key_size
-        info = known_curves[key_size]
-        super().__init__(pk)
-        self.private_format = PrivateFormat.PKCS8
-        self.jwk_const = {"kty": "EC", "crv": "P-%s" % key_size}
-        self.jwk_attr = {"x": "x", "y": "y"}
-        self.jws_alg = info.alg
-
-        self.jkw_num_bytes = info.nbytes
-
-    @staticmethod
-    def create_pk(key_size: int) -> PrivateKeyType:
-        info = known_curves[key_size]
-        return ec.generate_private_key(info.curve, default_backend())
-
-    def sign_message(self, message: bytes) -> bytes:
-        info = known_curves[self.pk.curve.key_size]
-        # EC.sign returns ASN.1 encoded values for some inane reason
-        r, s = utils.decode_dss_signature(self.pk.sign(message, ec.ECDSA(info.hash_type())))
-        signature = r.to_bytes(info.nbytes, "big") + s.to_bytes(info.nbytes, "big")
-
-        return signature
-
-
-# key_type_map
-# map known key type names to (concrete_class, key_size)
-
-key_type_map: Dict[str, Tuple[Any, int]] = {
-    "rsa2048": (AcmeRsaKey, 2048),
-    "rsa3072": (AcmeRsaKey, 3072),
-    "rsa4096": (AcmeRsaKey, 4096),
-    "secp256r1": (AcmeEcKey, 256),
-    "secp384r1": (AcmeEcKey, 384),
-}
-
-# extract just the names for option choice lists, etc.
-key_type_choices = list(key_type_map)
+    # KID: https://acme-v02.api.letsencrypt.org/acme/account/1a2b3c4d5e6f7g8h9i0j
+    # Timestamp: 1600452956.446775
+    # -----BEGIN PRIVATE KEY-----
+    #
+    # Both openssl pkey and the cryptography library can load a PEM decorated
+    # like that.  Only possible question is whether the '\n' line ending needs
+    # to be adjusted for non-Unix systems.
 
 
 ### We also need to generate Certificate Signing Requests

@@ -6,8 +6,8 @@ import requests
 
 from .auth import ChalListType, ErrataListType, ProviderBase
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-from .crypto import AcmeCsr, AcmeKey
-from .lib import create_logger, log_response, safe_base64, sewer_meta
+from .crypto import AcmeCsr, AcmeKey, AcmeAccount
+from .lib import create_logger, log_response, safe_base64, sewer_meta, AcmeRegistrationError
 
 
 class Client:
@@ -19,13 +19,12 @@ class Client:
         self,
         *,
         domain_name: str,
-        acct_key: AcmeKey,
+        account: AcmeAccount,
         cert_key: AcmeKey,
         is_new_acct=False,
         dns_class: ProviderBase = None,
         domain_alt_names: Sequence[str] = None,
         contact_email: str = None,
-        digest: str = "sha256",
         provider: ProviderBase = None,
         ACME_REQUEST_TIMEOUT: int = 7,
         ACME_AUTH_STATUS_WAIT_PERIOD: int = 8,
@@ -57,8 +56,11 @@ class Client:
                 "Client was passed both the DEPRECATED dns_class argument and provider."
             )
 
-        if not isinstance(acct_key, AcmeKey) or not isinstance(cert_key, AcmeKey):
-            raise TypeError("Arguments acct_key and cert_key MUST be instances of crypto.AcmeKey.")
+        if not isinstance(account, AcmeAccount):
+            raise TypeError("The account argument must be an AcmeAccount.")
+
+        if not isinstance(cert_key, AcmeKey):
+            raise TypeError("The argument cert_key must be an AcmeKey.")
 
         ### setup Client's global variables
 
@@ -74,7 +76,6 @@ class Client:
             domain_alt_names = []
         self.domain_alt_names = list(set(domain_alt_names))
         self.contact_email = contact_email
-        self.digest = digest
         self.ACME_REQUEST_TIMEOUT = ACME_REQUEST_TIMEOUT
         self.ACME_AUTH_STATUS_WAIT_PERIOD = ACME_AUTH_STATUS_WAIT_PERIOD
         self.ACME_AUTH_STATUS_MAX_CHECKS = ACME_AUTH_STATUS_MAX_CHECKS
@@ -82,7 +83,7 @@ class Client:
         self.ACME_VERIFY = ACME_VERIFY
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
-        self.acct_key = acct_key
+        self.account = account
         self.cert_key = cert_key
         self.is_new_acct = is_new_acct
 
@@ -208,7 +209,7 @@ class Client:
 
         self.logger.info("acme_register%s" % " (is new account)" if self.is_new_acct else "")
 
-        if self.acct_key.kid:
+        if self.account.has_kid():
             self.logger.info("acme_register: key was already registered")
             return None
 
@@ -233,13 +234,13 @@ class Client:
         )
 
         if response.status_code not in [201, 200, 409]:
-            raise ValueError(
+            raise AcmeRegistrationError(
                 "Error while registering: status_code={status_code} response={response}".format(
                     status_code=response.status_code, response=log_response(response),
                 )
             )
 
-        self.acct_key.set_kid(response.headers["Location"])
+        self.account.set_kid(response.headers["Location"])
 
         self.logger.info("acme_register_success")
         return response
@@ -347,9 +348,7 @@ class Client:
 
     def get_keyauthorization(self, token):
         self.logger.debug("get_keyauthorization")
-        acme_header_jwk_json = json.dumps(
-            self.acct_key.jwk(), sort_keys=True, separators=(",", ":")
-        )
+        acme_header_jwk_json = json.dumps(self.account.jwk(), sort_keys=True, separators=(",", ":"))
         acme_thumbprint = safe_base64(sha256(acme_header_jwk_json.encode("utf8")).digest())
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
@@ -370,20 +369,17 @@ class Client:
         The server MUST provide information about its retry state to the
         client via the "errors" field in the challenge and the Retry-After
         """
-        self.logger.info("check_authorization_status")
+        self.logger.debug("check_authorization_status")
         desired_status = desired_status or ["pending", "valid"]
         number_of_checks = 0
         while True:
             time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
-            check_authorization_status_response = self.make_signed_acme_request(
-                authorization_url, payload=""
-            )
-            authorization_status = check_authorization_status_response.json()["status"]
+            response = self.make_signed_acme_request(authorization_url, payload="")
+            authorization_status = response.json()["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
-                "check_authorization_status_response. status_code={0}. response={1}".format(
-                    check_authorization_status_response.status_code,
-                    log_response(check_authorization_status_response),
+                "response. status_code={0}. response={1}".format(
+                    response.status_code, log_response(response),
                 )
             )
             if authorization_status in desired_status:
@@ -397,8 +393,8 @@ class Client:
                     )
                 )
 
-        self.logger.info("check_authorization_status_success")
-        return check_authorization_status_response
+        self.logger.debug("check_authorization_status_success")
+        return response
 
     def respond_to_challenge(self, acme_keyauthorization, challenge_url):
         """
@@ -508,12 +504,12 @@ class Client:
         - "url"
         """
         self.logger.debug("get_acme_header")
-        header = {"alg": self.acct_key.jws_alg, "nonce": self.get_nonce(), "url": url}
+        header = {"alg": self.account.key_desc.jwk["alg"], "nonce": self.get_nonce(), "url": url}
 
         if needs_jwk:
-            header["jwk"] = self.acct_key.jwk()
+            header["jwk"] = self.account.jwk()
         else:
-            header["kid"] = self.acct_key.kid
+            header["kid"] = self.account.kid
 
         return header
 
@@ -526,7 +522,7 @@ class Client:
         message = ("%s.%s" % (protected64, payload64)).encode("utf-8")
         #        signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
         #        signature64 = safe_base64(signature)  # str
-        signature64 = safe_base64(self.acct_key.sign_message(message))
+        signature64 = safe_base64(self.account.sign_message(message))
         data = json.dumps(
             {"protected": protected64, "payload": payload64, "signature": signature64}
         )

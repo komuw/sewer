@@ -5,6 +5,20 @@ from typing import Any, Union
 LoggerType = logging.Logger
 
 
+class SewerError(Exception):
+    "base class for sewer-related exceptions"
+    pass
+
+
+class AcmeError(SewerError):
+    "base class [and, inevitably, catch-all] for ACME related errors"
+    pass
+
+
+class AcmeRegistrationError(AcmeError):
+    pass
+
+
 ### FIX ME ### can be more specific about response arg's type... somehow
 
 

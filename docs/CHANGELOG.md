@@ -7,18 +7,19 @@ most recent version is listed first.
 
 CLI changes:
 
-- `--account_key` & `--certificate_key` supported only for compatibility:
-  use `--acct_key` and `--cert_key` to avoid future deprecation.
+- `--acct_key` & `--cert_key` should be used to designate the file that
+  holds the keys to be used (rather than having new ones generated). 
+  `--account_key` & `--certificate_key` are still accepted as synonyms.
 
 - add `--acct_key_type` & `--cert_key_type` to allow choice of RSA or EC
-  keys and sizes.
+  keys and key sizes when sewer is generating them for you.
 
 - changed default for generated keys to 3072 bit RSA (had been 2048 bit)
 
 - add `--is_new_key` to allow for first-time registration of your own
   account key (using `--acct_key`) generated outside of sewer.
 
-Internal changes:
+Internal changes for library clients:
 
 - Client methods cert() and renew() are deprecated; just call
   get_certificate() directly instead.
@@ -27,9 +28,10 @@ Internal changes:
 
   - AcmeKey & AcmeCsr in crypto.py; uses only cryptography library
 
-  - dropped `account_key` and `certificate_key` optional arguments
+  - dropped `account_key` and `certificate_key` optional arguments to Client
 
-  - added `acct_key` and `cert_key` REQUIRED arguments taking AcmeKey objects
+  - added `acct_key` and `cert_key` REQUIRED arguments to Client taking
+    AcmeKey objects
 
   - dropped `bits` argument because Client no longer generates keys!
 

@@ -40,11 +40,11 @@ class Test_AcmeKey(unittest.TestCase):
         # sign_message
         self.assertTrue(len(loaded_key.sign_message(b"Taketh uth to thine leaderth")))
 
-    def test11_rsa_privbytes_sign(self):
+    def test11_rsa_kitchen_sink(self):
         for kt in self.rsa_key_types:
             self.fromfile_privbytes_frombytes_sign_key(kt)
 
-    def test11_secp_privbytes_sign(self):
+    def test12_secp_kitchen_sink(self):
         for kt in self.secp_key_types:
             self.fromfile_privbytes_frombytes_sign_key(kt)
 

@@ -12,15 +12,16 @@
 # scope.  So reminiscent of the bad side of ol' lint.
 
 
-from unittest import mock
+from unittest import expectedFailure, mock, TestCase
+
 import cryptography
-from unittest import TestCase
 
 import sewer.client
-from sewer.config import ACME_DIRECTORY_URL_STAGING
 
+from ..config import ACME_DIRECTORY_URL_STAGING
+from ..crypto import AcmeKey, AcmeAccount
+from ..lib import AcmeRegistrationError
 from . import test_utils
-from ..crypto import AcmeKey
 
 LOG_LEVEL = "CRITICAL"
 
@@ -28,18 +29,22 @@ LOG_LEVEL = "CRITICAL"
 # luckily it's working anyway, but it's a good thing most of this will have to be scrapped soon
 
 
-def keys_for_ACME():
-    return {"acct_key": AcmeKey.create("secp256r1"), "cert_key": AcmeKey.create("secp256r1")}
+def keys_for_ACME(no_kid=False):
+    acct = AcmeAccount.create("secp256r1")
+    ck = AcmeKey.create("secp256r1")
+    if not no_kid:
+        acct.kid = "https://imagine.acct.kid/here"
+    return {"account": acct, "cert_key": ck}
 
 
-def usual_ACME():
+def usual_ACME(no_kid=False):
     res = {
         "ACME_REQUEST_TIMEOUT": 1,
         "ACME_AUTH_STATUS_WAIT_PERIOD": 0,
         "ACME_DIRECTORY_URL": ACME_DIRECTORY_URL_STAGING,
         "LOG_LEVEL": LOG_LEVEL,
     }
-    res.update(keys_for_ACME())
+    res.update(keys_for_ACME(no_kid))
     return res
 
 
@@ -107,17 +112,15 @@ class TestClient(TestCase):
             self.assertTrue(mock_acme_registration.called)
 
     def test_acme_registration_failure_doesnt_result_in_certificate(self):
+        client = sewer.client.Client(
+            domain_name=self.domain_name, provider=self.provider, **usual_ACME(no_kid=True)
+        )
         with mock.patch(
             "requests.post", return_value=test_utils.MockResponse(status_code=400)
         ), mock.patch("requests.get", return_value=test_utils.MockResponse(status_code=400)):
 
-            def mock_get_certificate():
-                self.client.cert()
-
-            self.assertRaises(ValueError, mock_get_certificate)
-            with self.assertRaises(ValueError) as raised_exception:
-                mock_get_certificate()
-            self.assertIn("Error while registering", str(raised_exception.exception))
+            with self.assertRaises(AcmeRegistrationError):
+                client.get_certificate()
 
     def test_get_identifier_authorization_is_called(self):
         gia_return_value = {
@@ -420,8 +423,8 @@ class TestClientUnits(TestCase):
         self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 
     def test03_prop_timeout_timeout(self):
-        # with default [1,2,4,8] sleep times and delay of 5, needs >4 failures to hit exception
-        p = test_utils.ExmpleDNS(prop_timeout=5, fail_prop_count=5)
+        # with default [1,2,4,8] sleep times and timeout of 2, needs 3 failures to timeout
+        p = test_utils.ExmpleDNS(prop_timeout=2, fail_prop_count=3)
         with self.assertRaises(RuntimeError):
             self.mock_sewer(provider=p).propagation_delay(self.mock_challenges)
 

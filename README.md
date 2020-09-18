@@ -1,17 +1,24 @@
 ## Sewer
 
-**Cryptography rework branch.**
+**pre-0.8.4**
 
 The story so far:
-- the mixed openssl/cryptography libraries using code has all been ripped
-out of client.py
+- the mixed openssl/cryptography library based code has all been ripped
+  out of client.py
+
 - AcmeKey and AcmeCsr, in crypto.py, replace and extend (ECDSA keys) old code
-- Client NO LONGER GENERATES KEYS (account or certificate)
+
+- Client NO LONGER GENERATES KEYS (account or certificate) (CLI command
+  does)
+
 - Client argument changes:
   + acct_key:AcmeKey in place of account_key: str
   + cert_key:AcmeKey in plaxe of certificate_key: str
   + bits: int removed
+  + digest argument dropped (AcmeKey knows which to use based on key type &
+    size, and LE doesn't seem to accept any others anyway)
   + is_new_account:bool [False] if key requires registration
+
 - CLI options have changed a bit, mostly to add new features (ECDSA keys!)
   + acct_key/cert_key added, preferred over account_key/certificate_key
   + acct_key_type/cert_key_type allow selection of RSA or EC key generation

@@ -3,7 +3,7 @@ import argparse, os
 from . import client, config, lib
 
 from .catalog import ProviderCatalog
-from .crypto import AcmeKey, key_type_choices
+from .crypto import AcmeKey, AcmeAccount, key_type_choices
 
 
 DEFAULT_KEY_TYPE = "rsa3072"
@@ -360,14 +360,14 @@ def main():
         raise OSError("The dir '{0}' is not writable".format(out_dir))
 
     if args.acct_key_file:
-        acct_key = AcmeKey.from_bytes(args.acct_key_file.read())
+        account = AcmeAccount.from_pem(args.acct_key_file.read())
         is_new_acct = args.is_new_acct
     else:
-        acct_key = AcmeKey.create(args.acct_key_type)
+        account = AcmeAccount.create(args.acct_key_type)
         is_new_acct = True
 
     if args.cert_key_file:
-        cert_key = AcmeKey.from_bytes(args.cert_key.read())
+        cert_key = AcmeKey.from_pem(args.cert_key.read())
     else:
         cert_key = AcmeKey.create(args.cert_key_type)
 
@@ -388,7 +388,7 @@ def main():
         domain_name=domain,
         domain_alt_names=alt_domains,
         contact_email=email,
-        acct_key=acct_key,
+        account=account,
         is_new_acct=is_new_acct,
         cert_key=cert_key,
         ACME_DIRECTORY_URL=ACME_DIRECTORY_URL,
@@ -402,7 +402,7 @@ def main():
     crt_key_file_path = os.path.join(out_dir, "{0}.key".format(file_name))
 
     # write out account_key in out_dir directory
-    acct_key.to_file(account_key_file_path)
+    account.write_pem(account_key_file_path)
     logger.info("account key succesfully written to {0}.".format(account_key_file_path))
 
     certificate = acme_client.get_certificate()
@@ -412,5 +412,5 @@ def main():
         certificate_file.write(certificate)
     logger.info("certificate succesfully written to {0}.".format(crt_file_path))
 
-    cert_key.to_file(crt_key_file_path)
+    cert_key.write_pem(crt_key_file_path)
     logger.info("certificate key succesfully written to {0}.".format(crt_key_file_path))

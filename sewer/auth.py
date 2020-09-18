@@ -1,5 +1,6 @@
-from .lib import create_logger, LoggerType
 from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
+
+from .lib import create_logger, LoggerType
 
 ChalItemType = Dict[str, str]
 ChalListType = Sequence[ChalItemType]
