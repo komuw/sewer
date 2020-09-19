@@ -1,7 +1,6 @@
-## `sewer` changelog:
-most recent version is listed first.   
+# `sewer` changelog:
 
-## **version:** 0.8.4 [unreleased]
+## **version:** 0.8.4
 
 - add support for ECDSA keys
 
@@ -24,16 +23,26 @@ Internal changes for library clients:
 - Client methods cert() and renew() are deprecated; just call
   get_certificate() directly instead.
 
+- Client **no longer generates keys**.  (see below)
+
 - crytographic refactoring
 
-  - AcmeKey & AcmeCsr in crypto.py; uses only cryptography library
+  - AcmeKey, AcmeAccount & AcmeCsr in crypto.py; uses only cryptography library
+
+- Client interface changes due to crypto refactoring
 
   - dropped `account_key` and `certificate_key` optional arguments to Client
 
   - added `acct_key` and `cert_key` REQUIRED arguments to Client taking
-    AcmeKey objects
+    AcmeAccount and AcmeKey objects, respectively.
+
+  - add `is_new_acct` argument to force registration of the supplied account
+    key
 
   - dropped `bits` argument because Client no longer generates keys!
+
+  - dropped `digest` argument since there are currently no alternate digest
+    methods for the different key types.  (was this ever used?)
 
 ## **version:** 0.8.3
 
