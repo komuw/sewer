@@ -28,3 +28,4 @@ Contributors
 - [alec T](https://github.com/AlecTroemel)
 - [Don S](https://github.com/donspaulding)
 - [Julien Demoor](https://github.com/jdkx)
+- [@tkalus](https://github.com/tkalus)
