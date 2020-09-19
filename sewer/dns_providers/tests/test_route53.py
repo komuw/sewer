@@ -78,6 +78,18 @@ class TestRoute53(TestCase):
         )
 
     @mock.patch("sewer.dns_providers.route53.boto3.client")
+    def test_user_given_client(self, mock_client):
+        passed_client = mock.MagicMock()
+        dns_class = Route53Dns(client=passed_client)
+        mock_client.assert_not_called()
+        self.assertEqual(passed_client, dns_class.r53)
+
+    @mock.patch("sewer.dns_providers.route53.boto3.client")
+    def test_user_given_creds_and_client(self, mock_client):
+        with self.assertRaises(RuntimeError):
+            Route53Dns(access_key_id="mock-key", client=mock.MagicMock())
+
+    @mock.patch("sewer.dns_providers.route53.boto3.client")
     def test_user_not_given_credential(self, mock_client):
         dns_class = Route53Dns()
         mock_client.assert_called_once_with("route53", config=dns_class.aws_config)
