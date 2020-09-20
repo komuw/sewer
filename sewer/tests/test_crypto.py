@@ -19,7 +19,7 @@ class Test_AcmeKey(unittest.TestCase):
         """
 
         type_name, key_size = key_type
-        filename = "test/%s.pem" % type_name
+        filename = "tests/data/%s.pem" % type_name
 
         # read_pem
         loaded_key = AcmeKey.read_pem(filename)

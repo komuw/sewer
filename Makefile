@@ -61,26 +61,47 @@ uploadprod_tag:
 # 1. python -m unittest sewer.tests.test_Client.TestClient.test_something
 # 2. python -m unittest discover -k test_find_dns_zone_id
 
-.PHONY: test testdata rsatestkeys secptestkeys
+TDATA = tests/data
 
-test:
-	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
-	@printf "\n coverage erase::\n" && ${coverage} erase
-	@printf "\n coverage run::\n" && ${coverage} run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*" -m unittest discover
-	@printf "\n coverage report::\n" && ${coverage} report --show-missing --fail-under=85
-	@printf "\n run black::\n" && ${black} --line-length=100 --target-version py35 .
-	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+.PHONY: clean coverage format lint
 
+test: testdata coverage format lint
 
 testdata: rsatestkeys secptestkeys
 
-rsatestkeys:
-	openssl genpkey -out test/rsa2048.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
-	openssl genpkey -out test/rsa3072.pem -algorithm RSA -pkeyopt rsa_keygen_bits:3072
-	openssl genpkey -out test/rsa4096.pem -algorithm RSA -pkeyopt rsa_keygen_bits:4096
+coverage: clean
+	@printf "\n coverage erase::\n" && ${coverage} erase
+	@printf "\n coverage run::\n" && ${coverage} run 
+	@printf "\n coverage report::\n" && ${coverage} report --show-missing --fail-under=85
 
-secptestkeys:
-	openssl genpkey -out test/secp256r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-256
-	openssl genpkey -out test/secp384r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-384
+clean:
+	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
+
+format:
+	@printf "\n run black::\n" && ${black} --line-length=100 --target-version py35 .
+
+lint:
+	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+
+rsatestkeys: ${TDATA}/rsa2048.pem ${TDATA}/rsa3072.pem ${TDATA}/rsa4096.pem
+
+${TDATA}/rsa2048.pem:
+	openssl genpkey -out ${TDATA}/rsa2048.pem -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+
+${TDATA}/rsa3072.pem:
+	openssl genpkey -out ${TDATA}/rsa3072.pem -algorithm RSA -pkeyopt rsa_keygen_bits:3072
+
+${TDATA}/rsa4096.pem:
+	openssl genpkey -out ${TDATA}/rsa4096.pem -algorithm RSA -pkeyopt rsa_keygen_bits:4096
+
+secptestkeys: ${TDATA}/secp256r1.pem ${TDATA}/secp384r1.pem
+
+${TDATA}/secp256r1.pem:
+	openssl genpkey -out ${TDATA}/secp256r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-256
+
+${TDATA}/secp384r1.pem:
+	openssl genpkey -out ${TDATA}/secp384r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-384
+
 # not actually useful with LE at this time
-#	openssl genpkey -out test/secp521r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-521
+${TDATA}/secp521r1.pem:
+	openssl genpkey -out ${TDATA}/secp521r1.pem -algorithm EC -pkeyopt ec_paramgen_curve:P-521

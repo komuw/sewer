@@ -28,16 +28,15 @@ jobs:
       - run:
           name: run tests
           command: |
-            mkdir test
             make testdata
             find . -type f -name *.pyc -delete | echo
             coverage erase
-            coverage run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover && bash <(curl -s https://codecov.io/bash)
-
+            # coverage run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover && bash <(curl -s https://codecov.io/bash)
+            coverage run && ln -s tests/coverage .coverage && bash <(curl -s https://codecov.io/bash)
       - run:
           name: run tests reports
           command: |      
-            coverage report --show-missing --fail-under=85
+            coverage report --fail-under=85
 
       - run:
           name: run static analyzers

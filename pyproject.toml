@@ -1,0 +1,20 @@
+[tool.coverage.run]
+command_line = "-m unittest discover"
+source = ["sewer"]
+omit = [
+    "*test*",
+    "*__init__.py"
+]
+data_file = "tests/coverage"
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+omit = [
+    "*__main__.py",
+    "*acme.py",
+    "*cli.py"
+]
+
+[tool.coverage.html]
+directory = "tests/data/htmlcov"
