@@ -266,7 +266,7 @@ class AcmeAccount(AcmeKey):
     def __init__(self, pk: PrivateKeyType, key_desc: KeyDesc) -> None:
         super().__init__(pk, key_desc)
         self.__kid: Optional[str] = None
-        self.__timestamp: Optional[int] = None
+        self.__timestamp: Optional[float] = None
         self.__jwk: Optional[Dict[str, str]] = None
 
     ### kid's descriptor methods
