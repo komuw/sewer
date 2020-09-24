@@ -1,7 +1,5 @@
 ## Sewer
 
-**0.8.4-beta**
-
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
@@ -10,7 +8,7 @@
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- The stable release is [0.8.3](https://komuw.github.io/sewer/notes/0.8.3-notes).
+- The stable release is [0.8.4](https://komuw.github.io/sewer/notes/0.8.4-notes).
 - More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
 PYTHON compatibility: 3.5 is nominally still supported, and with assistance

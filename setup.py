@@ -50,8 +50,8 @@ setup(
     install_requires=["requests", "cryptography"],
     extras_require=dict(
         provider_deps_map,
-        dev=["coverage", "twine", "wheel"],
-        test=["pylint==2.3.1", "black==19.10b0"],
+        dev=["twine", "wheel"],
+        test=["coverage>=5.0", "pytest>=6.0", "pylint==2.3.1", "black==19.10b0"],
         alldns=all_deps_of_all_providers,
     ),
     # data files to be placed in project directory, not zip safe but zips suck anyway

@@ -28,27 +28,21 @@ foo:
 
 
 # upload to testpypi
-upload: upload_only
+upload: build
+	@${twine} upload dist/* -r testpypi
 	@${pip} install -U -i https://testpypi.python.org/pypi sewer
 
-upload_only:
+build:
 	@rm -rf build
 	@rm -rf dist
 	@rm -rf sewer.egg-info
 	@${python} setup.py sdist
 	@${python} setup.py bdist_wheel
-	@${twine} upload dist/* -r testpypi
 
-
-uploadprod: uploadprod_only uploadprod_tag
+uploadprod: build uploadprod_only uploadprod_tag
 	@${pip} install -U sewer
 
 uploadprod_only:
-	@rm -rf build
-	@rm -rf dist
-	@sudo rm -rf sewer.egg-info
-	@${python} setup.py sdist
-	@${python} setup.py bdist_wheel
 	@${twine} upload dist/*
 
 uploadprod_tag:
