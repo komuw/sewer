@@ -72,7 +72,7 @@ clean:
 	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
 
 format:
-	@printf "\n run black::\n" && ${black} --line-length=100 --target-version py35 .
+	@printf "\n run black::\n" && ${black} .
 
 lint:
 	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/

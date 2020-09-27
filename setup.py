@@ -66,5 +66,8 @@ setup(
     #     ],
     # },
     entry_points={"console_scripts": ["sewer=sewer.cli:main", "sewer-cli=sewer.cli:main"]},
-    **meta,
+    ### CANNOT FIX ### black sometimes ignores explicit version and adds the invalid comma anyway
+    # fmt: off
+    **meta
+    # fmt: on
 )
