@@ -34,13 +34,9 @@ class AcmeKidError(AcmeKeyError):
 
 ### types for things defined here
 
-### FIX ME ### what can we use for XxxKeyType?  [[ not vital, just tightens up typing ]]
+### FIX ME ### is there any way to eliminate the repetition here?  cryptography classes...
 
-# RsaKeyType = openssl.rsa._RSAPrivateKey
-# EcKeyType = openssl.ec._EllipticCurvePrivateKey
-# AcmeKeyType = Union[RsaKeyType, EcKeyType]
-
-# and why does this [seem] to work?
+private_key_types = (openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey)
 PrivateKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey]
 
 
@@ -160,6 +156,29 @@ key_table = [
 key_type_choices = [kd.type_name for kd in key_table]
 
 
+def resolve_key_desc(key: Union[str, PrivateKeyType]) -> KeyDesc:
+    """
+    Given a private key or a registered key type name, find the unique matching
+    descriptor and return it.
+
+    Raises exceptions if no match is found or if more than one matches (internal
+    table error!).
+    """
+
+    if isinstance(key, private_key_types):
+        kdl = [kd for kd in key_table if kd.match(key)]
+        kt = str(type(key))
+    else:
+        kdl = [kd for kd in key_table if kd.type_name == key]
+        kt = key
+    if not kdl:
+        raise AcmeKeyTypeError("Unknown key type: %s", kt)
+    if len(kdl) != 1:
+        raise AcmeKeyError("Internal error: key type %s matches %s entries!" % (kt, len(kdl)))
+    return kdl[0]
+
+
+
 ### AcmeKey, finally!
 
 
@@ -192,20 +211,12 @@ class AcmeKey:
     ### Key Constructors
 
     @classmethod
-    def create(cls, key_type: str) -> "AcmeKey":
+    def create(cls, key_type_name: str) -> "AcmeKey":
         """
         Factory method to create a new key of key_type, returned as an AcmeKey.
         """
 
-        kdl = [kd for kd in key_table if kd.type_name == key_type]
-        if not kdl:
-            raise AcmeKeyTypeError("Unknown key_type: %s" % key_type)
-        if len(kdl) != 1:
-            raise AcmeKeyError(
-                "Internal error: key_type %s matches %s entries!" % (key_type, len(kdl))
-            )
-        kd = kdl[0]
-
+        kd = resolve_key_desc(key_type_name)
         return cls(kd.generate(kd.gen_arg), kd)
 
     @classmethod
@@ -217,14 +228,7 @@ class AcmeKey:
         """
 
         pk = load_pem_private_key(pem_data, None, default_backend())
-        kdl = [kd for kd in key_table if kd.match(pk)]
-        if not kdl:
-            raise AcmeKeyTypeError("Unknown pk type: %s", type(pk))
-        if len(kdl) != 1:
-            raise AcmeKeyError(
-                "Internal error: key of type %s matches %s entries!" % (type(pk), len(kdl))
-            )
-        kd = kdl[0]
+        kd = resolve_key_desc(pk)
 
         return cls(pk, kd)
 
@@ -263,7 +267,9 @@ class AcmeAccount(AcmeKey):
     Only an account key needs (or has) a Key ID associated with it.
     """
 
-    def __init__(self, pk: PrivateKeyType, key_desc: KeyDesc) -> None:
+    def __init__(self, pk: PrivateKeyType, key_desc: KeyDesc = None) -> None:
+        if key_desc is None:
+            key_desc = resolve_key_desc(pk)
         super().__init__(pk, key_desc)
         self.__kid: Optional[str] = None
         self.__timestamp: Optional[float] = None
