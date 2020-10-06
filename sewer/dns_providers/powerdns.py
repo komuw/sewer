@@ -1,4 +1,5 @@
 import json
+
 import requests
 
 from . import common
@@ -18,8 +19,6 @@ class PowerDNSDns(common.BaseDns):
     So, we must be smart about stripping out subdomains as part of the URL passed
     to `requests.patch`, but must maintain the FQDN in the `name` field of the `payload`.
     """
-
-    dns_provider_name = "powerdns"
 
     def __init__(self, powerdns_api_key, powerdns_api_url, *kwargs):
         self.powerdns_api_key = powerdns_api_key

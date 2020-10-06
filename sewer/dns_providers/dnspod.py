@@ -6,11 +6,6 @@ from . import common
 
 
 class DNSPodDns(common.BaseDns):
-    """
-    """
-
-    dns_provider_name = "dnspod"
-
     def __init__(
         self, DNSPOD_ID, DNSPOD_API_KEY, DNSPOD_API_BASE_URL="https://dnsapi.cn/", **kwargs
     ):

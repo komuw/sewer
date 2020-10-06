@@ -1,5 +1,30 @@
 # `sewer` changelog:
 
+## **pre-release** 0.8.5
+
+- first, some cleanup that was deferred from 0.8.4 (affects developers, not
+  cli users)
+
+  - crypto.py refactored
+
+  - mypy added to tests
+
+    - dns_providers have had non-base imports cleaned up: use local `# type:
+      ignore` annotations
+
+    - a few non-service-specific libs marked globally to be ignored
+
+    - mypy.ini created since Guido refuses to adopt config in pyproject.toml
+
+  - REMOVED obsolescent dns_provider_name class variables (use the JSON
+    catalog, added in 0.8.3)
+
+  - REMOVED obsolescent guards around service-specific imports and the
+    corresponding delayed exceptions (the unnecessary imports that made
+    these necessary were removed in 0.8.3)
+
+  - crypto.py's tests migrated to pytest format as tests/crypto_test.py
+
 ## **version:** 0.8.4
 
 - add support for ECDSA keys

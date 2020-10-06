@@ -8,15 +8,17 @@
 Sewer is a Let's Encrypt(ACME) client.  
 It's name is derived from Kenyan hip hop artiste, Kitu Sewer.  
 
-- The stable release is [0.8.4](https://komuw.github.io/sewer/notes/0.8.4-notes).
-- More history in the [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
+- The stable release is
+  [0.8.4](https://komuw.github.io/sewer/notes/0.8.4-notes).
+- More history (including notes on 0.8.5-to-be) in the
+  [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
-PYTHON compatibility: 3.5 is nominally still supported, and with assistance
-from Github's multi-version Python linting I've repaired some issues.  Even
-with the GH multi-version testing, there are parts of the drivers,
-especially, which I simply can't test (with 3.5) because the actual service
-provider interaction has to be mocked.  Such issues will be fixed on a
-best-effort basis when reported for the life of 0.8.
+PYTHON compatibility: 3.5 is still supported, though I believe at least one
+driver contains incompatible code (I have no way to actually test it, and
+sometimes these new features have been backported in 3.x.later).  As of
+0.8.5 I'm still trying not to break 3.5, but that oldest officially
+supported version is probably going to take a bump.  You already cannot run
+all the dev tests under 3.5 (black is one obvious one)...
 
 I (maintainer @mmaney) loiter in channel ##sewer (on irc.freenode.net) for
 those who remember IRC.  Don't ask to ask, but waiting is.

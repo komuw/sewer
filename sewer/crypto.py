@@ -12,9 +12,13 @@ from cryptography.hazmat.primitives.serialization import (
 )
 from cryptography.hazmat.backends import default_backend, openssl
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
 
 from .lib import AcmeError, safe_base64
+
+
+class AcmeAbstractError(AcmeError):
+    pass
 
 
 ### Exceptions specific to ACME crypto operations
@@ -44,112 +48,83 @@ PrivateKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePriv
 
 
 class KeyDesc:
+
+    pk_type: PrivateKeyType
+
     def __init__(
         self,
+        key_size: int,
         type_name: str,
-        generate: Callable,
-        gen_arg,
-        pk_type,
-        sign: Callable,
-        sign_kwargs: Dict[str, Any],
-        jwk: Dict[str, Any],
+        jwk_const: Dict[str, str],
+        jwk_attr: Dict[str, str],
+        alg: str,
+        key_bytes: int,
     ) -> None:
+        self.key_size = key_size
         self.type_name = type_name
-        self.generate = generate
-        self.gen_arg = gen_arg
-        self.pk_type = pk_type
-        self.sign = sign
-        self.sign_kwargs = sign_kwargs
-        self.jwk = jwk
+        self.jwk_const = jwk_const
+        self.jwk_attr = jwk_attr
+        self.alg = alg
+        self.key_bytes = key_bytes
 
-    def _size(self) -> int:
-        if isinstance(self.gen_arg, int):
-            return self.gen_arg
-        # else gen_arg is ec.SECP###R1
-        return self.gen_arg.key_size
+    def generate(self) -> PrivateKeyType:
+        raise AcmeAbstractError("KeyDesc.generate")
+
+    def sign(self, pk: PrivateKeyType, message: bytes) -> bytes:
+        raise AcmeAbstractError("KeyDesc.sign")
 
     def match(self, pk: PrivateKeyType) -> bool:
-        if isinstance(pk, self.pk_type) and pk.key_size == self._size():
+        if isinstance(pk, self.pk_type) and pk.key_size == self.key_size:
             return True
         return False
 
 
-def rsa_gen(key_size: int) -> PrivateKeyType:
-    return rsa.generate_private_key(65537, key_size, default_backend())
+class RsaKeyDesc(KeyDesc):
+
+    pk_type = rsa.RSAPrivateKey
+
+    def __init__(self, key_size: int) -> None:
+        type_name = "rsa%s" % key_size
+        super().__init__(key_size, type_name, {"kty": "RSA"}, {"e": "e", "n": "n"}, "RS256", 0)
+
+    def generate(self) -> PrivateKeyType:
+        return rsa.generate_private_key(65537, self.key_size, default_backend())
+
+    def sign(self, pk: PrivateKeyType, message: bytes) -> bytes:
+        "Yes, SHA256 is hardwired.  As of Sep 2020, LE rejects other hashes for RSA"
+
+        return pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
 
 
-def ec_gen(curve) -> PrivateKeyType:
-    return ec.generate_private_key(curve, default_backend())
+class EcKeyDesc(KeyDesc):
 
+    pk_type = ec.EllipticCurvePrivateKey
 
-def rsa_sign(pk, message: bytes) -> bytes:
-    "Yes, SHA256 is hardwired.  As of Sep 2020, LE rejects other hashes for RSA"
+    def __init__(self, key_size: int, hash_type, alg: str, key_bytes: int) -> None:
+        name = "secp%sr1" % key_size
+        curve = "P-%s" % key_size
+        super().__init__(
+            key_size, name, {"kty": "EC", "crv": curve}, {"x": "x", "y": "y"}, alg, key_bytes
+        )
+        self.curve = getattr(ec, name.upper())
+        self.hash_type = hash_type
 
-    return pk.sign(message, padding.PKCS1v15(), hashes.SHA256())
+    def generate(self) -> PrivateKeyType:
+        return ec.generate_private_key(self.curve, default_backend())
 
-
-def ec_sign(pk, message: bytes, *, hash_type, nbytes: int) -> bytes:
-    # EC sign method returns ASN.1 encoded values for some inane reason
-    r, s = utils.decode_dss_signature(pk.sign(message, ec.ECDSA(hash_type())))
-    return r.to_bytes(nbytes, "big") + s.to_bytes(nbytes, "big")
+    def sign(self, pk: PrivateKeyType, message: bytes) -> bytes:
+        # EC sign method returns ASN.1 encoded values for some inane reason
+        r, s = utils.decode_dss_signature(pk.sign(message, ec.ECDSA(self.hash_type())))
+        return r.to_bytes(self.key_bytes, "big") + s.to_bytes(self.key_bytes, "big")
 
 
 key_table = [
-    KeyDesc(
-        "rsa2048",
-        rsa_gen,
-        2048,
-        rsa.RSAPrivateKey,
-        rsa_sign,
-        {},
-        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
-    ),
-    KeyDesc(
-        "rsa3072",
-        rsa_gen,
-        3072,
-        rsa.RSAPrivateKey,
-        rsa_sign,
-        {},
-        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
-    ),
-    KeyDesc(
-        "rsa4096",
-        rsa_gen,
-        4096,
-        rsa.RSAPrivateKey,
-        rsa_sign,
-        {},
-        {"const": {"kty": "RSA"}, "attrib": {"e": "e", "n": "n"}, "alg": "RS256", "nbytes": 0},
-    ),
-    KeyDesc(
-        "secp256r1",
-        ec_gen,
-        ec.SECP256R1,
-        ec.EllipticCurvePrivateKey,
-        ec_sign,
-        {"hash_type": hashes.SHA256, "nbytes": 32},
-        {
-            "const": {"kty": "EC", "crv": "P-256"},
-            "attrib": {"x": "x", "y": "y"},
-            "alg": "ES256",
-            "nbytes": 32,
-        },
-    ),
-    KeyDesc(
-        "secp384r1",
-        ec_gen,
-        ec.SECP384R1,
-        ec.EllipticCurvePrivateKey,
-        ec_sign,
-        {"hash_type": hashes.SHA384, "nbytes": 48},
-        {
-            "const": {"kty": "EC", "crv": "P-384"},
-            "attrib": {"x": "x", "y": "y"},
-            "alg": "ES384",
-            "nbytes": 48,
-        },
-    ),
+    RsaKeyDesc(2048),
+    RsaKeyDesc(3072),
+    RsaKeyDesc(4096),
+    EcKeyDesc(256, hashes.SHA256, "ES256", 32),
+    EcKeyDesc(384, hashes.SHA384, "ES384", 48),
+    # EcKeyDesc(521, hashes.SHA512, 64, "ES512", 66),  this is where the key size != hash size?
 ]
 
 # extract just the names for option choice lists, etc.
@@ -178,8 +153,10 @@ def resolve_key_desc(key: Union[str, PrivateKeyType]) -> KeyDesc:
     return kdl[0]
 
 
-
 ### AcmeKey, finally!
+
+
+AcmeKeyType = Union["AcmeKey", "AcmeAccount"]
 
 
 class AcmeKey:
@@ -211,16 +188,16 @@ class AcmeKey:
     ### Key Constructors
 
     @classmethod
-    def create(cls, key_type_name: str) -> "AcmeKey":
+    def create(cls: Type["AcmeKey"], key_type_name: str) -> "AcmeKey":
         """
         Factory method to create a new key of key_type, returned as an AcmeKey.
         """
 
         kd = resolve_key_desc(key_type_name)
-        return cls(kd.generate(kd.gen_arg), kd)
+        return cls(kd.generate(), kd)
 
     @classmethod
-    def from_pem(cls, pem_data: bytes) -> "AcmeKey":
+    def from_pem(cls: Type["AcmeKey"], pem_data: bytes) -> "AcmeKey":
         """
         load a key from the PEM-format bytes, return an AcmeKey
 
@@ -233,7 +210,7 @@ class AcmeKey:
         return cls(pk, kd)
 
     @classmethod
-    def read_pem(cls, filename: str) -> "AcmeKey":
+    def read_pem(cls: Type["AcmeKey"], filename: str) -> "AcmeKey":
         "convenience method to load a PEM-format key; returns the AcmeKey"
 
         with open(filename, "rb") as f:
@@ -256,7 +233,7 @@ class AcmeKey:
             f.write(self.to_pem())
 
     def sign_message(self, message: bytes) -> bytes:
-        return self.key_desc.sign(self.pk, message, **self.key_desc.sign_kwargs)
+        return self.key_desc.sign(self.pk, message)
 
 
 ### An ACME account is identified by a key.  When registered there is a Key ID as well.
@@ -272,7 +249,7 @@ class AcmeAccount(AcmeKey):
             key_desc = resolve_key_desc(pk)
         super().__init__(pk, key_desc)
         self.__kid: Optional[str] = None
-        self.__timestamp: Optional[float] = None
+        self._timestamp: Optional[float] = None
         self.__jwk: Optional[Dict[str, str]] = None
 
     ### kid's descriptor methods
@@ -288,7 +265,7 @@ class AcmeAccount(AcmeKey):
         if self.__kid and self.__kid != kid:
             raise AcmeKidError("Cannot alter a key's kid")
         self.__kid = kid
-        self.__timestamp = timestamp if timestamp is not None else time.time()
+        self._timestamp = timestamp if timestamp is not None else time.time()
 
     def del_kid(self) -> None:
         "Doesn't actually del the hidden attribute, just resets the value to None (empty)"
@@ -310,11 +287,12 @@ class AcmeAccount(AcmeKey):
         """
 
         if not self.__jwk:
+            jwk = {}
             pubnums = self.pk.public_key().public_numbers()
-            jwk = dict(self.key_desc.jwk["const"])
-            for name, attr_name in self.key_desc.jwk["attrib"].items():
+            jwk.update(self.key_desc.jwk_const)
+            for name, attr_name in self.key_desc.jwk_attr.items():
                 val = getattr(pubnums, attr_name)
-                numbytes = self.key_desc.jwk["nbytes"]
+                numbytes = self.key_desc.key_bytes
                 if numbytes == 0:
                     numbytes = (val.bit_length() + 7) // 8
                 jwk[name] = safe_base64(val.to_bytes(numbytes, "big"))
@@ -323,8 +301,9 @@ class AcmeAccount(AcmeKey):
 
     ### TODO ### store & load file format with kid, timestamp and pk.
     #
-    # The PEM RFC says that at least most implementations accept prefixed
-    # attributes which would give us something like
+    # RFC7568 says that at least most implementations accept text outside the
+    # BEGIN...END lines, especially in PKIX certificates.  So I plan to do
+    # something like this:
     #
     # KID: https://acme-v02.api.letsencrypt.org/acme/account/1a2b3c4d5e6f7g8h9i0j
     # Timestamp: 1600452956.446775
@@ -333,6 +312,35 @@ class AcmeAccount(AcmeKey):
     # Both openssl pkey and the cryptography library can load a PEM decorated
     # like that.  Only possible question is whether the '\n' line ending needs
     # to be adjusted for non-Unix systems.
+
+    def write_key(self, filename: str) -> None:
+        "Like write_pem but prepends the KID and timestamp if those are present"
+
+        with open(filename, "wb") as f:
+            if self.__kid:
+                f.write(("KID: %s\n" % self.__kid).encode())
+                if self._timestamp:
+                    f.write(("Timestamp: %s\n" % self._timestamp).encode())
+            f.write(self.to_pem())
+
+    @classmethod
+    def read_key(cls: Type["AcmeAccount"], filename: str) -> "AcmeAccount":
+        with open(filename, "rb") as f:
+            data = f.read()
+        prefix = b""
+        n = data.find(b"-----BEGIN")
+        if 0 < n:
+            prefix = data[:n]
+            data = data[n:]
+        acct = cast("AcmeAccount", cls.from_pem(data))
+        if prefix:
+            parts = prefix.split(b"\n")
+            for p in parts:
+                if p.startswith(b"KID: "):
+                    acct.__kid = p[5:].decode()
+                elif p.startswith(b"Timestamp: "):
+                    acct._timestamp = float(p[11:])
+        return acct
 
 
 ### We also need to generate Certificate Signing Requests

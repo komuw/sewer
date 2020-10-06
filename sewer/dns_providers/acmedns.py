@@ -1,29 +1,15 @@
 import urllib.parse
 
-try:
-    acmedns_dependencies = True
-    from dns.resolver import Resolver
-except ImportError:
-    acmedns_dependencies = False
 import requests
+
+from dns.resolver import Resolver
 
 from . import common
 from ..lib import log_response
 
 
 class AcmeDnsDns(common.BaseDns):
-    """
-    """
-
-    dns_provider_name = "acmedns"
-
     def __init__(self, ACME_DNS_API_USER, ACME_DNS_API_KEY, ACME_DNS_API_BASE_URL, **kwargs):
-
-        if not acmedns_dependencies:
-            raise ImportError(
-                """You need to install AcmeDnsDns dependencies. run; pip3 install sewer[acmedns]"""
-            )
-
         self.ACME_DNS_API_USER = ACME_DNS_API_USER
         self.ACME_DNS_API_KEY = ACME_DNS_API_KEY
         self.HTTP_TIMEOUT = 65  # seconds

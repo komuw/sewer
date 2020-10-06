@@ -504,7 +504,7 @@ class Client:
         - "url"
         """
         self.logger.debug("get_acme_header")
-        header = {"alg": self.account.key_desc.jwk["alg"], "nonce": self.get_nonce(), "url": url}
+        header = {"alg": self.account.key_desc.alg, "nonce": self.get_nonce(), "url": url}
 
         if needs_jwk:
             header["jwk"] = self.account.jwk()

@@ -1,22 +1,23 @@
-import urllib.parse
-import requests
+import time, urllib.parse
+
+import requests, tldextract
+
 from . import common
 from ..lib import log_response
 
-try:
-    rackspace_dependencies = True
-    import tldextract
-except ImportError:
-    rackspace_dependencies = False
-
-import time
-
 
 class RackspaceDns(common.BaseDns):
-    """
-    """
-
-    dns_providername = "rackspace"
+    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY, **kwargs):
+        self.RACKSPACE_DNS_ZONE_ID = None
+        self.RACKSPACE_USERNAME = RACKSPACE_USERNAME
+        self.RACKSPACE_API_KEY = RACKSPACE_API_KEY
+        self.HTTP_TIMEOUT = 65  # seconds
+        super().__init__(**kwargs)
+        self.RACKSPACE_API_TOKEN, self.RACKSPACE_API_BASE_URL = self.get_rackspace_credentials()
+        self.RACKSPACE_HEADERS = {
+            "X-Auth-Token": self.RACKSPACE_API_TOKEN,
+            "Content-Type": "application/json",
+        }
 
     def get_rackspace_credentials(self):
         self.logger.debug("get_rackspace_credentials")
@@ -54,23 +55,6 @@ class RackspaceDns(common.BaseDns):
         else:
             api_base_url = url_data["endpoints"][0]["publicURL"] + "/"
         return (api_token, api_base_url)
-
-    def __init__(self, RACKSPACE_USERNAME, RACKSPACE_API_KEY, **kwargs):
-
-        if not rackspace_dependencies:
-            raise ImportError(
-                """You need to install RackspaceDns dependencies. run; pip3 install sewer[rackspace]"""
-            )
-        self.RACKSPACE_DNS_ZONE_ID = None
-        self.RACKSPACE_USERNAME = RACKSPACE_USERNAME
-        self.RACKSPACE_API_KEY = RACKSPACE_API_KEY
-        self.HTTP_TIMEOUT = 65  # seconds
-        super().__init__(**kwargs)
-        self.RACKSPACE_API_TOKEN, self.RACKSPACE_API_BASE_URL = self.get_rackspace_credentials()
-        self.RACKSPACE_HEADERS = {
-            "X-Auth-Token": self.RACKSPACE_API_TOKEN,
-            "Content-Type": "application/json",
-        }
 
     def get_dns_zone(self, domain_name):
         self.logger.debug("get_dns_zone")

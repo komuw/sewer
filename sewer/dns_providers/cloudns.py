@@ -1,8 +1,4 @@
-try:
-    cloudns_dependencies = True
-    from cloudns_api import record
-except ImportError:
-    cloudns_dependencies = False
+from cloudns_api import record  # type: ignore
 
 from . import common
 
@@ -22,16 +18,7 @@ def _split_domain_name(domain_name):
 
 
 class ClouDNSDns(common.BaseDns):
-
-    dns_provider_name = "cloudns"
-
     def __init__(self, **kwargs):
-
-        if not cloudns_dependencies:
-            raise ImportError(
-                """You need to install ClouDNSDns dependencies. run; pip3 install sewer[cloudns]"""
-            )
-
         super().__init__(**kwargs)
 
     def create_dns_record(self, domain_name, domain_dns_value):
