@@ -47,7 +47,7 @@ class UnboundSsh(BaseDns):
         migrate the legacy DNS driver to the new model if possible!
         """
 
-        fqdn = self.target_domain({"domain": host_fqdn})
+        fqdn = self.target_domain({"ident_value": host_fqdn})
 
         update_cmd = unbound_command(cmd, fqdn, acme_challenge)
         res = subprocess.run(("ssh", self.ssh_des, "unbound-control -- ", update_cmd))

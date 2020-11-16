@@ -116,14 +116,14 @@ class TestAuthDNS(unittest.TestCase):
 
     def test04_without_alias(self):
         p = auth.DNSProviderBase()
-        chal = {"domain": "example.com"}
+        chal = {"ident_value": "example.com"}
         self.assertTrue(
             p.cname_domain(chal) is None and p.target_domain(chal) == "_acme-challenge.example.com"
         )
 
     def test05_with_alias(self):
         p = auth.DNSProviderBase(alias="valid.com")
-        chal = {"domain": "example.com"}
+        chal = {"ident_value": "example.com"}
         self.assertTrue(
             p.target_domain(chal) == "example.com.valid.com"
             and p.cname_domain(chal) == "_acme-challenge.example.com"

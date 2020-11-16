@@ -89,10 +89,10 @@ class DNSProviderBase(ProviderBase):
     def cname_domain(self, chal: Dict[str, str]) -> Union[str, None]:
         "returns fqdn where CNAME should be if aliasing, else None"
 
-        return "_acme-challenge." + chal["domain"] if self.alias else None
+        return "_acme-challenge." + chal["ident_value"] if self.alias else None
 
     def target_domain(self, chal: Dict[str, str]) -> str:
         "returns fqdn where challenge TXT should be placed"
 
-        d = chal["domain"]
+        d = chal["ident_value"]
         return "_acme-challenge." + d if not self.alias else d + "." + self.alias
