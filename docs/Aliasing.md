@@ -39,7 +39,7 @@ often needed since the privilege needed to directly configure the canonical
 response file is likely to be the same (or even less) than that needed to
 setup the new certificate.  And it's possible that you've already used it
 without thinking of it as _aliasing_ because it uses such basic HTTP
-behavior.
+behavior (and so needs no support from sewer).
 
 ## Preparing for DNS aliasing
 
@@ -86,6 +86,4 @@ redirects can be provisioned.
 This is really pretty short & sweet.
 All that's needed, once the setup is done, is to pass `alias=alias.org` to
 the alias-supporting driver when it's created.
-For users of the command line tool, you would add an option `--alias_domain
-alias.org` as well as specifying a DNS driver that supports the alias
-method, when those become available.
+From the command line, that's `--p_opts alias=alias.org`.

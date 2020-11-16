@@ -2,8 +2,9 @@
 
 ## **pre-release** 0.8.5
 
-- first, some cleanup that was deferred from 0.8.4 (affects developers, not
-  cli users)
+- driver for Windows DNS server (local only) [IN PROGRESS]
+
+- cleanup that was deferred from 0.8.4 (affects developers, not cli users)
 
   - crypto.py refactored
 
@@ -14,16 +15,21 @@
 
     - a few non-service-specific libs marked globally to be ignored
 
-    - mypy.ini created since Guido refuses to adopt config in pyproject.toml
-
   - REMOVED obsolescent dns_provider_name class variables (use the JSON
     catalog, added in 0.8.3)
 
   - REMOVED obsolescent guards around service-specific imports and the
-    corresponding delayed exceptions (the unnecessary imports that made
-    these necessary were removed in 0.8.3)
+    corresponding delayed exceptions (the unnecessary imports that used to
+    require the guards were removed in 0.8.3)
 
   - crypto.py's tests migrated to pytest format as tests/crypto_test.py
+
+- Fixed the alias support code and unbound_ssh, its only in-tree client, to
+  use correct names for alias option parameters
+
+- Aliasing document updated to current client options
+
+- in-tree tests began migrating to pytest format (and moving to ./tests)
 
 ## **version:** 0.8.4
 
