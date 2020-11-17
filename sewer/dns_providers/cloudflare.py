@@ -7,11 +7,6 @@ from ..lib import log_response
 
 
 class CloudFlareDns(common.BaseDns):
-    """
-    """
-
-    dns_provider_name = "cloudflare"
-
     def __init__(
         self,
         CLOUDFLARE_EMAIL=None,

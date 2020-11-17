@@ -11,57 +11,48 @@ pip = ${python} -m pip
 coverage = ${python} -m coverage
 black = ${python} -m black
 pylint = ${python} -m pylint
+mypy = ${python} -m mypy
 
 
 VERSION_STRING=$$(sed -n -e '/"version"/ s/.*version": *"\([^"]*\)".*/\1/p' <sewer/meta.json)
 
 
-# foo is just a show-me target
-foo:
-	@echo "VERSION = ${VERSION_STRING}"
-	@echo "python is ${python}"
-	@echo "pip command: ${pip}"
-	@echo "twine command: ${twine}"
-	@echo "coverage command: ${coverage}"
-	@echo "black command: ${black}"
-	@echo "pylint command: ${pylint}"
+.PHONY: build
+build:				# build distribution artifacts
+	rm -rf build
+	rm -rf dist
+	rm -rf sewer.egg-info
+	${python} setup.py sdist
+	${python} setup.py bdist_wheel
 
 
-# upload to testpypi
-upload: build
+uploadtest: build		# build and upload to pypi-test
 	@${twine} upload dist/* -r testpypi
 	@${pip} install -U -i https://testpypi.python.org/pypi sewer
 
-build:
-	@rm -rf build
-	@rm -rf dist
-	@rm -rf sewer.egg-info
-	@${python} setup.py sdist
-	@${python} setup.py bdist_wheel
+release2pypi: build upload2pypi release-tag	# build & upload to pypi
+	@echo "${pip} install -U sewer"
 
-uploadprod: build uploadprod_only uploadprod_tag
-	@${pip} install -U sewer
+.PHONY: upload2pypi release-tag
+upload2pypi:
+	${twine} upload dist/*
 
-uploadprod_only:
-	@${twine} upload dist/*
-
-uploadprod_tag:
+release-tag:
 	@printf "\n creating git tag: $(VERSION_STRING) \n"
 	@printf "\n with commit message, see Changelong: https://github.com/komuw/sewer/blob/master/CHANGELOG.md \n" && git tag -a "$(VERSION_STRING)" -m "see Changelong: https://github.com/komuw/sewer/blob/master/CHANGELOG.md"
 	@printf "\n git push the tag::\n" && git push --all -u --follow-tags
 
 
-# you can run single testcase as;
-# 1. python -m unittest sewer.tests.test_Client.TestClient.test_something
-# 2. python -m unittest discover -k test_find_dns_zone_id
+# TESTS - target "test" runs the unit tests under coverage and reports both.
 
 TDATA = tests/data
 
-.PHONY: clean coverage format lint
+.PHONY: clean coverage format-check lint mypy
 
-test: testdata coverage format lint
+test: testdata coverage mypy lint format-check
 
 testdata: rsatestkeys secptestkeys
+	-mkdir tests/tmp
 
 coverage: clean
 	@printf "\n coverage erase::\n" && ${coverage} erase
@@ -69,13 +60,18 @@ coverage: clean
 	@printf "\n coverage report::\n" && ${coverage} report --show-missing --fail-under=85
 
 clean:
-	@printf "\n removing pyc files::\n" && find . -type f -name *.pyc -delete | echo
+	find . -type f -name *.pyc -delete | echo
+	-rm -r tests/tmp
+	-mkdir tests/tmp
 
-format:
-	@printf "\n run black::\n" && ${black} .
+mypy:
+	${mypy} sewer/client.py sewer/cli.py
 
 lint:
-	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+	@printf "\n run pylint::\n" && ${pylint} --enable=E --disable=W,R,C --unsafe-load-any-extension=y ${LINTARGS} sewer/
+
+format-check:
+	@printf "\n run black::\n" && ${black} --check .
 
 rsatestkeys: ${TDATA}/rsa2048.pem ${TDATA}/rsa3072.pem ${TDATA}/rsa4096.pem
 

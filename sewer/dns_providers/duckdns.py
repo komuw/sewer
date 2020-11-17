@@ -1,13 +1,11 @@
 import urllib.parse
+
 import requests
 
 from . import common
 
 
 class DuckDNSDns(common.BaseDns):
-
-    dns_provider_name = "duckdns"
-
     def __init__(self, duckdns_token, DUCKDNS_API_BASE_URL="https://www.duckdns.org", **kwargs):
 
         self.duckdns_token = duckdns_token

@@ -2,13 +2,11 @@
 # https://www.pcextreme.nl/aurora/dns
 # Aurora uses libcloud from apache
 # https://libcloud.apache.org/
-try:
-    aurora_dependencies = True
-    from libcloud.dns.providers import get_driver
-    from libcloud.dns.types import Provider, RecordType
-    import tldextract
-except ImportError:
-    aurora_dependencies = False
+import tldextract
+
+from libcloud.dns.providers import get_driver  # type: ignore
+from libcloud.dns.types import Provider, RecordType  # type: ignore
+
 from . import common
 
 
@@ -18,15 +16,7 @@ class AuroraDns(common.BaseDns):
     facilitate better tests.
     """
 
-    dns_provider_name = "aurora"
-
     def __init__(self, AURORA_API_KEY, AURORA_SECRET_KEY, **kwargs):
-
-        if not aurora_dependencies:
-            raise ImportError(
-                """You need to install AuroraDns dependencies. run; pip3 install sewer[aurora]"""
-            )
-
         self.AURORA_API_KEY = AURORA_API_KEY
         self.AURORA_SECRET_KEY = AURORA_SECRET_KEY
         super().__init__(**kwargs)

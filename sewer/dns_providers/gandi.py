@@ -7,11 +7,6 @@ from . import common
 
 
 class GandiDns(common.BaseDns):
-    """
-    """
-
-    dns_provider_name = "gandi"
-
     def __init__(
         self,
         GANDI_API_KEY=None,

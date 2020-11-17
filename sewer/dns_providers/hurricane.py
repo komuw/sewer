@@ -3,11 +3,7 @@ Hurricane Electric DNS Support
 """
 import json
 
-try:
-    hedns_dependencies = True
-    import HurricaneDNS as _hurricanedns
-except ImportError:
-    hedns_dependencies = False
+import HurricaneDNS as _hurricanedns  # type: ignore
 
 from . import common
 
@@ -31,11 +27,6 @@ class _Response(object):
 class HurricaneDns(common.BaseDns):
     def __init__(self, username, password, **kwargs):
         super().__init__(**kwargs)
-        if not hedns_dependencies:
-            raise ImportError(
-                """You need to install HurricaneDns dependencies. run: pip3 install sewer[hurricane]"""
-            )
-
         self.clt = _hurricanedns.HurricaneDNS(username, password)
 
     @staticmethod

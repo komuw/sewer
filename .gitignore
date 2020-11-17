@@ -28,9 +28,9 @@ README.html
 .vscode/
 .DS_Store
 
-# Coverage artifacts
-/tests/coverage
-/tests/htmlcov/
+# testing artifacts, temp files, etc.
+/tests/coverage/
+/tests/tmp/
 
 # Setuptools distribution folder.
 /dist/

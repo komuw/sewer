@@ -24,15 +24,15 @@ jobs:
           command: |
             sudo pip3 install -e .[dev,test,alldns]
 
-      # run tests!
+      # run tests!  Most config is in pyprojects.toml rather than --options since 0.8.4
       - run:
           name: run tests
           command: |
             make testdata
             find . -type f -name *.pyc -delete | echo
             coverage erase
-            # coverage run --omit="*tests*,*.virtualenvs/*,*.venv/*,*__init__*,*/usr/local/lib/python2.7/dist-packages*" -m unittest discover && bash <(curl -s https://codecov.io/bash)
-            coverage run && ln -s tests/coverage .coverage && bash <(curl -s https://codecov.io/bash)
+            coverage run && ln -s tests/coverage/.coverage .coverage && bash <(curl -s https://codecov.io/bash)
+
       - run:
           name: run tests reports
           command: |      

@@ -1,13 +1,12 @@
 import json
 
-try:
-    aliyun_dependencies = True
-    from aliyunsdkcore import client
-    from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
-    from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
-    from aliyunsdkalidns.request.v20150109 import DeleteDomainRecordRequest
-except ImportError:
-    aliyun_dependencies = False
+from aliyunsdkcore import client  # type: ignore
+import aliyunsdkalidns.request.v20150109  # type:ignore
+from aliyunsdkalidns.request.v20150109 import (
+    DescribeDomainRecordsRequest,
+    AddDomainRecordRequest,
+    DeleteDomainRecordRequest,
+)
 
 from . import common
 
@@ -38,10 +37,6 @@ class AliyunDns(common.BaseDns):
         :param bool debug: if debug?
         """
         super().__init__(**kwargs)
-        if not aliyun_dependencies:
-            raise ImportError(
-                """You need to install aliyunDns dependencies. run; pip3 install sewer[aliyun]"""
-            )
         self._key = key
         self._secret = secret
         self._endpoint = endpoint
