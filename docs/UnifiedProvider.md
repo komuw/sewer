@@ -26,7 +26,7 @@ with new-model drivers (all http-01 drivers, as there are no old ones).  New
 drivers normally should inherit from the `DNSProviderBase` or
 `HTTPProviderBase` classes in auth.py.
 
-`DNSProviderBase` has support for [aliasing](docs/Aliasing), though the
+`DNSProviderBase` has support for [aliasing](Aliasing), though the
 individual drivers need to be created (or modified) to support it at this
 time.  _unbound_ssh is a quirky but working example that supports aliasing.`
 

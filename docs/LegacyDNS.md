@@ -49,7 +49,7 @@ In practice, at least one of the services is unable to do that
 
 ### Legacy DNS vs Aliasing
 
-Legacy DNS drivers MAY change to use the [aliasing](DNS-ALiasing) methods
+Legacy DNS drivers MAY change to use the [aliasing](ALiasing) methods
 inherited from `DNSProviderBase`, though this will require a potentially
 fragile faking of the new-model challenge dict in the driver.  See the
 `unbound_ssh` example driver, and bear in mind that a change to the data

@@ -34,7 +34,7 @@ support for some features varies.
   drivers, but it has to be done one by one.
 
 - _alias_ publishing challenges in a different [sub]domain than the
-  identities being authorized.  See [Aliasing](aliasing).
+  identities being authorized.  See [Aliasing](Aliasing).
 
 - _prop_ support for the [unpropagated](unpropagated) interface.  Can be
   added to any driver but may only be worthwhile with service API support?

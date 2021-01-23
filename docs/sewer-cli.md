@@ -165,7 +165,7 @@ used up.  Default is "1,2,4,8".  _to be added when there's driver support_
 
 `--p_opts alias_domain=<alias_domain_name>`
 > Configure an alternate DNS domain in which the challenge responses will be
-placed.  See [Aliasing](docs/Aliasing) for details.  **Legacy DNS
+placed.  See [Aliasing](Aliasing) for details.  **Legacy DNS
 providers accept this, but require further modification to actually apply
 the aliasing that's supported by their parent classes.**
 _This was `--alias_domain <name>` during 0.8.3 development.`
