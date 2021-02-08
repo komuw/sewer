@@ -86,7 +86,7 @@ print("your letsencrypt.org account key is:", acct_key.private_bytes())
 # NB: your certificate_key and account_key should be SECRET.
 # You can write these out to individual files, eg::
 
-with open("certificate.crt", "wb"') as f:
+with open('certificate.crt', 'wb') as f:
     f.write(certificate.private_bytes())
 with open('certificate.key', 'wb') as f:
     f.write(certkey.private_bytes())
