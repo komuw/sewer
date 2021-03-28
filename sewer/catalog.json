@@ -260,5 +260,22 @@
     "cls": "UnboundSsh",
     "features": ["alias"],
     "deps": []
-  }  
+  },
+  {
+    "name": "windns",
+    "desc": "interacts with Windows Server PowerShell DnsServer module for dns challenge",
+    "chals": ["dns-01"],
+    "args": [
+      {
+        "name": "zone",
+        "req": 1
+      },
+      {
+        "name": "power_shell_path"
+      }
+    ],
+    "path": "sewer.providers.windns",
+    "cls": "WinDNS",
+    "deps": ["windowsdnsserver-py"]
+  }
 ]

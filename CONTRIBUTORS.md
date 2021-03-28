@@ -29,3 +29,4 @@ Contributors
 - [Don S](https://github.com/donspaulding)
 - [Julien Demoor](https://github.com/jdkx)
 - [@tkalus](https://github.com/tkalus)
+- [Bilal Ekrem Harmansa](https://github.com/bilalekremharmansa)

@@ -318,6 +318,11 @@ def get_provider(provider_name, provider_kwargs, catalog, logger):
     elif provider_name == "route53":
         raise ValueError("route53 driver can only be used programmatically at this time, sorry")
 
+    elif provider_name == "windns":
+        from sewer.providers.windns import WinDNS
+
+        dns_class = WinDNS(**provider_kwargs)
+
     else:
         raise ValueError("The dns provider {0} is not recognised.".format(provider_name))
 
