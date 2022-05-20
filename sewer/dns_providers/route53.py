@@ -11,6 +11,7 @@ class Route53Dns(common.BaseDns):
     ttl = 10
     connect_timeout = 30
     read_timeout = 30
+    propagate_timeout = 120
 
     def __init__(self, access_key_id=None, secret_access_key=None, client=None, **kwargs):
         if (access_key_id or secret_access_key) and client:
@@ -41,16 +42,20 @@ class Route53Dns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."
-        return self._change_txt_record("UPSERT", challenge_domain, domain_dns_value)
+        change_id = self._change_txt_record("UPSERT", challenge_domain, domain_dns_value)
+        self._wait_for_propagation(change_id)
+        return change_id
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."
-        return self._change_txt_record("DELETE", challenge_domain, domain_dns_value)
+        change_id = self._change_txt_record("DELETE", challenge_domain, domain_dns_value)
+        self._wait_for_propagation(change_id)
+        return change_id
 
     def _find_zone_id_for_domain(self, domain):
         """Find the zone id responsible a given FQDN.
-           That is, the id for the zone whose name is the longest parent of the
-           domain.
+        That is, the id for the zone whose name is the longest parent of the
+        domain.
         """
         paginator = self.r53.get_paginator("list_hosted_zones")
         zones = []
@@ -109,3 +114,11 @@ class Route53Dns(common.BaseDns):
             },
         )
         return response["ChangeInfo"]["Id"]
+
+    def _wait_for_propagation(self, change_id):
+        for i in range(0, self.propagate_timeout):
+            response = self.r53.get_change(Id=change_id)
+            if response["ChangeInfo"]["Status"] == "INSYNC":
+                return
+            elif response["ChangeInfo"]["Status"] != "INSYNC" and i >= self.propagate_timeout:
+                raise RuntimeError("Waited too long for Route53 DNS propagation")
