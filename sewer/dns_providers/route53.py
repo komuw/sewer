@@ -1,4 +1,5 @@
 import collections
+import time
 
 import boto3  # type: ignore
 from botocore.client import Config  # type: ignore
@@ -122,3 +123,5 @@ class Route53Dns(common.BaseDns):
                 return
             elif response["ChangeInfo"]["Status"] != "INSYNC" and i >= self.propagate_timeout:
                 raise RuntimeError("Waited too long for Route53 DNS propagation")
+            # Only used to avoid being ratelimited checking for status
+            time.sleep(1)
