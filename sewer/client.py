@@ -617,6 +617,10 @@ class Client:
         See docs/unpropagated.md for the details.
         """
 
+        if self.provider.propagate_function:
+            self.provider.propagate(challenges)
+            return ("", [])
+
         if self.provider.prop_delay:
             time.sleep(self.provider.prop_delay)
 

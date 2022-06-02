@@ -12,6 +12,7 @@ class Route53Dns(common.BaseDns):
     ttl = 10
     connect_timeout = 30
     read_timeout = 30
+    propagate_function = True
     propagate_timeout = 120
 
     def __init__(self, access_key_id=None, secret_access_key=None, client=None, **kwargs):
@@ -43,15 +44,21 @@ class Route53Dns(common.BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."
-        change_id = self._change_txt_record("UPSERT", challenge_domain, domain_dns_value)
-        self._wait_for_propagation(change_id)
-        return change_id
+        return self._change_txt_record("UPSERT", challenge_domain, domain_dns_value)
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         challenge_domain = "_acme-challenge" + "." + domain_name + "."
-        change_id = self._change_txt_record("DELETE", challenge_domain, domain_dns_value)
-        self._wait_for_propagation(change_id)
-        return change_id
+        return self._change_txt_record("DELETE", challenge_domain, domain_dns_value)
+
+    def wait_for_propagation(self, change_id):
+        for i in range(0, self.propagate_timeout):
+            response = self.r53.get_change(Id=change_id)
+            if response["ChangeInfo"]["Status"] == "INSYNC":
+                return
+            elif response["ChangeInfo"]["Status"] != "INSYNC" and i >= self.propagate_timeout:
+                raise RuntimeError("Waited too long for Route53 DNS propagation")
+            # Only used to avoid being ratelimited checking for status
+            time.sleep(1)
 
     def _find_zone_id_for_domain(self, domain):
         """Find the zone id responsible a given FQDN.
@@ -115,13 +122,3 @@ class Route53Dns(common.BaseDns):
             },
         )
         return response["ChangeInfo"]["Id"]
-
-    def _wait_for_propagation(self, change_id):
-        for i in range(0, self.propagate_timeout):
-            response = self.r53.get_change(Id=change_id)
-            if response["ChangeInfo"]["Status"] == "INSYNC":
-                return
-            elif response["ChangeInfo"]["Status"] != "INSYNC" and i >= self.propagate_timeout:
-                raise RuntimeError("Waited too long for Route53 DNS propagation")
-            # Only used to avoid being ratelimited checking for status
-            time.sleep(1)
