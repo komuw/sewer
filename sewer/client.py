@@ -236,7 +236,8 @@ class Client:
         if response.status_code not in [201, 200, 409]:
             raise AcmeRegistrationError(
                 "Error while registering: status_code={status_code} response={response}".format(
-                    status_code=response.status_code, response=log_response(response),
+                    status_code=response.status_code,
+                    response=log_response(response),
                 )
             )
 
@@ -379,7 +380,8 @@ class Client:
             number_of_checks = number_of_checks + 1
             self.logger.debug(
                 "response. status_code={0}. response={1}".format(
-                    response.status_code, log_response(response),
+                    response.status_code,
+                    log_response(response),
                 )
             )
             if authorization_status in desired_status:
