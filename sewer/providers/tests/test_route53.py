@@ -6,15 +6,16 @@ from sewer.lib import dns_challenge
 
 
 class TestRoute53(TestCase):
-    """
-    """
+    """ """
 
     def setUp(self):
         self.domain_name = "example.com"
         self.domain_dns_value = "mock-domain_dns_value"
         self.route53_key_id = "mock-key-id"
         self.route53_key_secret = "mock-key-secret"
-        self.challenges = [{"ident_value": "example.com", "key_auth": "abcdefghijklmnop.0123456789"}]
+        self.challenges = [
+            {"ident_value": "example.com", "key_auth": "abcdefghijklmnop.0123456789"}
+        ]
         self.provider = Route53Dns(self.route53_key_id, self.route53_key_secret)
 
     def tearDown(self):
@@ -92,10 +93,12 @@ class TestRoute53(TestCase):
         )
         changeset = provider._create_changeset_batches(self, self.challenges)
         self.assertEqual(
-            changeset["/hostedzone/Z2EH0L5RFW3ACH"]["_acme-challenge.example.com"]["ResourceRecordSet"]["ResourceRecords"][0]["Value"],
-            '"{0}"'.format(dns_challenge(self.challenges[0]["key_auth"]))
+            changeset["/hostedzone/Z2EH0L5RFW3ACH"]["_acme-challenge.example.com"][
+                "ResourceRecordSet"
+            ]["ResourceRecords"][0]["Value"],
+            '"{0}"'.format(dns_challenge(self.challenges[0]["key_auth"])),
         )
-    
+
     @mock.patch("sewer.providers.route53.boto3.client")
     def test_setup(self, mock_client):
         provider = Route53Dns()
@@ -106,15 +109,13 @@ class TestRoute53(TestCase):
         mock_client.return_value.change_resource_record_sets.return_value = (
             self.mocked_route53_set_record_response()
         )
-        mock_client.return_value.get_change.return_value = (
-            self.mocked_route53_set_change_response()
-        )
+        mock_client.return_value.get_change.return_value = self.mocked_route53_set_change_response()
 
         provider.setup(self.challenges)
 
         mock_client.mock_calls[3].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=provider._create_changeset_batches("UPSERT", self.challenges)
+            ChangeBatch=provider._create_changeset_batches("UPSERT", self.challenges),
         )
 
     @mock.patch("sewer.providers.route53.boto3.client")
@@ -127,15 +128,13 @@ class TestRoute53(TestCase):
         mock_client.return_value.change_resource_record_sets.return_value = (
             self.mocked_route53_set_record_response()
         )
-        mock_client.return_value.get_change.return_value = (
-            self.mocked_route53_set_change_response()
-        )
+        mock_client.return_value.get_change.return_value = self.mocked_route53_set_change_response()
 
         provider.clear(self.challenges)
 
         mock_client.mock_calls[3].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=provider._create_changeset_batches("DELETE", self.challenges)
+            ChangeBatch=provider._create_changeset_batches("DELETE", self.challenges),
         )
 
     @mock.patch("sewer.providers.route53.boto3.client")
@@ -145,13 +144,9 @@ class TestRoute53(TestCase):
         mock_client.return_value.change_resource_record_sets.return_value = (
             self.mocked_route53_set_record_response()
         )
-        mock_client.return_value.get_change.return_value = (
-            self.mocked_route53_set_change_response()
-        )
+        mock_client.return_value.get_change.return_value = self.mocked_route53_set_change_response()
 
         changes = self.mocked_route53_set_record_response()
         provider._wait_for_propagation([changes["ChangeInfo"]["Id"]])
 
-        mock_client.mock_calls[0].assert_called_once_with(
-            Id=changes["ChangeInfo"]["Id"]
-        )
+        mock_client.mock_calls[0].assert_called_once_with(Id=changes["ChangeInfo"]["Id"])
