@@ -1,7 +1,8 @@
 from unittest import mock
 from unittest import TestCase
 
-from sewer.dns_providers.route53 import Route53Dns
+from sewer.providers.route53 import Route53Dns
+from sewer.lib import dns_challenge
 
 
 class TestRoute53(TestCase):
@@ -13,7 +14,8 @@ class TestRoute53(TestCase):
         self.domain_dns_value = "mock-domain_dns_value"
         self.route53_key_id = "mock-key-id"
         self.route53_key_secret = "mock-key-secret"
-        self.dns_class = Route53Dns(self.route53_key_id, self.route53_key_secret)
+        self.challenges = [{"ident_value": "example.com", "key_auth": "abcdefghijklmnop.0123456789"}]
+        self.provider = Route53Dns(self.route53_key_id, self.route53_key_secret)
 
     def tearDown(self):
         pass
@@ -22,21 +24,9 @@ class TestRoute53(TestCase):
     def mocked_route53_set_record_response():
         return {"ChangeInfo": {"Id": "mocked-id"}}
 
-    def make_change_batch(self, action, domain_name, domain_value):
-        return {
-            "Comment": "certbot-dns-route53 certificate validation " + action,
-            "Changes": [
-                {
-                    "Action": action,
-                    "ResourceRecordSet": {
-                        "Name": domain_name,
-                        "Type": "TXT",
-                        "TTL": 10,
-                        "ResourceRecords": [{"Value": domain_value}],
-                    },
-                }
-            ],
-        }
+    @staticmethod
+    def mocked_route53_set_change_response():
+        return {"ChangeInfo": {"Status": "INSYNC"}}
 
     def mocked_find_zone_response(self):
         return [
@@ -67,36 +57,48 @@ class TestRoute53(TestCase):
             }
         ]
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
+    @mock.patch("sewer.providers.route53.boto3.client")
     def test_user_given_credential(self, mock_client):
-        dns_class = Route53Dns("mock-key", "mock-secret")
+        provider = Route53Dns("mock-key", "mock-secret")
         mock_client.assert_called_once_with(
             "route53",
             aws_access_key_id="mock-key",
             aws_secret_access_key="mock-secret",
-            config=dns_class.aws_config,
+            config=provider.aws_config,
         )
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
+    @mock.patch("sewer.providers.route53.boto3.client")
     def test_user_given_client(self, mock_client):
         passed_client = mock.MagicMock()
-        dns_class = Route53Dns(client=passed_client)
+        provider = Route53Dns(client=passed_client)
         mock_client.assert_not_called()
-        self.assertEqual(passed_client, dns_class.r53)
+        self.assertEqual(passed_client, provider.r53)
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
+    @mock.patch("sewer.providers.route53.boto3.client")
     def test_user_given_creds_and_client(self, mock_client):
         with self.assertRaises(RuntimeError):
             Route53Dns(access_key_id="mock-key", client=mock.MagicMock())
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
+    @mock.patch("sewer.providers.route53.boto3.client")
     def test_user_not_given_credential(self, mock_client):
-        dns_class = Route53Dns()
-        mock_client.assert_called_once_with("route53", config=dns_class.aws_config)
+        provider = Route53Dns()
+        mock_client.assert_called_once_with("route53", config=provider.aws_config)
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
-    def test_route53_create_record(self, mock_client):
-        dns_class = Route53Dns()
+    @mock.patch("sewer.providers.route53.boto3.client")
+    def test_create_changeset(self, mock_client):
+        provider = Route53Dns()
+        mock_client.return_value.get_paginator.return_value.paginate.return_value = (
+            self.mocked_find_zone_response()
+        )
+        changeset = provider._create_changeset_batches(self, self.challenges)
+        self.assertEqual(
+            changeset["/hostedzone/Z2EH0L5RFW3ACH"]["_acme-challenge.example.com"]["ResourceRecordSet"]["ResourceRecords"][0]["Value"],
+            '"{0}"'.format(dns_challenge(self.challenges[0]["key_auth"]))
+        )
+    
+    @mock.patch("sewer.providers.route53.boto3.client")
+    def test_setup(self, mock_client):
+        provider = Route53Dns()
         # mock list zones paginator response
         mock_client.return_value.get_paginator.return_value.paginate.return_value = (
             self.mocked_find_zone_response()
@@ -104,18 +106,20 @@ class TestRoute53(TestCase):
         mock_client.return_value.change_resource_record_sets.return_value = (
             self.mocked_route53_set_record_response()
         )
+        mock_client.return_value.get_change.return_value = (
+            self.mocked_route53_set_change_response()
+        )
 
-        change_id = dns_class.create_dns_record(self.domain_name, self.domain_dns_value)
-        self.assertEqual(change_id, "mocked-id")
+        provider.setup(self.challenges)
 
         mock_client.mock_calls[3].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=self.make_change_batch("UPSERT", self.domain_name, self.domain_dns_value),
+            ChangeBatch=provider._create_changeset_batches("UPSERT", self.challenges)
         )
 
-    @mock.patch("sewer.dns_providers.route53.boto3.client")
-    def test_route53_delete_record(self, mock_client):
-        dns_class = Route53Dns()
+    @mock.patch("sewer.providers.route53.boto3.client")
+    def test_clear(self, mock_client):
+        provider = Route53Dns()
         # mock list zones paginator response
         mock_client.return_value.get_paginator.return_value.paginate.return_value = (
             self.mocked_find_zone_response()
@@ -123,11 +127,31 @@ class TestRoute53(TestCase):
         mock_client.return_value.change_resource_record_sets.return_value = (
             self.mocked_route53_set_record_response()
         )
+        mock_client.return_value.get_change.return_value = (
+            self.mocked_route53_set_change_response()
+        )
 
-        dns_class.create_dns_record(self.domain_name, self.domain_dns_value)
-        dns_class.delete_dns_record(self.domain_name, self.domain_dns_value)
+        provider.clear(self.challenges)
 
-        mock_client.mock_calls[4].assert_called_once_with(
+        mock_client.mock_calls[3].assert_called_once_with(
             HostedZoneId="mocked-id",
-            ChangeBatch=self.make_change_batch("DELETE", self.domain_name, self.domain_dns_value),
+            ChangeBatch=provider._create_changeset_batches("DELETE", self.challenges)
+        )
+
+    @mock.patch("sewer.providers.route53.boto3.client")
+    def test_waiting_for_propagation(self, mock_client):
+        provider = Route53Dns()
+
+        mock_client.return_value.change_resource_record_sets.return_value = (
+            self.mocked_route53_set_record_response()
+        )
+        mock_client.return_value.get_change.return_value = (
+            self.mocked_route53_set_change_response()
+        )
+
+        changes = self.mocked_route53_set_record_response()
+        provider._wait_for_propagation([changes["ChangeInfo"]["Id"]])
+
+        mock_client.mock_calls[0].assert_called_once_with(
+            Id=changes["ChangeInfo"]["Id"]
         )
