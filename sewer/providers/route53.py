@@ -74,9 +74,11 @@ class Route53Dns(DNSProviderBase):
                         "Name": name,
                         "Type": "TXT",
                         "TTL": self.ttl,
-                        "ResourceRecords": [{
-                            "Value": value,
-                        }],
+                        "ResourceRecords": [
+                            {
+                                "Value": value,
+                            }
+                        ],
                     },
                 }
             else:
