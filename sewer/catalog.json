@@ -240,7 +240,7 @@
         "old_param": "secret_access_key"
       }
     ],
-    "path": "sewer.dns_providers.route53",
+    "path": "sewer.providers.route53",
     "cls": "Route53Dns",
     "deps": ["boto3"],
     "memo": "DUMMY LISTING: route53 has never been integrated into cli.py, so this DOESN'T WORK yet"
