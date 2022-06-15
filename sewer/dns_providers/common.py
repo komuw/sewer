@@ -20,17 +20,10 @@ class BaseDns(DNSProviderBase):
 
     def setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
         for chal in challenges:
-            chal["change_id"] = self.create_dns_record(
-                chal["ident_value"], dns_challenge(chal["key_auth"])
-            )
+            self.create_dns_record(chal["ident_value"], dns_challenge(chal["key_auth"]))
         return []
 
     def unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
-        return []
-
-    def propagate(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
-        for chal in challenges:
-            self.wait_for_propagation(chal["change_id"])
         return []
 
     def clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
