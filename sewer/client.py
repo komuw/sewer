@@ -632,25 +632,25 @@ class Client:
                 errata = self.provider.unpropagated(unready)
                 num_checks += 1
 
-                # right idea, but details aren't yet nailed down?
-                # failed = [e for e in errata if e['status'].startswith("FAIL")]
+                ## TODO ## Improvement: currently the code only checks for the existance of
+                # challenges returned by the unpropagated function. Whether they are simply
+                # processing or they have failed, is not currently being evaluated. In the future,
+                # when providers return more information from that function, this should be improved.
+                # Example: failed = [e for e in errata if e['status'].startswith("FAIL")]
 
-                if errata:
-                    poll_time = time.time()
-                    # intentional: do an "extra" check rather than running short
-                    if end_time < poll_time:
-                        break
+                if len(errata[1]) == 0:
+                    return ("", [])
+                else:
+                    unready = [errata[2] for errata in errata[1]]
+                    # intentional: check before sleeping so one extra check is made
+                    if time.time() > end_time:
+                        ## FIX ME ## Should this rais an error or return data for the client class
+                        # to handle. Example: return ("timeout", unready)
+                        raise RuntimeError(
+                            "propagation_delay: time out after %s probes: %s" % (num_checks, unready)
+                        )
                     # wait a while to let more propagation happen
                     time.sleep(next(sleep_time))
-
-                unready = [err[2] for err in errata]
-
-            if unready:
-                ### FIX ME ### might be good for mock tests, but really should try to clear, eh?
-                # return ("timeout", unready)
-                raise RuntimeError(
-                    "propagation_delay: time out after %s probes: %s" % (num_checks, unready)
-                )
 
         return ("", [])
 

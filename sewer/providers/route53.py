@@ -1,6 +1,3 @@
-import collections
-import time
-
 import boto3  # type: ignore
 from botocore.client import Config  # type: ignore
 
@@ -14,7 +11,8 @@ class Route53Dns(DNSProviderBase):
     ttl = 10
     connect_timeout = 30
     read_timeout = 30
-    propagate_timeout = 120
+    prop_timeout = 120
+    prop_sleep_times = [2]
 
     def __init__(self, access_key_id=None, secret_access_key=None, client=None, **kwargs):
         if (access_key_id or secret_access_key) and client:
@@ -38,65 +36,43 @@ class Route53Dns(DNSProviderBase):
             # let boto3 find credential
             # https://boto3.readthedocs.io/en/latest/guide/configuration.html#best-practices-for-configuring-credentials
             self.r53 = boto3.client("route53", config=self.aws_config)
-
-        self._resource_records = collections.defaultdict(list)
-        super().__init__(**kwargs)
+        super().__init__(
+            **kwargs, prop_timeout=self.prop_timeout, prop_sleep_times=self.prop_sleep_times
+        )
 
     def setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
-        self._process_challenges("UPSERT", challenges)
+        self._process_challenges(challenges, "UPSERT")
         return []
 
     def unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
-        return []
+        unready = []
+        for chal in challenges:
+            response = self.r53.get_change(Id=chal["change_id"])
+            if response["ChangeInfo"]["Status"] != "INSYNC":
+                unready.append(("unready", "still waiting for propagation", chal))
+        if len(unready) == 0:
+            return ("", [])
+        else:
+            return ("unready", unready)
 
     def clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[ErrataItemType]:
-        self._process_challenges("DELETE", challenges)
+        self._process_challenges(challenges, "DELETE")
         return []
 
-    def _process_challenges(self, action, challenges):
-        changeset_batches = self._create_changeset_batches(action, challenges)
-        change_id = self._apply_changeset_batches(action, changeset_batches)
-        self._wait_for_propagation(change_id)
-
-    def _create_changeset_batches(self, action, challenges):
-        changeset_batches = {}
+    def _process_challenges(
+        self, challenges: Sequence[Dict[str, str]], action
+    ) -> Sequence[ErrataItemType]:
+        unique_domains = {}
         for chal in challenges:
-            name = self.target_domain(chal)
-            value = '"{0}"'.format(dns_challenge(chal["key_auth"]))
-            zone_id = self._find_zone_id_for_domain(name)
-            if changeset_batches.get(zone_id) is None:
-                changeset_batches[zone_id] = {}
-
-            if changeset_batches[zone_id].get(name) is None:
-                changeset_batches[zone_id][name] = {
-                    "Action": action,
-                    "ResourceRecordSet": {
-                        "Name": name,
-                        "Type": "TXT",
-                        "TTL": self.ttl,
-                        "ResourceRecords": [
-                            {
-                                "Value": value,
-                            }
-                        ],
-                    },
-                }
-            else:
-                changeset_batches[zone_id][name]["ResourceRecordSet"]["ResourceRecords"].append(
-                    {"Value": value}
-                )
-        return changeset_batches
-
-    def _wait_for_propagation(self, change_ids):
-        for change_id in change_ids:
-            for i in range(0, self.propagate_timeout):
-                response = self.r53.get_change(Id=change_id)
-                if response["ChangeInfo"]["Status"] == "INSYNC":
-                    return
-                if i >= self.propagate_timeout:
-                    raise RuntimeError("Waited too long for Route53 DNS propagation")
-                # Only used to avoid being ratelimited checking for status
-                time.sleep(1)
+            target_domain = self.target_domain(chal)
+            if unique_domains.get(target_domain) is None:
+                unique_domains[target_domain] = {"values": [], "challenge_indices": []}
+            unique_domains[target_domain]["values"].append(
+                {"Value": '"{0}"'.format(dns_challenge(chal["key_auth"]))}
+            )
+            unique_domains[target_domain]["challenge_indices"].append(challenges.index(chal))
+        for domain, challenge_info in unique_domains.items():
+            self._apply_challenge_change(challenges, action, domain, challenge_info)
 
     def _find_zone_id_for_domain(self, domain):
         """Find the zone id responsible a given FQDN.
@@ -125,15 +101,23 @@ class Route53Dns(DNSProviderBase):
         zones.sort(key=lambda z: len(z[0]), reverse=True)
         return zones[0][1]
 
-    def _apply_changeset_batches(self, action, changeset_batches):
-        change_ids = []
-        for zone_id, changeset_batch in changeset_batches.items():
-            response = self.r53.change_resource_record_sets(
-                HostedZoneId=zone_id,
-                ChangeBatch={
-                    "Comment": "certbot-dns-route53 certificate validation " + action,
-                    "Changes": list(changeset_batch.values()),
-                },
-            )
-            change_ids.append(response["ChangeInfo"]["Id"])
-        return change_ids
+    def _apply_challenge_change(self, challenges, action, domain, challenge_info):
+        zone_id = self._find_zone_id_for_domain(domain)
+        changeset = {
+            "Comment": "certbot-dns-route53 certificate validation " + action,
+            "Changes": [
+                {
+                    "Action": action,
+                    "ResourceRecordSet": {
+                        "Name": domain,
+                        "Type": "TXT",
+                        "TTL": self.ttl,
+                        "ResourceRecords": challenge_info["values"],
+                    },
+                }
+            ],
+        }
+        response = self.r53.change_resource_record_sets(HostedZoneId=zone_id, ChangeBatch=changeset)
+        for index in challenge_info["challenge_indices"]:
+            challenges[index]["change_id"] = response["ChangeInfo"]["Id"]
+        return
