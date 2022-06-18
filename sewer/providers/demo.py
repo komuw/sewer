@@ -20,14 +20,14 @@ class ManualProvider(ProviderBase):
         super().__init__(**kwargs)
         self.chal_type = chal_type
 
-    def setup(self, challenges: ChalListType) -> ErrataListType:
+    def setup(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         return self._prompt("add", challenges)
 
-    def unpropagated(self, challenges: ChalListType) -> ErrataListType:
+    def unpropagated(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         # could add confirmation here, but it's just a demo
         return []
 
-    def clear(self, challenges: ChalListType) -> ErrataListType:
+    def clear(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         return self._prompt("clear", challenges)
 
     def _prompt(self, mode: str, challenges: ChalListType) -> ErrataListType:

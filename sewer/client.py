@@ -1,6 +1,6 @@
 import json, time, platform
 from hashlib import sha256
-from typing import Dict, Sequence, Tuple, Union
+from typing import Any, Dict, Sequence, Tuple, Union
 
 import requests
 
@@ -551,14 +551,16 @@ class Client:
                 }
                 challenges.append(challenge)
 
+            drv_data = {}
+
             # any errors in setup are fatal (here - they are all necessary for same cert)
-            failures = self.provider.setup(challenges)
+            failures = self.provider.setup(challenges, drv_data)
             if failures:
                 raise RuntimeError("get_certificate: challenge setup failed for %s" % failures)
 
             ### FIX ME ### should abort cert and try to clear on error
 
-            error, errata_list = self.propagation_delay(challenges)
+            error, errata_list = self.propagation_delay(challenges, drv_data)
 
             # for a case where you want certificates for *.example.com and example.com
             # you have to create both auth records AND then respond to the challenge.
@@ -593,7 +595,7 @@ class Client:
             raise e
         finally:
             # best-effort attempt to clear challenges
-            failures = self.provider.clear(challenges)
+            failures = self.provider.clear(challenges, drv_data)
 
         return certificate
 
@@ -605,7 +607,7 @@ class Client:
         while True:
             yield cur_time
 
-    def propagation_delay(self, challenges: ChalListType) -> Tuple[str, ErrataListType]:
+    def propagation_delay(self, challenges: ChalListType, drv_data: dict[str, Any]) -> Tuple[str, ErrataListType]:
         """
         Wait for the challenges to propagate through the service.
 
@@ -627,7 +629,7 @@ class Client:
             num_checks = 0
 
             while unready:
-                errata = self.provider.unpropagated(unready)
+                errata = self.provider.unpropagated(unready, drv_data)
                 num_checks += 1
 
                 # right idea, but details aren't yet nailed down?
