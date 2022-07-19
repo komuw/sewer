@@ -474,7 +474,7 @@ class Client:
         )
         self.logger.info(
             "get_identifier_authorization got %s, token=%s"
-            % (challenge_url, challenge_token)
+            % (identifier_auth["challenge_url"], identifier_auth["token"])
         )
         return identifier_auth
 
