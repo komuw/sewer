@@ -398,7 +398,9 @@ class Client:
         self.logger.info("apply_for_cert_issuance_success")
         return authorizations, finalize_url
 
-    def get_identifier_auth_challenge(self, response_challenges):
+    def get_identifier_auth_challenge(
+        self, domain, auth_url, wildcard, response_challenges
+    ):
         allowed_challenge_types = [c["type"] for c in response_challenges]
 
         # left most chal_type wins
@@ -455,7 +457,7 @@ class Client:
         domain = response_json["identifier"]["value"]
         wildcard = response_json.get("wildcard")
         identifier_auth = self.get_identifier_auth_challenge(
-            response_json["challenges"]
+            domain, auth_url, wildcard, response_json["challenges"]
         )
 
         if not identifier_auth:
