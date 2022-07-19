@@ -152,7 +152,9 @@ class Client:
         ### FIX ME ### [:100] is bandaid to reduce spew during tests
 
         except Exception as e:
-            self.logger.error("Unable to intialise Client. error={0}".format(str(e)[:100]))
+            self.logger.error(
+                "Unable to intialise Client. error={0}".format(str(e)[:100])
+            )
             raise e
 
     def GET(self, url: str) -> requests.Response:
@@ -175,7 +177,12 @@ class Client:
         return self._request("POST", url, data=data, headers=headers)
 
     def _request(
-        self, method: str, url: str, *, data: bytes = None, headers: Dict[str, str] = None
+        self,
+        method: str,
+        url: str,
+        *,
+        data: bytes = None,
+        headers: Dict[str, str] = None
     ) -> requests.Response:
         """
         shared implementation for GET, POST and HEAD
@@ -190,7 +197,9 @@ class Client:
         if "UserAgent" not in headers:
             headers["UserAgent"] = self.User_Agent
 
-        kwargs = {"timeout": self.ACME_REQUEST_TIMEOUT}  # type: Dict[str, Union[str, int]]
+        kwargs = {
+            "timeout": self.ACME_REQUEST_TIMEOUT
+        }  # type: Dict[str, Union[str, int]]
 
         ### FIX ME ### can get current bogus cert from pebble, figure out how to use it here?
 
@@ -226,7 +235,9 @@ class Client:
         self.logger.debug("get_acme_endpoints")
         get_acme_endpoints = self.GET(self.ACME_DIRECTORY_URL)
         self.logger.debug(
-            "get_acme_endpoints_response. status_code={0}".format(get_acme_endpoints.status_code)
+            "get_acme_endpoints_response. status_code={0}".format(
+                get_acme_endpoints.status_code
+            )
         )
         if get_acme_endpoints.status_code not in [200, 201]:
             raise ValueError(
@@ -282,7 +293,9 @@ class Client:
         X509Req.set_pubkey(pk)
         X509Req.set_version(2)
         X509Req.sign(pk, self.digest)
-        return OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_ASN1, X509Req)
+        return OpenSSL.crypto.dump_certificate_request(
+            OpenSSL.crypto.FILETYPE_ASN1, X509Req
+        )
 
     def acme_register(self):
         """
@@ -385,6 +398,34 @@ class Client:
         self.logger.info("apply_for_cert_issuance_success")
         return authorizations, finalize_url
 
+    def get_identifier_auth_challenge(self, response_challenges):
+        allowed_challenge_types = [c["type"] for c in response_challenges]
+
+        # left most chal_type wins
+        for chal_type in self.provider.chal_types:
+            try:
+                i = allowed_challenge_types.index(chal_type)
+                challenge = response_challenges[i]
+                challenge_token = challenge["token"]
+                challenge_url = challenge["url"]
+
+                return {
+                    "domain": domain,
+                    "url": auth_url,
+                    "wildcard": wildcard,
+                    "token": challenge_token,
+                    "challenge_url": challenge_url,
+                }
+
+            except ValueError:
+                self.logger.debug(
+                    "get_identifier_authorization_response. {chal_type} not in response challenges list".format(
+                        chal_type
+                    )
+                )
+
+        return None
+
     def get_identifier_authorization(self, auth_url: str) -> Dict[str, str]:
         """
         https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.5
@@ -413,21 +454,9 @@ class Client:
         response_json = response.json()
         domain = response_json["identifier"]["value"]
         wildcard = response_json.get("wildcard")
-        identifier_auth = None
-
-        for i in response_json["challenges"]:
-            if i["type"] in self.provider.chal_types:
-                challenge = i
-                challenge_token = challenge["token"]
-                challenge_url = challenge["url"]
-
-                identifier_auth = {
-                    "domain": domain,
-                    "url": auth_url,
-                    "wildcard": wildcard,
-                    "token": challenge_token,
-                    "challenge_url": challenge_url,
-                }
+        identifier_auth = self.get_identifier_auth_challenge(
+            response_json["challenges"]
+        )
 
         if not identifier_auth:
             raise ValueError(
@@ -437,17 +466,24 @@ class Client:
             )
 
         self.logger.debug(
-            "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
+            "get_identifier_authorization_success. identifier_auth={0}".format(
+                identifier_auth
+            )
         )
         self.logger.info(
-            "get_identifier_authorization got %s, token=%s" % (challenge_url, challenge_token)
+            "get_identifier_authorization got %s, token=%s"
+            % (challenge_url, challenge_token)
         )
         return identifier_auth
 
     def get_keyauthorization(self, token):
         self.logger.debug("get_keyauthorization")
-        acme_header_jwk_json = json.dumps(self.get_jwk(), sort_keys=True, separators=(",", ":"))
-        acme_thumbprint = safe_base64(sha256(acme_header_jwk_json.encode("utf8")).digest())
+        acme_header_jwk_json = json.dumps(
+            self.get_jwk(), sort_keys=True, separators=(",", ":")
+        )
+        acme_thumbprint = safe_base64(
+            sha256(acme_header_jwk_json.encode("utf8")).digest()
+        )
         acme_keyauthorization = "{0}.{1}".format(token, acme_thumbprint)
 
         return acme_keyauthorization
@@ -516,7 +552,9 @@ class Client:
             "respond_to_challenge for %s at %s" % (acme_keyauthorization, challenge_url)
         )
         payload = json.dumps({"keyAuthorization": "{0}".format(acme_keyauthorization)})
-        respond_to_challenge_response = self.make_signed_acme_request(challenge_url, payload)
+        respond_to_challenge_response = self.make_signed_acme_request(
+            challenge_url, payload
+        )
         self.logger.debug(
             "respond_to_challenge_response. status_code={0}. response={1}".format(
                 respond_to_challenge_response.status_code,
@@ -585,7 +623,9 @@ class Client:
 
     def sign_message(self, message):
         self.logger.debug("sign_message")
-        pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, self.account_key.encode())
+        pk = OpenSSL.crypto.load_privatekey(
+            OpenSSL.crypto.FILETYPE_PEM, self.account_key.encode()
+        )
         return OpenSSL.crypto.sign(pk, message.encode("utf8"), self.digest)
 
     def get_nonce(self):
@@ -646,7 +686,9 @@ class Client:
         payload64 = safe_base64(payload)
         protected = self.get_acme_header(url, needs_jwk)
         protected64 = safe_base64(json.dumps(protected))
-        signature = self.sign_message(message="{0}.{1}".format(protected64, payload64))  # bytes
+        signature = self.sign_message(
+            message="{0}.{1}".format(protected64, payload64)
+        )  # bytes
         signature64 = safe_base64(signature)  # str
         data = json.dumps(
             {"protected": protected64, "payload": payload64, "signature": signature64}
@@ -667,7 +709,9 @@ class Client:
             challenge = {
                 "ident_value": identifier_auth["domain"],
                 "token": token,
-                "key_auth": self.get_keyauthorization(token),  # responder acme_keyauth..
+                "key_auth": self.get_keyauthorization(
+                    token
+                ),  # responder acme_keyauth..
                 "wildcard": identifier_auth["wildcard"],
                 "auth_url": auth_url,  # responder auth.._url
                 "chal_url": identifier_auth["challenge_url"],  # responder challenge_url
@@ -677,7 +721,9 @@ class Client:
         # any errors in setup are fatal (here - they are all necessary for same cert)
         failures = self.provider.setup(challenges)
         if failures:
-            raise RuntimeError("get_certificate: challenge setup failed for %s" % failures)
+            raise RuntimeError(
+                "get_certificate: challenge setup failed for %s" % failures
+            )
 
         return challenges, finalize_url
 
@@ -717,7 +763,9 @@ class Client:
         ### FIX ME ### [:100] is a bandaid to reduce spew during tests
 
         except Exception as e:
-            self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)[:100]))
+            self.logger.error(
+                "Error: Unable to issue certificate. error={0}".format(str(e)[:100])
+            )
             raise e
         finally:
             # best-effort attempt to clear challenges
@@ -775,7 +823,8 @@ class Client:
                 ### FIX ME ### might be good for mock tests, but really should try to clear, eh?
                 # return ("timeout", unready)
                 raise RuntimeError(
-                    "propagation_delay: time out after %s probes: %s" % (num_checks, unready)
+                    "propagation_delay: time out after %s probes: %s"
+                    % (num_checks, unready)
                 )
 
         return ("", [])
