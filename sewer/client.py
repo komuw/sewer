@@ -422,7 +422,7 @@ class Client:
             except ValueError:
                 self.logger.debug(
                     "get_identifier_authorization_response. {chal_type} not in response challenges list".format(
-                        chal_type
+                        chal_type=chal_type
                     )
                 )
 
