@@ -45,13 +45,13 @@ class ProviderBase:
         else:
             self.prop_sleep_times = (int(cast(int, prop_sleep_times)),)
 
-    def setup(self, challenges: ChalListType) -> ErrataListType:
+    def setup(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         raise NotImplementedError("setup method not implemented by %s" % self.__class__)
 
-    def unpropagated(self, challenges: ChalListType) -> ErrataListType:
+    def unpropagated(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         raise NotImplementedError("unpropagated method not implemented by %s" % self.__class__)
 
-    def clear(self, challenges: ChalListType) -> ErrataListType:
+    def clear(self, challenges: ChalListType, drv_data: dict[str, Any]) -> ErrataListType:
         raise NotImplementedError("clear method not implemented by %s" % self.__class__)
 
 

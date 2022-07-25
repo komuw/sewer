@@ -11,6 +11,9 @@ made in the process of unifying the two types of challenges,
 while influenced by Alec's code and our discussions, are entirely my fault.
 Alec cannot be blamed for my choices!
 
+Nick Silverman has also influenced this interface in the course of making
+route53 a full-featured driver (WIP).
+
 ## A few words about words
 
 Because the word "provider" is so overloaded, I'm going to refer to the
@@ -68,12 +71,13 @@ API for checking some internal status that might be faster and/or more
 reliable than polling DNS servers.  For cases where all that can (or needs)
 to be done is some DNS lookups, well, that can be packaged as a function.
 
---- end reconcile block
-
 This is the pattern which all three methods use: accept a list of challenges
-(each a dictionary) to process, and return an errata list containing the
-subset which have problems or are not ready.  So in all cases an empty list
-returned means that all went well.
+(each a dictionary) to process and a drv_data dictionary for driver specific
+non-challenge-specific data, and return an errata list containing the subset
+which have problems or are not ready as a list of `(status, msg, challenge)`
+tuples.  So in all cases an empty list returned means that all went well.
+
+--- end reconcile block
 
 ## `ProviderBase`
 
@@ -98,7 +102,7 @@ optional, arguments.  They ended up here because they are not specific to a
 subclass; a counterexample is the `alias` parameter, which is handled in
 `DNSProviderBase`.  The conventions for ProviderBase and its subclasses are:
 - keyword only arguments (other than self, of course)
-- Required arguments never have a default value
+- Required arguments (in the base classes) never have a default value
 - Optional arguments must have a default, of course
 - Everything not explicitly handled is left to kwargs
 
@@ -127,10 +131,12 @@ It is allowed to add, change, or even remove items from kwargs if necessary
 
 --- (see where for args documentation?  DNS-Alias and DNS-Propagation & ???)
 
-### `setup(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+### `setup(self, challenges: Sequence[Dict[str, str]], drv_data: dict[str, Any]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
 The `setup` method is called to publish one or more challenges.  Each item
-in the list describes one challenge.
+in the list describes one challenge.  It is passed an empty dict (drv_data)
+which it can use to store internal data that's not specific to one
+challenge.
 
 (_the description of the challenges list is common to all three methods_)
 
@@ -153,17 +159,20 @@ only outstanding challenges, and the call(s) to the driver SHOULD be omitted
 if there are none.  But the latter, especially, is just the plan, so
 throwing an exception if the challenges list is empty is JUST NOT ON.
 
+Keys of the form `drv_*` are reserved for the driver.  They will never be
+set, modified, or cleared by the code that calls the set/prop/clear API.
+
 > Allowing an empty challenges list is also convenient for unit tests.
 
 Each of the three methods return an errata list of the challenge items which
 encountered an issue - couldn't create, isn't published, removal failed.  So
 in all cases, an empty list means all is well.
 
-The *errata list* is a list-like containing a tuple for each failed or
-unready challenge.  The tuples have three elements: a status (str), a msg
-(str) intended to enlighten a human observer, and the original challenge
-item (the dictionary from the argument list).  The status MUST be one of the
-defined values:
+The *errata list* is a sequence containing a tuple for each failed or
+not-yet-propagated challenge.  The tuples have three elements: a status
+(str), a msg (str) intended to further explain the error for a human
+observer, and the challenge item (the item from the challenges argument
+being reported).  The status MUST be one of the defined values:
 
 | status | applies to | meaning |
 | --- | --- | --- |
@@ -171,7 +180,13 @@ defined values:
 | "skipped" | setup | may skip challenges after one has a hard failure |
 | "unready" | unpropagated | soft fail: record not deployed to authoritative server(s).  If a non-recoverable error is detected, then use _failed_. |
 
-### `unpropagated(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+_Perhaps this can be collapsed - have the "status" key (mandantory) and the
+"msg" key (optional?) added to the challenge dictionary by the driver. 
+Unlike the `drv_*` keys, these WILL be modified by the calling code,
+probably by being cleared before the list of challenges is [re]submitted to
+any of the methods._
+
+### `unpropagated(self, challenges: Sequence[Dict[str, str]], drv_data: dict[str, Any]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
 This method is expected to be needed mostly for DNS challenges, but it
 should be used whenever a service provider has a relatively slow or
@@ -180,12 +195,12 @@ challenge data being visible to the world.  When there's no expectation of
 such lag, or no way to reliably check that the challenge has propagated,
 this may as well just return an empty list, and we'll all hope for the best.
 
-### `clear(self, challenges: Sequence[Dict[str, str]]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
+### `clear(self, challenges: Sequence[Dict[str, str]], drv_data: dict[str, Any]) -> Sequence[Tuple[str, str, Dict[str, str]]]`
 
-`clear`, unlike `setup`, SHOULD NOT stop processing challenges after hitting
-an error.  It's possible that any reported errors will be treated as
-potential soft errors and the operation retried (with only the unready
-challenges).
+`clear`, unlike `setup` (and `unpropagated`?), SHOULD NOT stop processing
+challenges after hitting an error.  It's possible that any reported errors
+will be treated as potential soft errors and the operation retried (with
+only the unready challenges).
 
 _? should have a status word for "this one's hard failed, forget about it"?_
 
