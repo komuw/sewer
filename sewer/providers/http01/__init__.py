@@ -1,0 +1,1 @@
+from .server import Provider as StandaloneServer
