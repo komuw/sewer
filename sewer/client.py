@@ -94,7 +94,10 @@ class Client:
             self.User_Agent = self.get_user_agent()
             acme_endpoints = self.get_acme_endpoints().json()
             self.ACME_GET_NONCE_URL = acme_endpoints["newNonce"]
-            self.ACME_TOS_URL = acme_endpoints["meta"]["termsOfService"]
+            try:
+                self.ACME_TOS_URL = acme_endpoints["meta"]["termsOfService"]
+            except KeyError:
+                self.ACME_TOS_URL = None
             self.ACME_KEY_CHANGE_URL = acme_endpoints["keyChange"]
             self.ACME_NEW_ACCOUNT_URL = acme_endpoints["newAccount"]
             self.ACME_NEW_ORDER_URL = acme_endpoints["newOrder"]
