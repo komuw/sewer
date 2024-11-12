@@ -10,7 +10,6 @@ from cryptography.hazmat.primitives.serialization import (
     NoEncryption,
     PrivateFormat,
 )
-from cryptography.hazmat.backends import default_backend, openssl
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -34,25 +33,17 @@ class AcmeKidError(AcmeKeyError):
 
 ### types for things defined here
 
-### FIX ME ### what can we use for XxxKeyType?  [[ not vital, just tightens up typing ]]
-
-# RsaKeyType = openssl.rsa._RSAPrivateKey
-# EcKeyType = openssl.ec._EllipticCurvePrivateKey
-# AcmeKeyType = Union[RsaKeyType, EcKeyType]
-
-# and why does this [seem] to work?
-PrivateKeyType = Union[openssl.rsa._RSAPrivateKey, openssl.ec._EllipticCurvePrivateKey]
+PrivateKeyType = Union[rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey]
 
 
 ### low level key type table
-
 
 class KeyDesc:
     def __init__(
         self,
         type_name: str,
         generate: Callable,
-        gen_arg,
+        gen_arg: Union[int, ec.EllipticCurve],
         pk_type,
         sign: Callable,
         sign_kwargs: Dict[str, Any],
@@ -79,11 +70,11 @@ class KeyDesc:
 
 
 def rsa_gen(key_size: int) -> PrivateKeyType:
-    return rsa.generate_private_key(65537, key_size, default_backend())
+    return rsa.generate_private_key(65537, key_size)
 
 
 def ec_gen(curve) -> PrivateKeyType:
-    return ec.generate_private_key(curve, default_backend())
+    return ec.generate_private_key(curve)
 
 
 def rsa_sign(pk, message: bytes) -> bytes:
@@ -216,7 +207,7 @@ class AcmeKey:
         NB: since it's not stored in the PEM, the kid is empty (None)
         """
 
-        pk = load_pem_private_key(pem_data, None, default_backend())
+        pk = load_pem_private_key(pem_data, None)
         kdl = [kd for kd in key_table if kd.match(pk)]
         if not kdl:
             raise AcmeKeyTypeError("Unknown pk type: %s", type(pk))
@@ -240,7 +231,7 @@ class AcmeKey:
     def to_pem(self) -> bytes:
         "return private key's serialized (PEM) form"
 
-        pem_data = self.pk.private_bytes(
+        pem_data = self.pk.private_bytes(	# type: ignore[union-attr]
             encoding=Encoding.PEM, format=PrivateFormat.PKCS8, encryption_algorithm=NoEncryption()
         )
         return pem_data
@@ -276,7 +267,7 @@ class AcmeAccount(AcmeKey):
             raise AcmeKidError("Attempt to access a Key ID that hasn't been set.  Register key?")
         return self.__kid
 
-    def set_kid(self, kid: str, timestamp: float = None) -> None:
+    def set_kid(self, kid: str, timestamp: Optional[float] = None) -> None:
         "The kid can be set only once, but we overlook exact duplicate set calls"
 
         if self.__kid and self.__kid != kid:
@@ -348,7 +339,7 @@ class AcmeCsr:
         all_names = list(set([cn] + san))
         SAN: List[x509.GeneralName] = [x509.DNSName(name) for name in all_names]
         csrb = csrb.add_extension(x509.SubjectAlternativeName(SAN), critical=False)
-        self.csr = csrb.sign(key.pk, hashes.SHA256(), default_backend())
+        self.csr = csrb.sign(key.pk, hashes.SHA256())
 
     def public_bytes(self) -> bytes:
         return self.csr.public_bytes(Encoding.DER)
