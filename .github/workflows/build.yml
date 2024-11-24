@@ -1,0 +1,38 @@
+name: Build
+on: push
+  
+jobs:
+  linux:
+    runs-on:  ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.x'
+          cache: 'pip'
+
+      - name: install dependencies
+        shell: bash
+        run: |
+          sudo apt install build-essential
+          python -m pip install -e .[dev,test,alldns]
+      - name: run tests
+        shell: bash
+        run: |
+          make testdata
+          find . -type f -name *.pyc -delete | echo
+          coverage erase
+          coverage run
+      - name: generate test reports
+        shell: bash
+        run: |
+          coverage report --fail-under=85
+      - name: run static analyzers
+        shell: bash
+        run: |
+          black --check . ||  { printf "\\n\\t please use black to format your code."; exit 77; }
+          pylint --enable=E --disable=W,R,C --unsafe-load-any-extension=y sewer/
+      - name: run sewer cli
+        shell: bash
+        run: |
+          sewer --version && sewer --help

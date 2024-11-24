@@ -1,7 +1,6 @@
 ## Sewer
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccf655afb3974e9698025cbb65949aa2)](https://www.codacy.com/app/komuW/sewer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=komuW/sewer&amp;utm_campaign=Badge_Grade)
-[![CircleCI](https://circleci.com/gh/komuw/sewer.svg?style=svg)](https://circleci.com/gh/komuw/sewer)
+[![GitHub CI](https://github.com/komuw/sewer/actions/workflows/build.yml/basge.svg)](https://github.com/komuw/sewer/.github/workflows/build.yml)
 [![codecov](https://codecov.io/gh/komuW/sewer/branch/master/graph/badge.svg)](https://codecov.io/gh/komuW/sewer)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/komuw/sewer)
 
@@ -13,12 +12,7 @@ It's name is derived from Kenyan hip hop artiste, Kitu Sewer.
 - More history (including notes on 0.8.5-to-be) in the
   [CHANGELOG](https://komuw.github.io/sewer/CHANGELOG).
 
-PYTHON compatibility: 3.5 is still supported, though I believe at least one
-driver contains incompatible code (I have no way to actually test it, and
-sometimes these new features have been backported in 3.x.later).  As of
-0.8.5 I'm still trying not to break 3.5, but that oldest officially
-supported version is probably going to take a bump.  You already cannot run
-all the dev tests under 3.5 (black is one obvious one)...
+PYTHON compatibility: 3.7 and above are tested.
 
 I (maintainer @mmaney) loiter in channel ##sewer (on irc.freenode.net) for
 those who remember IRC.  Don't ask to ask, but waiting is.
@@ -46,7 +40,7 @@ those who remember IRC.  Don't ask to ask, but waiting is.
 ## Installation
 
 ```shell
-pip3 install sewer
+pip install sewer
 
 # with All DNS Provider support, include aliyun, Hurricane Electric, Aurora, ACME ...
 # pip3 install sewer[alldns]
