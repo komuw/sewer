@@ -338,6 +338,13 @@ class Client:
                     "challenge_url": challenge_url,
                 }
 
+        if not identifier_auth:
+            raise ValueError(
+                "Error getting authorization: provider challenge types {} not in response".format(
+                    self.provider.chal_types
+                )
+            )
+
         self.logger.debug(
             "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
         )
