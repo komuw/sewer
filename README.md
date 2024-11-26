@@ -77,6 +77,9 @@ pip install sewer
 
 # with PowerDNS DNS Support
 # pip3 install sewer[powerdns]
+
+# with Windows Server DNS Support
+# pip3 install sewer[windns]
 ```
 
 sewer(since version 0.5.0) is now python3 only.  To install the (now

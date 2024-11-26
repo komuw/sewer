@@ -26,6 +26,7 @@ support for some features varies.
 | [Rackspace](https://www.rackspace.com/cloud/dns) | rackspace | ? | no | no | test coverage 69% | 
 | [Route 53 (AWS)](https://aws.amazon.com/route53/) | route53 (1) | OK | no | no | wc+ in 0.8.2; not in CLI |
 | Unbound | unbound_ssh | OK | yes | no | Working demonstrator model for local unbound server |
+| [Windows Server DNS](https://docs.microsoft.com/en-us/powershell/module/dnsserver) | windns | OK | yes | - | |
 
 - _wc+_ (wilcard plus) is specifically about a single certificate that has
   at least two registered names: `domain.tld` and `*.domain.tld`.  This
